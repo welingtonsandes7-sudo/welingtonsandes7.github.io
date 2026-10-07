@@ -3,533 +3,385 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Leitor Inteligente — Boletos Organizados</title>
+    <title>Boletos & Cheques — Controle Simples</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-        * { font-family: 'Inter', sans-serif; }
-        .gradient { background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); }
-        .card { transition: 0.2s; }
-        .card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
-        .status-vencer { background: #fef3c7; color: #92400e; }
-        .status-atrasado { background: #fee2e2; color: #b91c1c; }
-        .status-pago { background: #d1fae5; color: #065f46; }
+        * { font-family: system-ui, sans-serif; }
+        .aba { cursor: pointer; }
+        .aba.ativa { border-bottom: 3px solid #2563eb; color: #2563eb; font-weight: bold; }
         .linha-vencer { border-left: 4px solid #f59e0b; }
-        .linha-atrasado { border-left: 4px solid #ef4444; }
+        .linha-vencido { border-left: 4px solid #ef4444; }
         .linha-pago { border-left: 4px solid #10b981; }
-        .aba.ativa { border-bottom: 3px solid #3b82f6; color: #1e40af; font-weight: 600; }
-        .leitor-area { background: #eff6ff; border: 3px dashed #3b82f6; transition: 0.2s; }
-        .leitor-area:focus-within { border-color: #1d4ed8; background: #dbeafe; }
-        .leitor-sucesso { background: #ecfdf5; border-color: #10b981; }
-        .cab-ordem { cursor: pointer; user-select: none; }
-        .cab-ordem:hover { background-color: #e0e7ff; }
-        .ordem-asc::after { content: " ↑"; font-size: 0.7em; }
-        .ordem-desc::after { content: " ↓"; font-size: 0.7em; }
+        .linha-aberto { border-left: 4px solid #6366f1; }
+        .linha-compensado { border-left: 4px solid #10b981; }
+        .linha-devolvido { border-left: 4px solid #ef4444; }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
-    <header class="gradient text-white py-6 px-4">
-        <div class="max-w-7xl mx-auto">
-            <h1 class="text-2xl md:text-3xl font-bold">
-                <i class="fa fa-barcode mr-2"></i> Boletos Organizados
-                <span class="bg-white/20 text-sm px-3 py-1 rounded-full ml-2">Ordenados automaticamente</span>
-            </h1>
-            <p class="text-blue-100 mt-1">Leitura rápida + lista organizada: Nome → Código → Valor → Status</p>
+    <header class="bg-blue-600 text-white py-5 px-4">
+        <div class="max-w-6xl mx-auto">
+            <h1 class="text-2xl font-bold">📋 Controle de Boletos & Cheques</h1>
+            <p class="text-blue-100 mt-1">Organizado e simples</p>
         </div>
     </header>
 
-    <main class="max-w-7xl mx-auto px-4 py-6">
-        <!-- ÁREA DE LEITURA -->
-        <section id="area-leitor" class="leitor-area rounded-xl p-5 mb-6">
-            <div class="flex flex-wrap items-center gap-4">
-                <div class="flex-1 min-w-[280px]">
-                    <label class="block text-sm font-bold text-blue-800 mb-2">
-                        <i class="fa fa-scanner mr-1 text-lg"></i> Passe o código de barras aqui
-                    </label>
-                    <input type="text" id="campo-leitor" 
-                        placeholder="✅ Passe → cadastra → já aparece na lista organizada!"
-                        class="w-full px-4 py-4 text-lg font-mono border-2 rounded-lg bg-white focus:outline-none"
-                        autocomplete="off">
-                </div>
-                <div class="text-sm bg-white p-4 rounded-lg shadow-sm max-w-xs">
-                    <p class="font-bold text-blue-700 mb-2">📋 O que faz:</p>
-                    <ul class="space-y-1 text-gray-600">
-                        <li>🔢 Lê Código</li>
-                        <li>💰 Extrai Valor</li>
-                        <li>📆 Extrai Vencimento</li>
-                        <li>📅 Emissão = hoje</li>
-                        <li>📑 Lista organizada automaticamente</li>
-                    </ul>
-                </div>
-            </div>
-            <div id="resultado-leitura" class="mt-4 hidden bg-white p-4 rounded-lg border-l-4 border-green-500">
-                <p class="font-bold text-green-700 mb-2"><i class="fa fa-check-circle"></i> Dados lidos:</p>
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-                    <div><span class="text-gray-500">Código:</span> <span id="res-codigo" class="font-mono font-bold">-</span></div>
-                    <div><span class="text-gray-500">Valor:</span> <span id="res-valor" class="font-bold text-green-600">-</span></div>
-                    <div><span class="text-gray-500">Vencimento:</span> <span id="res-venc" class="font-bold">-</span></div>
-                    <div><span class="text-gray-500">Emissão:</span> <span id="res-emiss" class="font-bold">-</span></div>
-                </div>
-            </div>
-        </section>
+    <main class="max-w-6xl mx-auto px-4 py-5">
+        <!-- ABAS -->
+        <div class="flex border-b mb-6">
+            <button id="aba-boleto" class="aba ativa px-5 py-3 text-lg" data-painel="painel-boleto">
+                <i class="fa fa-file-text-o mr-2"></i> Boletos
+            </button>
+            <button id="aba-cheque" class="aba px-5 py-3 text-lg text-gray-500" data-painel="painel-cheque">
+                <i class="fa fa-money mr-2"></i> Cheques
+            </button>
+        </div>
 
-        <!-- AVISOS -->
-        <section id="avisos-area" class="mb-6 hidden">
-            <div class="bg-amber-50 border border-amber-200 rounded-xl p-4">
-                <h3 class="font-bold text-amber-800 mb-3">
-                    <i class="fa fa-bell mr-1"></i> Avisos de Vencimento
-                </h3>
-                <div id="lista-avisos" class="space-y-2 text-sm"></div>
-            </div>
-        </section>
-
-        <!-- RESUMO -->
-        <section class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-            <div class="card bg-white rounded-xl shadow p-4 text-center">
-                <p class="text-gray-500 text-xs">Total Boletos</p>
-                <p id="bol-qtd" class="text-xl font-bold text-gray-800">0</p>
-            </div>
-            <div class="card bg-white rounded-xl shadow p-4 text-center">
-                <p class="text-amber-600 text-xs">A Vencer</p>
-                <p id="bol-vencer" class="text-xl font-bold text-amber-500">0</p>
-                <p id="bol-valor-vencer" class="text-xs text-gray-500">R$ 0,00</p>
-            </div>
-            <div class="card bg-white rounded-xl shadow p-4 text-center">
-                <p class="text-red-600 text-xs">Atrasados</p>
-                <p id="bol-atrasado" class="text-xl font-bold text-red-500">0</p>
-                <p id="bol-valor-atrasado" class="text-xs text-gray-500">R$ 0,00</p>
-            </div>
-            <div class="card bg-white rounded-xl shadow p-4 text-center">
-                <p class="text-green-600 text-xs">Total Pago</p>
-                <p id="total-pago-valor" class="text-xl font-bold text-green-500">R$ 0,00</p>
-            </div>
-        </section>
-
-        <!-- LISTA PRINCIPAL — ORGANIZADA -->
-        <section class="bg-white rounded-xl shadow-md p-6">
-            <div class="flex flex-wrap justify-between items-center mb-4">
-                <h2 class="text-xl font-semibold text-gray-700">
-                    <i class="fa fa-list-ol text-blue-500 mr-2"></i> Boletos a Vencer — Organizados
-                </h2>
-                <div class="flex gap-2 mt-2">
-                    <button class="filtro-bol ativo px-3 py-1 rounded bg-blue-600 text-white" data-filtro="a-vencer">A Vencer</button>
-                    <button class="filtro-bol px-3 py-1 rounded bg-gray-200" data-filtro="atrasado">Atrasados</button>
-                    <button class="filtro-bol px-3 py-1 rounded bg-gray-200" data-filtro="pago">Pagos</button>
-                    <button class="filtro-bol px-3 py-1 rounded bg-gray-200" data-filtro="todos">Todos</button>
+        <!-- ============== BOLETOS ============== -->
+        <div id="painel-boleto" class="painel">
+            <!-- RESUMO -->
+            <div class="grid grid-cols-3 gap-4 mb-6">
+                <div class="bg-white rounded-lg shadow p-4 text-center">
+                    <p class="text-amber-600 text-sm font-medium">A Vencer</p>
+                    <p id="bol-vencer-qtd" class="text-2xl font-bold text-amber-500">0</p>
+                </div>
+                <div class="bg-white rounded-lg shadow p-4 text-center">
+                    <p class="text-red-600 text-sm font-medium">Vencidos</p>
+                    <p id="bol-vencido-qtd" class="text-2xl font-bold text-red-500">0</p>
+                </div>
+                <div class="bg-white rounded-lg shadow p-4 text-center">
+                    <p class="text-green-600 text-sm font-medium">Pagos</p>
+                    <p id="bol-pago-qtd" class="text-2xl font-bold text-green-500">0</p>
                 </div>
             </div>
 
-            <p class="text-sm text-gray-500 mb-3">
-                <i class="fa fa-info-circle"></i> Ordem padrão: <strong>Nome ↑ → Código ↑ → Valor ↑ → Status</strong> | Clique no cabeçalho para mudar a ordem
-            </p>
-
-            <div class="overflow-x-auto">
-                <table class="w-full text-sm">
-                    <thead class="bg-gray-50">
-                        <tr class="text-left text-gray-600">
-                            <th class="p-3 cab-ordem ordem-asc" data-coluna="nome">
-                                <i class="fa fa-sort-alpha-asc mr-1 text-blue-500"></i> Nome / Descrição
-                            </th>
-                            <th class="p-3 cab-ordem" data-coluna="codigo">
-                                <i class="fa fa-barcode mr-1 text-gray-400"></i> Código de Barras
-                            </th>
-                            <th class="p-3 cab-ordem text-right" data-coluna="valor">
-                                <i class="fa fa-money mr-1 text-gray-400"></i> Valor
-                            </th>
-                            <th class="p-3 cab-ordem" data-coluna="vencimento">
-                                <i class="fa fa-calendar mr-1 text-gray-400"></i> Vencimento
-                            </th>
-                            <th class="p-3 cab-ordem" data-coluna="status">
-                                <i class="fa fa-tag mr-1 text-gray-400"></i> Status
-                            </th>
-                            <th class="p-3 text-center">Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody id="lista-boletos"></tbody>
-                </table>
-            </div>
-            <p id="bol-sem" class="text-gray-400 text-center py-8">Nenhum boleto cadastrado. Passe o leitor acima!</p>
-        </section>
-
-        <!-- CADASTRO MANUAL -->
-        <section class="bg-white rounded-xl shadow-md p-6 mt-6">
-            <h2 class="text-xl font-semibold text-gray-700 mb-4">
-                <i class="fa fa-pencil-square-o text-blue-500 mr-2"></i> Cadastro Manual / Edição
-            </h2>
-            <div class="bg-blue-50 p-3 rounded-lg mb-4">
-                <label class="block text-sm font-medium text-blue-700 mb-1">
-                    ⚙️ Prazo padrão (dias — quando não lê a data)
-                </label>
-                <input type="number" id="prazo-padrao-bol" value="30" min="1"
-                    class="w-full max-w-xs px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
-            </div>
-            <form id="form-boleto" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-600 mb-1">Nome / Fornecedor</label>
-                    <input type="text" id="bol-nome" placeholder="Ex: Aluguel, Energia..."
-                        class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-600 mb-1">Código de Barras</label>
-                    <input type="text" id="bol-codigo" placeholder="Número do código" required
-                        class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-600 mb-1">Valor (R$)</label>
-                    <input type="number" step="0.01" min="0" id="bol-valor"
-                        class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-600 mb-1">Emissão</label>
-                    <input type="date" id="bol-emissao"
-                        class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-600 mb-1">Vencimento</label>
-                    <div class="flex gap-2">
-                        <input type="number" id="bol-prazo" min="1" placeholder="Dias"
-                            class="w-24 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
-                        <button type="button" id="bol-calcular" class="bg-blue-100 text-blue-700 px-3 rounded-lg hover:bg-blue-200">
-                            <i class="fa fa-calculator"></i>
-                        </button>
-                        <input type="date" id="bol-vencimento" required
-                            class="flex-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+            <!-- CADASTRAR BOLETO -->
+            <div class="bg-white rounded-lg shadow p-5 mb-6">
+                <h3 class="text-lg font-bold text-gray-700 mb-4">➕ Cadastrar Boleto</h3>
+                <form id="form-boleto" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-600 mb-1">Nome / Descrição</label>
+                        <input type="text" id="bol-nome" class="w-full px-3 py-2 border rounded-lg" placeholder="Ex: Aluguel" required>
                     </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-600 mb-1">Valor R$</label>
+                        <input type="number" step="0.01" id="bol-valor" class="w-full px-3 py-2 border rounded-lg" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-600 mb-1">Vencimento</label>
+                        <input type="date" id="bol-vencimento" class="w-full px-3 py-2 border rounded-lg" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-600 mb-1">Status</label>
+                        <select id="bol-status" class="w-full px-3 py-2 border rounded-lg">
+                            <option value="a-vencer">A Vencer</option>
+                            <option value="pago">Pago</option>
+                        </select>
+                    </div>
+                    <div class="md:col-span-2">
+                        <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium">
+                            Salvar Boleto
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- LISTA BOLETOS -->
+            <div class="bg-white rounded-lg shadow p-5">
+                <h3 class="text-lg font-bold text-gray-700 mb-4">📑 Lista de Boletos</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="p-3 text-left">Nome</th>
+                                <th class="p-3 text-left">Valor</th>
+                                <th class="p-3 text-left">Vencimento</th>
+                                <th class="p-3 text-left">Status</th>
+                                <th class="p-3 text-center">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="lista-boletos"></tbody>
+                    </table>
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-600 mb-1">Status</label>
-                    <select id="bol-status" class="w-full px-4 py-2 border rounded-lg">
-                        <option value="a-vencer">A Vencer</option>
-                        <option value="pago">Pago</option>
-                    </select>
+                <p id="bol-vazio" class="text-gray-400 text-center py-4">Nenhum boleto cadastrado</p>
+            </div>
+        </div>
+
+        <!-- ============== CHEQUES ============== -->
+        <div id="painel-cheque" class="painel hidden">
+            <!-- RESUMO -->
+            <div class="grid grid-cols-3 gap-4 mb-6">
+                <div class="bg-white rounded-lg shadow p-4 text-center">
+                    <p class="text-indigo-600 text-sm font-medium">Em Aberto</p>
+                    <p id="che-aberto-qtd" class="text-2xl font-bold text-indigo-500">0</p>
                 </div>
-                <div class="sm:col-span-2 lg:col-span-3">
-                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-2 rounded-lg text-lg font-medium">
-                        <i class="fa fa-save mr-1"></i> Salvar Boleto
-                    </button>
+                <div class="bg-white rounded-lg shadow p-4 text-center">
+                    <p class="text-green-600 text-sm font-medium">Compensados</p>
+                    <p id="che-pago-qtd" class="text-2xl font-bold text-green-500">0</p>
                 </div>
-            </form>
-        </section>
+                <div class="bg-white rounded-lg shadow p-4 text-center">
+                    <p class="text-red-600 text-sm font-medium">Devolvidos</p>
+                    <p id="che-dev-qtd" class="text-2xl font-bold text-red-500">0</p>
+                </div>
+            </div>
+
+            <!-- CADASTRAR CHEQUE -->
+            <div class="bg-white rounded-lg shadow p-5 mb-6">
+                <h3 class="text-lg font-bold text-gray-700 mb-4">➕ Cadastrar Cheque</h3>
+                <form id="form-cheque" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-600 mb-1">Emitente / Quem deu</label>
+                        <input type="text" id="che-nome" class="w-full px-3 py-2 border rounded-lg" placeholder="Nome da pessoa" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-600 mb-1">Número</label>
+                        <input type="text" id="che-numero" class="w-full px-3 py-2 border rounded-lg" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-600 mb-1">Valor R$</label>
+                        <input type="number" step="0.01" id="che-valor" class="w-full px-3 py-2 border rounded-lg" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-600 mb-1">Vencimento</label>
+                        <input type="date" id="che-vencimento" class="w-full px-3 py-2 border rounded-lg" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-600 mb-1">Status</label>
+                        <select id="che-status" class="w-full px-3 py-2 border rounded-lg">
+                            <option value="aberto">Em Aberto</option>
+                            <option value="compensado">Compensado</option>
+                            <option value="devolvido">Devolvido</option>
+                        </select>
+                    </div>
+                    <div class="md:col-span-2">
+                        <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded-lg font-medium">
+                            Salvar Cheque
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- LISTA CHEQUES -->
+            <div class="bg-white rounded-lg shadow p-5">
+                <h3 class="text-lg font-bold text-gray-700 mb-4">📑 Lista de Cheques</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="p-3 text-left">Emitente</th>
+                                <th class="p-3 text-left">Nº</th>
+                                <th class="p-3 text-left">Valor</th>
+                                <th class="p-3 text-left">Vencimento</th>
+                                <th class="p-3 text-left">Status</th>
+                                <th class="p-3 text-center">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="lista-cheques"></tbody>
+                    </table>
+                </div>
+                <p id="che-vazio" class="text-gray-400 text-center py-4">Nenhum cheque cadastrado</p>
+            </div>
+        </div>
     </main>
 
-    <footer class="bg-gray-800 text-gray-400 text-center py-4 mt-8 text-sm">
-        <p>📋 Lista organizada por Nome → Código → Valor → Status © 2026</p>
-    </footer>
-
     <script>
-        // DADOS
-        let boletos = JSON.parse(localStorage.getItem('boletos')) || [];
-        let filtroBol = 'a-vencer';
-        let ordem = { coluna: 'nome', direcao: 'asc' }; // padrão
+        // DADOS — Salvo no navegador
+        let boletos = JSON.parse(localStorage.getItem('meus_boletos') || '[]');
+        let cheques = JSON.parse(localStorage.getItem('meus_cheques') || '[]');
 
-        // ===== UTILITÁRIAS =====
-        function fmtData(d) { return d ? new Date(d+'T00:00:00').toLocaleDateString('pt-BR') : '-'; }
-        function fmtValor(v) { return Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); }
-        function hoje() { const h=new Date(); h.setHours(0,0,0,0); return h; }
-        function hojeStr() { return hoje().toISOString().split('T')[0]; }
-        function adicionarDias(dias, dataBase = hoje()) {
-            const d = new Date(dataBase);
-            d.setDate(d.getDate() + Number(dias));
-            return d.toISOString().split('T')[0];
+        // FUNÇÕES ÚTEIS
+        function hoje() {
+            const d = new Date();
+            d.setHours(0,0,0,0);
+            return d;
         }
-        function statusBoleto(b) {
-            if(b.status==='pago') return 'pago';
-            return new Date(b.vencimento+'T00:00:00') < hoje() ? 'atrasado' : 'a-vencer';
+        function fmtData(d) {
+            if(!d) return '-';
+            return new Date(d + 'T00:00:00').toLocaleDateString('pt-BR');
         }
-
-        // ===== ORDENAÇÃO =====
-        function ordenarBoletos(lista) {
-            return [...lista].sort((a, b) => {
-                let comp = 0;
-                switch(ordem.coluna) {
-                    case 'nome':
-                        comp = String(a.nome||'').localeCompare(String(b.nome||''));
-                        break;
-                    case 'codigo':
-                        comp = String(a.codigo||'').localeCompare(String(b.codigo||''));
-                        break;
-                    case 'valor':
-                        comp = (Number(a.valor)||0) - (Number(b.valor)||0);
-                        break;
-                    case 'vencimento':
-                        comp = String(a.vencimento||'').localeCompare(String(b.vencimento||''));
-                        break;
-                    case 'status':
-                        const ordemStatus = { 'atrasado':1, 'a-vencer':2, 'pago':3 };
-                        comp = (ordemStatus[statusBoleto(a)]||9) - (ordemStatus[statusBoleto(b)]||9);
-                        break;
-                    default:
-                        comp = String(a.nome||'').localeCompare(String(b.nome||''));
-                }
-                return ordem.direcao === 'asc' ? comp : -comp;
-            });
+        function fmtValor(v) {
+            return Number(v||0).toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
+        }
+        function estaVencido(data) {
+            return new Date(data + 'T00:00:00') < hoje();
         }
 
-        // ===== EXTRAIR DADOS DO CÓDIGO =====
-        function extrairDadosBoleto(codigo) {
-            codigo = codigo.replace(/\D/g, '');
-            if(codigo.length < 44) {
-                return { codigoCompleto: codigo, codigo: codigo, valor: 0, vencimento: null, usouPrazoPadrao: true };
-            }
-            const dados = { codigoCompleto: codigo, codigo: codigo, valor: 0, vencimento: null };
-            if(codigo.length === 44) {
-                const fatorVenc = codigo.substring(33, 37);
-                const valorStr = codigo.substring(37, 44);
-                const dataBase = new Date('1997-10-07');
-                if(fatorVenc && !isNaN(fatorVenc)) {
-                    const dias = parseInt(fatorVenc);
-                    if(dias > 0 && dias < 9999) {
-                        const venc = new Date(dataBase);
-                        venc.setDate(venc.getDate() + dias);
-                        if(venc > new Date('2000-01-01') && venc < new Date('2035-01-01')) {
-                            dados.vencimento = venc.toISOString().split('T')[0];
-                        }
-                    }
-                }
-                if(valorStr) dados.valor = parseInt(valorStr) / 100;
-            }
-            if(!dados.vencimento) {
-                const prazoPadrao = Number(document.getElementById('prazo-padrao-bol').value) || 30;
-                dados.vencimento = adicionarDias(prazoPadrao);
-                dados.usouPrazoPadrao = true;
-            }
-            if(!dados.valor || dados.valor === 0) dados.valor = 0;
-            return dados;
+        // SALVAR
+        function salvar() {
+            localStorage.setItem('meus_boletos', JSON.stringify(boletos));
+            localStorage.setItem('meus_cheques', JSON.stringify(cheques));
+            atualizarTela();
         }
 
-        // ===== INICIALIZAÇÃO =====
-        document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('bol-emissao').value = hojeStr();
-            calcularVencimentoBoleto();
-            atualizarAvisos();
-            setTimeout(() => document.getElementById('campo-leitor').focus(), 300);
-        });
-
-        // ===== CÁLCULO VENCIMENTO =====
-        function calcularVencimentoBoleto() {
-            const prazo = Number(document.getElementById('bol-prazo').value) || Number(document.getElementById('prazo-padrao-bol').value) || 30;
-            document.getElementById('bol-vencimento').value = adicionarDias(prazo);
-        }
-        document.getElementById('bol-prazo').addEventListener('input', calcularVencimentoBoleto);
-        document.getElementById('bol-calcular').addEventListener('click', calcularVencimentoBoleto);
-        document.getElementById('prazo-padrao-bol').addEventListener('input', calcularVencimentoBoleto);
-
-        // ===== LEITOR =====
-        document.getElementById('campo-leitor').addEventListener('keydown', (e) => {
-            if(e.key === 'Enter') {
-                e.preventDefault();
-                const codigoBruto = document.getElementById('campo-leitor').value.trim();
-                if(!codigoBruto) return;
-
-                const dados = extrairDadosBoleto(codigoBruto);
-                const emissao = hojeStr();
-                const vencimento = dados.vencimento;
-                const valor = dados.valor;
-
-                // Mostra o que foi lido
-                const areaRes = document.getElementById('resultado-leitura');
-                areaRes.classList.remove('hidden');
-                document.getElementById('res-codigo').textContent = codigoBruto.substring(0,14)+'...';
-                document.getElementById('res-valor').textContent = fmtValor(valor);
-                document.getElementById('res-venc').textContent = fmtData(vencimento);
-                document.getElementById('res-emiss').textContent = fmtData(emissao);
-                document.getElementById('area-leitor').classList.add('leitor-sucesso');
-                setTimeout(() => document.getElementById('area-leitor').classList.remove('leitor-sucesso'), 3000);
-
-                // Cadastra
-                boletos.push({
-                    codigo: codigoBruto,
-                    nome: `Boleto ${codigoBruto.substring(0,8)}`,
-                    valor: valor,
-                    emissao: emissao,
-                    vencimento: vencimento,
-                    status: 'a-vencer'
+        // TROCAR ABA
+        document.querySelectorAll('.aba').forEach(aba => {
+            aba.addEventListener('click', () => {
+                document.querySelectorAll('.aba').forEach(a => {
+                    a.classList.remove('ativa', 'text-gray-500');
+                    if(a.id !== aba.id) a.classList.add('text-gray-500');
                 });
-
-                alert(`✅ CADASTRADO!\n📌 Nome: Boleto ${codigoBruto.substring(0,8)}\n🔢 Código: ${codigoBruto.substring(0,14)}...\n💰 Valor: ${fmtValor(valor)}\n📅 Emissão: ${fmtData(emissao)}\n📆 Vencimento: ${fmtData(vencimento)}`);
-
-                salvarTudo();
-                atualizarAvisos();
-                document.getElementById('campo-leitor').value = '';
-                setTimeout(() => document.getElementById('campo-leitor').focus(), 100);
-            }
-        });
-
-        // ===== CLIQUE PARA ORDENAR =====
-        document.querySelectorAll('.cab-ordem').forEach(cab => {
-            cab.addEventListener('click', () => {
-                const coluna = cab.dataset.coluna;
-                if(ordem.coluna === coluna) {
-                    ordem.direcao = ordem.direcao === 'asc' ? 'desc' : 'asc';
-                } else {
-                    ordem.coluna = coluna;
-                    ordem.direcao = 'asc';
-                }
-                renderBoletos();
+                aba.classList.add('ativa');
+                document.querySelectorAll('.painel').forEach(p => p.classList.add('hidden'));
+                document.getElementById(aba.dataset.painel).classList.remove('hidden');
             });
         });
 
-        // ===== FILTROS =====
-        document.querySelectorAll('.filtro-bol').forEach(botao => {
-            botao.addEventListener('click', () => {
-                document.querySelectorAll('.filtro-bol').forEach(b => {
-                    b.classList.remove('bg-blue-600','text-white');
-                    b.classList.add('bg-gray-200');
-                });
-                botao.classList.add('bg-blue-600','text-white');
-                botao.classList.remove('bg-gray-200');
-                filtroBol = botao.dataset.filtro;
-                renderBoletos();
-            });
-        });
-
-        // ===== SALVAR MANUAL =====
+        // CADASTRAR BOLETO
         document.getElementById('form-boleto').addEventListener('submit', e => {
             e.preventDefault();
             boletos.push({
-                nome: document.getElementById('bol-nome').value || `Boleto ${document.getElementById('bol-codigo').value.substring(0,8)}`,
-                codigo: document.getElementById('bol-codigo').value,
-                valor: Number(document.getElementById('bol-valor').value) || 0,
-                emissao: document.getElementById('bol-emissao').value,
+                id: Date.now(),
+                nome: document.getElementById('bol-nome').value,
+                valor: Number(document.getElementById('bol-valor').value),
                 vencimento: document.getElementById('bol-vencimento').value,
                 status: document.getElementById('bol-status').value
             });
             e.target.reset();
-            document.getElementById('bol-emissao').value = hojeStr();
-            calcularVencimentoBoleto();
-            salvarTudo();
-            atualizarAvisos();
-            document.getElementById('campo-leitor').focus();
+            salvar();
         });
 
-        // ===== RENDERIZAR LISTA =====
-        function renderBoletos() {
-            const lst = document.getElementById('lista-boletos');
-            const sem = document.getElementById('bol-sem');
-            lst.innerHTML = '';
-
-            // Aplica filtro
-            let filtrado = boletos.filter(b => {
-                const st = statusBoleto(b);
-                if(filtroBol === 'todos') return true;
-                if(filtroBol === 'a-vencer') return st === 'a-vencer';
-                return st === filtroBol;
+        // CADASTRAR CHEQUE
+        document.getElementById('form-cheque').addEventListener('submit', e => {
+            e.preventDefault();
+            cheques.push({
+                id: Date.now(),
+                nome: document.getElementById('che-nome').value,
+                numero: document.getElementById('che-numero').value,
+                valor: Number(document.getElementById('che-valor').value),
+                vencimento: document.getElementById('che-vencimento').value,
+                status: document.getElementById('che-status').value
             });
+            e.target.reset();
+            salvar();
+        });
 
-            // Aplica ORDENAÇÃO
-            const ordenado = ordenarBoletos(filtrado);
+        // RENDERIZAR TUDO
+        function atualizarTela() {
+            // ===== BOLETOS =====
+            const listaBol = document.getElementById('lista-boletos');
+            listaBol.innerHTML = '';
 
-            // Atualiza indicação visual da ordem nos cabeçalhos
-            document.querySelectorAll('.cab-ordem').forEach(cab => {
-                cab.classList.remove('ordem-asc', 'ordem-desc');
-                if(cab.dataset.coluna === ordem.coluna) {
-                    cab.classList.add(ordem.direcao === 'asc' ? 'ordem-asc' : 'ordem-desc');
-                }
-            });
+            let vencer = 0, vencido = 0, pago = 0;
 
-            if(!ordenado.length) {
-                sem.style.display = 'block';
-                return;
-            }
-            sem.style.display = 'none';
+            boletos.forEach((b, i) => {
+                let st = b.status;
+                if(st === 'a-vencer' && estaVencido(b.vencimento)) st = 'vencido';
+                
+                if(st === 'a-vencer') vencer++;
+                if(st === 'vencido') vencido++;
+                if(st === 'pago') pago++;
 
-            ordenado.forEach((b, idxVisivel) => {
-                const st = statusBoleto(b);
-                const indiceReal = boletos.indexOf(b);
-                let clsLinha = '', clsSt = '', txtSt = '';
-                if(st === 'atrasado') {
-                    clsLinha = 'linha-atrasado'; clsSt = 'status-atrasado'; txtSt = 'Atrasado';
+                let classeLinha = '', classeSt = '', textoSt = '';
+                if(st === 'vencido') {
+                    classeLinha = 'linha-vencido';
+                    classeSt = 'bg-red-100 text-red-700';
+                    textoSt = 'Vencido';
                 } else if(st === 'pago') {
-                    clsLinha = 'linha-pago'; clsSt = 'status-pago'; txtSt = 'Pago';
+                    classeLinha = 'linha-pago';
+                    classeSt = 'bg-green-100 text-green-700';
+                    textoSt = 'Pago';
                 } else {
-                    clsLinha = 'linha-vencer'; clsSt = 'status-vencer'; txtSt = 'A Vencer';
+                    classeLinha = 'linha-vencer';
+                    classeSt = 'bg-amber-100 text-amber-700';
+                    textoSt = 'A Vencer';
                 }
 
-                const tr = document.createElement('tr');
-                tr.className = `border-b hover:bg-gray-50 ${clsLinha}`;
-                tr.innerHTML = `
-                    <td class="p-3 font-medium">${b.nome}</td>
-                    <td class="p-3 font-mono text-xs">${b.codigo.substring(0,18)}${b.codigo.length>18?'...':''}</td>
-                    <td class="p-3 font-semibold text-right">${fmtValor(b.valor)}</td>
-                    <td class="p-3 text-sm">${fmtData(b.vencimento)}</td>
-                    <td class="p-3"><span class="px-2 py-1 rounded-full text-xs ${clsSt}">${txtSt}</span></td>
-                    <td class="p-3 text-center space-x-1">
-                        <button class="bol-pago text-green-500" data-i="${indiceReal}" title="Marcar pago">
-                            <i class="fa fa-check-circle"></i>
-                        </button>
-                        <button class="bol-excluir text-red-400" data-i="${indiceReal}" title="Excluir">
-                            <i class="fa fa-times"></i>
-                        </button>
-                    </td>`;
-                lst.appendChild(tr);
+                listaBol.innerHTML += `
+                    <tr class="border-b hover:bg-gray-50 ${classeLinha}">
+                        <td class="p-3">${b.nome}</td>
+                        <td class="p-3 font-medium">${fmtValor(b.valor)}</td>
+                        <td class="p-3">${fmtData(b.vencimento)}</td>
+                        <td class="p-3"><span class="px-2 py-1 rounded text-xs ${classeSt}">${textoSt}</span></td>
+                        <td class="p-3 text-center space-x-2">
+                            <button onclick="marcarBoletoPago(${i})" class="text-green-500" title="Marcar pago">
+                                <i class="fa fa-check-circle"></i>
+                            </button>
+                            <button onclick="excluirBoleto(${i})" class="text-red-500" title="Excluir">
+                                <i class="fa fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>`;
             });
 
-            // Ações
-            document.querySelectorAll('.bol-pago').forEach(btn => {
-                btn.addEventListener('click', ev => {
-                    const i = Number(ev.currentTarget.dataset.i);
-                    boletos[i].status = boletos[i].status === 'pago' ? 'a-vencer' : 'pago';
-                    salvarTudo();
-                    atualizarAvisos();
-                });
+            document.getElementById('bol-vencer-qtd').textContent = vencer;
+            document.getElementById('bol-vencido-qtd').textContent = vencido;
+            document.getElementById('bol-pago-qtd').textContent = pago;
+            document.getElementById('bol-vazio').style.display = boletos.length ? 'none' : 'block';
+
+            // ===== CHEQUES =====
+            const listaChe = document.getElementById('lista-cheques');
+            listaChe.innerHTML = '';
+
+            let aberto = 0, comp = 0, dev = 0;
+
+            cheques.forEach((c, i) => {
+                if(c.status === 'aberto') aberto++;
+                if(c.status === 'compensado') comp++;
+                if(c.status === 'devolvido') dev++;
+
+                let classeLinha = '', classeSt = '', textoSt = '';
+                if(c.status === 'aberto') {
+                    classeLinha = 'linha-aberto';
+                    classeSt = 'bg-indigo-100 text-indigo-700';
+                    textoSt = 'Em Aberto';
+                } else if(c.status === 'compensado') {
+                    classeLinha = 'linha-compensado';
+                    classeSt = 'bg-green-100 text-green-700';
+                    textoSt = 'Compensado';
+                } else {
+                    classeLinha = 'linha-devolvido';
+                    classeSt = 'bg-red-100 text-red-700';
+                    textoSt = 'Devolvido';
+                }
+
+                listaChe.innerHTML += `
+                    <tr class="border-b hover:bg-gray-50 ${classeLinha}">
+                        <td class="p-3">${c.nome}</td>
+                        <td class="p-3">${c.numero}</td>
+                        <td class="p-3 font-medium">${fmtValor(c.valor)}</td>
+                        <td class="p-3">${fmtData(c.vencimento)}</td>
+                        <td class="p-3"><span class="px-2 py-1 rounded text-xs ${classeSt}">${textoSt}</span></td>
+                        <td class="p-3 text-center space-x-2">
+                            <button onclick="marcarChequePago(${i})" class="text-green-500" title="Compensar">
+                                <i class="fa fa-check-circle"></i>
+                            </button>
+                            <button onclick="excluirCheque(${i})" class="text-red-500" title="Excluir">
+                                <i class="fa fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>`;
             });
-            document.querySelectorAll('.bol-excluir').forEach(btn => {
-                btn.addEventListener('click', ev => {
-                    if(confirm('Excluir este boleto?')) {
-                        boletos.splice(Number(ev.currentTarget.dataset.i), 1);
-                        salvarTudo();
-                        atualizarAvisos();
-                    }
-                });
-            });
+
+            document.getElementById('che-aberto-qtd').textContent = aberto;
+            document.getElementById('che-pago-qtd').textContent = comp;
+            document.getElementById('che-dev-qtd').textContent = dev;
+            document.getElementById('che-vazio').style.display = cheques.length ? 'none' : 'block';
         }
 
-        // ===== AVISOS =====
-        function atualizarAvisos() {
-            const avisos = [];
-            const hojeData = hoje();
-            boletos.forEach(b => {
-                if(b.status === 'pago') return;
-                const venc = new Date(b.vencimento + 'T00:00:00');
-                const dias = Math.ceil((venc - hojeData) / (1000*60*60*24));
-                if(dias < 0) {
-                    avisos.push(`🔴 ${b.nome}: VENCIDO há ${Math.abs(dias)} dias — ${fmtValor(b.valor)}`);
-                } else if(dias <= 3) {
-                    avisos.push(`🟡 ${b.nome}: Vence em ${dias} dia(s) — ${fmtValor(b.valor)}`);
-                }
-            });
-            const area = document.getElementById('avisos-area');
-            const lista = document.getElementById('lista-avisos');
-            if(avisos.length > 0) {
-                area.classList.remove('hidden');
-                lista.innerHTML = avisos.map(a => `<p class="text-sm">${a}</p>`).join('');
-            } else {
-                area.classList.add('hidden');
+        // AÇÕES — Funções globais
+        window.marcarBoletoPago = function(i) {
+            boletos[i].status = boletos[i].status === 'pago' ? 'a-vencer' : 'pago';
+            salvar();
+        };
+        window.excluirBoleto = function(i) {
+            if(confirm('Excluir este boleto?')) {
+                boletos.splice(i, 1);
+                salvar();
             }
-        }
+        };
+        window.marcarChequePago = function(i) {
+            cheques[i].status = cheques[i].status === 'compensado' ? 'aberto' : 'compensado';
+            salvar();
+        };
+        window.excluirCheque = function(i) {
+            if(confirm('Excluir este cheque?')) {
+                cheques.splice(i, 1);
+                salvar();
+            }
+        };
 
-        // ===== RESUMO E SALVAR =====
-        function atualizarResumo() {
-            const bolV = boletos.filter(b => statusBoleto(b) === 'a-vencer').reduce((s,b) => s + b.valor, 0);
-            const bolA = boletos.filter(b => statusBoleto(b) === 'atrasado').reduce((s,b) => s + b.valor, 0);
-            const bolP = boletos.filter(b => b.status === 'pago').reduce((s,b) => s + b.valor, 0);
-
-            document.getElementById('bol-qtd').textContent = boletos.length;
-            document.getElementById('bol-vencer').textContent = boletos.filter(b => statusBoleto(b) === 'a-vencer').length;
-            document.getElementById('bol-valor-vencer').textContent = fmtValor(bolV);
-            document.getElementById('bol-atrasado').textContent = boletos.filter(b => statusBoleto(b) === 'atrasado').length;
-            document.getElementById('bol-valor-atrasado').textContent = fmtValor(bolA);
-            document.getElementById('total-pago-valor').textContent = fmtValor(bolP);
-        }
-
-        function salvarTudo() {
-            localStorage.setItem('boletos', JSON.stringify(boletos));
-            atualizarResumo();
-            renderBoletos();
-        }
-
-        salvarTudo();
+        // INICIAR
+        atualizarTela();
     </script>
 </body>
 </html>
