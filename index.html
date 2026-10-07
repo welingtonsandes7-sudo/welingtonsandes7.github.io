@@ -61,7 +61,7 @@
                 <form id="form-boleto" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-600 mb-1">Nome / Descrição</label>
-                        <input type="text" id="bol-nome" class="w-full px-3 py-2 border rounded-lg" placeholder="Ex: Aluguel" required>
+                        <input type="text" id="bol-nome" class="w-full px-3 py-2 border rounded-lg" placeholder="Ex: Aluguel, Energia..." required>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-600 mb-1">Valor R$</label>
@@ -79,7 +79,7 @@
                         </select>
                     </div>
                     <div class="md:col-span-2">
-                        <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium">
+                        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium">
                             Salvar Boleto
                         </button>
                     </div>
@@ -131,10 +131,10 @@
                 <form id="form-cheque" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-600 mb-1">Emitente / Quem deu</label>
-                        <input type="text" id="che-nome" class="w-full px-3 py-2 border rounded-lg" placeholder="Nome da pessoa" required>
+                        <input type="text" id="che-nome" class="w-full px-3 py-2 border rounded-lg" placeholder="Nome da pessoa ou empresa" required>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-600 mb-1">Número</label>
+                        <label class="block text-sm font-medium text-gray-600 mb-1">Número do Cheque</label>
                         <input type="text" id="che-numero" class="w-full px-3 py-2 border rounded-lg" required>
                     </div>
                     <div>
@@ -154,7 +154,7 @@
                         </select>
                     </div>
                     <div class="md:col-span-2">
-                        <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded-lg font-medium">
+                        <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-medium">
                             Salvar Cheque
                         </button>
                     </div>
@@ -185,28 +185,25 @@
     </main>
 
     <script>
-        // DADOS — Salvo no navegador
+        // DADOS — Salvos no navegador
         let boletos = JSON.parse(localStorage.getItem('meus_boletos') || '[]');
         let cheques = JSON.parse(localStorage.getItem('meus_cheques') || '[]');
 
-        // FUNÇÕES ÚTEIS
+        // FUNÇÕES BÁSICAS
         function hoje() {
             const d = new Date();
-            d.setHours(0,0,0,0);
+            d.setHours(0, 0, 0, 0);
             return d;
         }
         function fmtData(d) {
-            if(!d) return '-';
+            if (!d) return '-';
             return new Date(d + 'T00:00:00').toLocaleDateString('pt-BR');
-        }
-        function fmtValor(v) {
-            return Number(v||0).toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
         }
         function estaVencido(data) {
             return new Date(data + 'T00:00:00') < hoje();
         }
 
-        // SALVAR
+        // SALVAR E ATUALIZAR
         function salvar() {
             localStorage.setItem('meus_boletos', JSON.stringify(boletos));
             localStorage.setItem('meus_cheques', JSON.stringify(cheques));
@@ -218,7 +215,7 @@
             aba.addEventListener('click', () => {
                 document.querySelectorAll('.aba').forEach(a => {
                     a.classList.remove('ativa', 'text-gray-500');
-                    if(a.id !== aba.id) a.classList.add('text-gray-500');
+                    if (a.id !== aba.id) a.classList.add('text-gray-500');
                 });
                 aba.classList.add('ativa');
                 document.querySelectorAll('.painel').forEach(p => p.classList.add('hidden'));
@@ -230,7 +227,6 @@
         document.getElementById('form-boleto').addEventListener('submit', e => {
             e.preventDefault();
             boletos.push({
-                id: Date.now(),
                 nome: document.getElementById('bol-nome').value,
                 valor: Number(document.getElementById('bol-valor').value),
                 vencimento: document.getElementById('bol-vencimento').value,
@@ -244,7 +240,6 @@
         document.getElementById('form-cheque').addEventListener('submit', e => {
             e.preventDefault();
             cheques.push({
-                id: Date.now(),
                 nome: document.getElementById('che-nome').value,
                 numero: document.getElementById('che-numero').value,
                 valor: Number(document.getElementById('che-valor').value),
@@ -255,132 +250,139 @@
             salvar();
         });
 
-        // RENDERIZAR TUDO
+        // AÇÕES — FUNÇÕES GLOBAIS
+        window.marcarBoletoPago = function(indice) {
+            boletos[indice].status = boletos[indice].status === 'pago' ? 'a-vencer' : 'pago';
+            salvar();
+        };
+        window.excluirBoleto = function(indice) {
+            if (confirm('Tem certeza que deseja excluir este boleto?')) {
+                boletos.splice(indice, 1);
+                salvar();
+            }
+        };
+        window.marcarChequeCompensado = function(indice) {
+            cheques[indice].status = cheques[indice].status === 'compensado' ? 'aberto' : 'compensado';
+            salvar();
+        };
+        window.excluirCheque = function(indice) {
+            if (confirm('Tem certeza que deseja excluir este cheque?')) {
+                cheques.splice(indice, 1);
+                salvar();
+            }
+        };
+
+        // ATUALIZAR TELA COMPLETA
         function atualizarTela() {
             // ===== BOLETOS =====
             const listaBol = document.getElementById('lista-boletos');
             listaBol.innerHTML = '';
-
             let vencer = 0, vencido = 0, pago = 0;
 
-            boletos.forEach((b, i) => {
-                let st = b.status;
-                if(st === 'a-vencer' && estaVencido(b.vencimento)) st = 'vencido';
-                
-                if(st === 'a-vencer') vencer++;
-                if(st === 'vencido') vencido++;
-                if(st === 'pago') pago++;
+            boletos.forEach((boleto, indice) => {
+                // Define status real
+                let statusReal = boleto.status;
+                if (statusReal === 'a-vencer' && estaVencido(boleto.vencimento)) {
+                    statusReal = 'vencido';
+                }
 
-                let classeLinha = '', classeSt = '', textoSt = '';
-                if(st === 'vencido') {
+                // Conta corretamente
+                if (statusReal === 'a-vencer') vencer++;
+                if (statusReal === 'vencido') vencido++;
+                if (statusReal === 'pago') pago++;
+
+                // Cores e textos
+                let classeLinha, classeStatus, textoStatus;
+                if (statusReal === 'vencido') {
                     classeLinha = 'linha-vencido';
-                    classeSt = 'bg-red-100 text-red-700';
-                    textoSt = 'Vencido';
-                } else if(st === 'pago') {
+                    classeStatus = 'bg-red-100 text-red-700';
+                    textoStatus = 'Vencido';
+                } else if (statusReal === 'pago') {
                     classeLinha = 'linha-pago';
-                    classeSt = 'bg-green-100 text-green-700';
-                    textoSt = 'Pago';
+                    classeStatus = 'bg-green-100 text-green-700';
+                    textoStatus = 'Pago';
                 } else {
                     classeLinha = 'linha-vencer';
-                    classeSt = 'bg-amber-100 text-amber-700';
-                    textoSt = 'A Vencer';
+                    classeStatus = 'bg-amber-100 text-amber-700';
+                    textoStatus = 'A Vencer';
                 }
 
                 listaBol.innerHTML += `
                     <tr class="border-b hover:bg-gray-50 ${classeLinha}">
-                        <td class="p-3">${b.nome}</td>
-                        <td class="p-3 font-medium">${fmtValor(b.valor)}</td>
-                        <td class="p-3">${fmtData(b.vencimento)}</td>
-                        <td class="p-3"><span class="px-2 py-1 rounded text-xs ${classeSt}">${textoSt}</span></td>
+                        <td class="p-3">${boleto.nome}</td>
+                        <td class="p-3 font-medium">R$ ${boleto.valor.toFixed(2).replace('.', ',')}</td>
+                        <td class="p-3">${fmtData(boleto.vencimento)}</td>
+                        <td class="p-3"><span class="px-2 py-1 rounded text-xs ${classeStatus}">${textoStatus}</span></td>
                         <td class="p-3 text-center space-x-2">
-                            <button onclick="marcarBoletoPago(${i})" class="text-green-500" title="Marcar pago">
+                            <button onclick="marcarBoletoPago(${indice})" class="text-green-500" title="Marcar como pago">
                                 <i class="fa fa-check-circle"></i>
                             </button>
-                            <button onclick="excluirBoleto(${i})" class="text-red-500" title="Excluir">
+                            <button onclick="excluirBoleto(${indice})" class="text-red-500" title="Excluir">
                                 <i class="fa fa-trash"></i>
                             </button>
                         </td>
                     </tr>`;
             });
 
+            // Atualiza contadores
             document.getElementById('bol-vencer-qtd').textContent = vencer;
             document.getElementById('bol-vencido-qtd').textContent = vencido;
             document.getElementById('bol-pago-qtd').textContent = pago;
-            document.getElementById('bol-vazio').style.display = boletos.length ? 'none' : 'block';
+            document.getElementById('bol-vazio').style.display = boletos.length === 0 ? 'block' : 'none';
 
             // ===== CHEQUES =====
             const listaChe = document.getElementById('lista-cheques');
             listaChe.innerHTML = '';
+            let aberto = 0, compensado = 0, devolvido = 0;
 
-            let aberto = 0, comp = 0, dev = 0;
+            cheques.forEach((cheque, indice) => {
+                // Conta corretamente
+                if (cheque.status === 'aberto') aberto++;
+                if (cheque.status === 'compensado') compensado++;
+                if (cheque.status === 'devolvido') devolvido++;
 
-            cheques.forEach((c, i) => {
-                if(c.status === 'aberto') aberto++;
-                if(c.status === 'compensado') comp++;
-                if(c.status === 'devolvido') dev++;
-
-                let classeLinha = '', classeSt = '', textoSt = '';
-                if(c.status === 'aberto') {
+                // Cores e textos
+                let classeLinha, classeStatus, textoStatus;
+                if (cheque.status === 'aberto') {
                     classeLinha = 'linha-aberto';
-                    classeSt = 'bg-indigo-100 text-indigo-700';
-                    textoSt = 'Em Aberto';
-                } else if(c.status === 'compensado') {
+                    classeStatus = 'bg-indigo-100 text-indigo-700';
+                    textoStatus = 'Em Aberto';
+                } else if (cheque.status === 'compensado') {
                     classeLinha = 'linha-compensado';
-                    classeSt = 'bg-green-100 text-green-700';
-                    textoSt = 'Compensado';
+                    classeStatus = 'bg-green-100 text-green-700';
+                    textoStatus = 'Compensado';
                 } else {
                     classeLinha = 'linha-devolvido';
-                    classeSt = 'bg-red-100 text-red-700';
-                    textoSt = 'Devolvido';
+                    classeStatus = 'bg-red-100 text-red-700';
+                    textoStatus = 'Devolvido';
                 }
 
                 listaChe.innerHTML += `
                     <tr class="border-b hover:bg-gray-50 ${classeLinha}">
-                        <td class="p-3">${c.nome}</td>
-                        <td class="p-3">${c.numero}</td>
-                        <td class="p-3 font-medium">${fmtValor(c.valor)}</td>
-                        <td class="p-3">${fmtData(c.vencimento)}</td>
-                        <td class="p-3"><span class="px-2 py-1 rounded text-xs ${classeSt}">${textoSt}</span></td>
+                        <td class="p-3">${cheque.nome}</td>
+                        <td class="p-3">${cheque.numero}</td>
+                        <td class="p-3 font-medium">R$ ${cheque.valor.toFixed(2).replace('.', ',')}</td>
+                        <td class="p-3">${fmtData(cheque.vencimento)}</td>
+                        <td class="p-3"><span class="px-2 py-1 rounded text-xs ${classeStatus}">${textoStatus}</span></td>
                         <td class="p-3 text-center space-x-2">
-                            <button onclick="marcarChequePago(${i})" class="text-green-500" title="Compensar">
+                            <button onclick="marcarChequeCompensado(${indice})" class="text-green-500" title="Marcar compensado">
                                 <i class="fa fa-check-circle"></i>
                             </button>
-                            <button onclick="excluirCheque(${i})" class="text-red-500" title="Excluir">
+                            <button onclick="excluirCheque(${indice})" class="text-red-500" title="Excluir">
                                 <i class="fa fa-trash"></i>
                             </button>
                         </td>
                     </tr>`;
             });
 
+            // Atualiza contadores
             document.getElementById('che-aberto-qtd').textContent = aberto;
-            document.getElementById('che-pago-qtd').textContent = comp;
-            document.getElementById('che-dev-qtd').textContent = dev;
-            document.getElementById('che-vazio').style.display = cheques.length ? 'none' : 'block';
+            document.getElementById('che-pago-qtd').textContent = compensado;
+            document.getElementById('che-dev-qtd').textContent = devolvido;
+            document.getElementById('che-vazio').style.display = cheques.length === 0 ? 'block' : 'none';
         }
 
-        // AÇÕES — Funções globais
-        window.marcarBoletoPago = function(i) {
-            boletos[i].status = boletos[i].status === 'pago' ? 'a-vencer' : 'pago';
-            salvar();
-        };
-        window.excluirBoleto = function(i) {
-            if(confirm('Excluir este boleto?')) {
-                boletos.splice(i, 1);
-                salvar();
-            }
-        };
-        window.marcarChequePago = function(i) {
-            cheques[i].status = cheques[i].status === 'compensado' ? 'aberto' : 'compensado';
-            salvar();
-        };
-        window.excluirCheque = function(i) {
-            if(confirm('Excluir este cheque?')) {
-                cheques.splice(i, 1);
-                salvar();
-            }
-        };
-
-        // INICIAR
+        // INICIA O SISTEMA
         atualizarTela();
     </script>
 </body>
