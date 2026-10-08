@@ -2,544 +2,417 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Boletos & Cheques ☁️</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controle Completo 📋</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
-    <!-- Scripts do Firebase carregados de forma segura -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <style>
-        * { box-sizing: border-box; touch-action: manipulation; }
-        body { background: #0f172a; color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 0; min-height: 100vh; }
-        .aba { padding: 14px 16px; font-size: 15px; border-bottom: 3px solid transparent; cursor: pointer; font-weight: 600; }
-        .aba.ativa { border-bottom-color: #3b82f6; color: #3b82f6; background: rgba(59,130,246,0.1); }
-        .card { background: #1e293b; border-radius: 12px; padding: 18px; margin: 12px; border: 1px solid #334155; }
-        .hidden { display: none !important; }
-        input { width: 100%; padding: 12px 14px; background: #334155; border: 1px solid #475569; border-radius: 8px; color: white; font-size: 16px; margin-bottom: 12px; -webkit-appearance: none; }
-        input:focus { outline: none; border-color: #3b82f6; }
-        .btn { padding: 14px 16px; border-radius: 8px; font-weight: bold; border: none; cursor: pointer; font-size: 16px; width: 100%; transition: opacity 0.2s; }
-        .btn:active { opacity: 0.8; }
-        .btn-azul { background: #3b82f6; color: white; }
-        .btn-verde { background: #10b981; color: white; }
-        .linha { padding: 14px; border-radius: 8px; margin-bottom: 10px; background: rgba(51, 65, 85, 0.4); border-left: 4px solid; }
-        .linha-pago { border-left-color: #10b981; }
-        .linha-vencer { border-left-color: #f59e0b; }
-        .linha-atrasado { border-left-color: #ef4444; }
-        .codigo-barras { font-family: monospace; font-size: 13px; color: #94a3b8; margin-top: 8px; word-break: break-all; background: #0f172a; padding: 8px 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; }
-        .salvo-aviso { position: fixed; top: 12px; right: 12px; background: #10b981; color: white; padding: 8px 16px; border-radius: 20px; font-size: 13px; z-index: 999; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
-        .contador { display: flex; gap: 8px; margin-bottom: 12px; }
-        .contador div { flex: 1; text-align: center; padding: 10px; border-radius: 10px; background: rgba(51, 65, 85, 0.5); border: 1px solid #334155; }
+        * { box-sizing: border-box; }
+        body { background: #f0f4f8; min-height: 100vh; margin: 0; font-family: Arial, sans-serif; }
+        
+        /* Abas */
+        .abas { display: flex; background: white; border-bottom: 2px solid #e5e7eb; position: sticky; top: 0; z-index: 50; overflow-x: auto; }
+        .aba { padding: 12px 16px; font-weight: 600; cursor: pointer; border-bottom: 3px solid transparent; white-space: nowrap; font-size: 14px; }
+        .aba.ativa { border-bottom-color: #2563eb; color: #2563eb; background: #eff6ff; }
+        .painel { display: none; padding: 16px; max-width: 1200px; margin: 0 auto; }
+        .painel.visivel { display: block; }
+        
+        /* Tabela Despesas */
+        .tabela-wrapper { overflow-x: auto; background: white; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
+        table { width: 100%; border-collapse: collapse; min-width: 900px; }
+        th, td { border: 1px solid #d1d5db; padding: 8px 6px; text-align: center; font-size: 13px; }
+        th { background: #2563eb; color: white; font-weight: bold; }
+        td:first-child { background: #eff6ff; text-align: left; font-weight: 500; white-space: nowrap; }
+        input { width: 100%; border: none; text-align: center; font-size: 13px; padding: 4px; background: transparent; }
+        input:focus { outline: 2px solid #2563eb; background: #f0f7ff; border-radius: 4px; }
+        .linha-total { background: #dbeafe; font-weight: bold; }
+        .categoria-titulo { background: #1e40af; color: white; padding: 10px 14px; font-weight: bold; font-size: 15px; border-radius: 10px 10px 0 0; }
+        
+        /* Boletos e Cheques */
+        .card { background: white; border-radius: 10px; padding: 16px; margin-bottom: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); border-left: 4px solid #f59e0b; }
+        .card.pago { border-left-color: #16a34a; }
+        .card.atrasado { border-left-color: #ef4444; }
+        .codigo-barras { font-family: monospace; font-size: 12px; color: #6b7280; background: #f3f4f6; padding: 6px 8px; border-radius: 4px; margin-top: 4px; word-break: break-all; }
+        .status-tag { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+        .status-pendente { background: #fef3c7; color: #92400e; }
+        .status-pago { background: #d1fae5; color: #065f46; }
+        .status-atrasado { background: #fee2e2; color: #991b1b; }
+        .status-aberto { background: #e0e7ff; color: #3730a3; }
+        .status-dev { background: #fee2e2; color: #991b1b; }
+        .contadores { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+        .contadores div { flex: 1; min-width: 100px; text-align: center; padding: 12px; border-radius: 10px; background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        input.full { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; margin-bottom: 10px; font-size: 14px; }
+        button { border: none; border-radius: 6px; padding: 10px 14px; cursor: pointer; font-size: 14px; font-weight: 500; }
+        .btn-azul { background: #2563eb; color: white; }
+        .btn-verde { background: #16a34a; color: white; }
+        .btn-vermelho { background: #ef4444; color: white; }
+        .btn-cinza { background: #e5e7eb; color: #333; }
+        .salvo { position: fixed; top: 12px; right: 12px; background: #16a34a; color: white; padding: 8px 16px; border-radius: 20px; font-size: 13px; display: none; z-index: 999; }
+        .form-card { background: white; border-radius: 10px; padding: 18px; margin-bottom: 20px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
+        h2 { font-size: 18px; font-weight: bold; margin-bottom: 16px; color: #1f2937; }
     </style>
 </head>
 <body>
 
-<div id="salvo-aviso" class="salvo-aviso hidden">
-    <i class="fa-solid fa-check"></i> <span id="salvo-texto">Salvo!</span>
+<div class="salvo" id="avisoSalvo">✅ Salvo!</div>
+
+<!-- ABAS -->
+<div class="abas">
+    <div class="aba ativa" data-painel="despesas">🏠 Despesas da Casa</div>
+    <div class="aba" data-painel="boletos">🧾 Boletos</div>
+    <div class="aba" data-painel="cheques">📑 Cheques</div>
 </div>
 
-<header class="bg-slate-900/95 py-4 px-4 sticky top-0 z-50 border-b border-slate-700 flex justify-between items-center">
-    <h1 class="text-base font-bold flex items-center gap-2">
-        <span>📋 Boletos & Cheques</span>
-    </h1>
-    <div class="flex gap-2">
-        <button type="button" onclick="exportarBackup()" class="text-xs bg-slate-800 text-slate-200 px-2.5 py-1.5 rounded-lg border border-slate-700">
-            <i class="fa-solid fa-download"></i> Baixar
-        </button>
-        <button type="button" onclick="document.getElementById('input-importar').click()" class="text-xs bg-slate-800 text-slate-200 px-2.5 py-1.5 rounded-lg border border-slate-700">
-            <i class="fa-solid fa-upload"></i> Restaurar
-        </button>
-        <input type="file" id="input-importar" class="hidden" accept=".json" onchange="importarBackup(event)">
+<!-- ======================================
+   PAINEL 1: DESPESAS DA CASA
+   ====================================== -->
+<div id="painel-despesas" class="painel visivel">
+    <h2 class="text-center text-blue-700 mb-4">🏠 Despesas da Casa</h2>
+    <div class="tabela-wrapper">
+        <table id="tabelaDespesas">
+            <thead>
+                <tr>
+                    <th>Despesa</th>
+                    <th>Jan</th>
+                    <th>Fev</th>
+                    <th>Mar</th>
+                    <th>Abr</th>
+                    <th>Mai</th>
+                    <th>Jun</th>
+                    <th>Jul</th>
+                    <th>Ago</th>
+                    <th>Set</th>
+                    <th>Out</th>
+                    <th>Nov</th>
+                    <th>Dez</th>
+                </tr>
+            </thead>
+            <tbody id="corpoTabela"></tbody>
+            <tfoot>
+                <tr class="linha-total">
+                    <td>💰 TOTAL</td>
+                    <td id="totalJan">0,00</td>
+                    <td id="totalFev">0,00</td>
+                    <td id="totalMar">0,00</td>
+                    <td id="totalAbr">0,00</td>
+                    <td id="totalMai">0,00</td>
+                    <td id="totalJun">0,00</td>
+                    <td id="totalJul">0,00</td>
+                    <td id="totalAgo">0,00</td>
+                    <td id="totalSet">0,00</td>
+                    <td id="totalOut">0,00</td>
+                    <td id="totalNov">0,00</td>
+                    <td id="totalDez">0,00</td>
+                </tr>
+            </tfoot>
+        </table>
     </div>
-</header>
-
-<div class="flex border-b border-slate-700 px-3 bg-slate-900">
-    <button type="button" class="aba ativa" data-painel="boletos">Boletos</button>
-    <button type="button" class="aba text-slate-400" data-painel="cheques">Cheques</button>
 </div>
 
-<main class="max-w-xl mx-auto pb-8">
-    <div class="px-3 pt-3">
-        <input type="text" id="campo-busca" placeholder="🔍 Pesquisar por nome ou código..." oninput="atualizarTela()">
+<!-- ======================================
+   PAINEL 2: BOLETOS
+   ====================================== -->
+<div id="painel-boletos" class="painel">
+    <h2 class="text-center text-amber-600 mb-4">🧾 Controle de Boletos</h2>
+    
+    <div class="contadores">
+        <div><p class="text-amber-600 text-sm">A Vencer</p><p id="b-v" class="font-bold text-xl">0</p></div>
+        <div><p class="text-red-600 text-sm">Atrasados</p><p id="b-a" class="font-bold text-xl">0</p></div>
+        <div><p class="text-green-600 text-sm">Pagos</p><p id="b-p" class="font-bold text-xl">0</p></div>
     </div>
 
-    <!-- ========== BOLETOS ========== -->
-    <div id="painel-boletos" class="painel">
-        <div class="contador px-3">
-            <div>
-                <p class="text-amber-400 text-xs font-semibold">A Vencer</p>
-                <p id="b-v" class="font-bold text-base">0</p>
-                <p id="b-v-val" class="text-[11px] text-slate-400">R$ 0,00</p>
-            </div>
-            <div>
-                <p class="text-red-400 text-xs font-semibold">Atrasados</p>
-                <p id="b-a" class="font-bold text-base">0</p>
-                <p id="b-a-val" class="text-[11px] text-slate-400">R$ 0,00</p>
-            </div>
-            <div>
-                <p class="text-green-400 text-xs font-semibold">Pagos</p>
-                <p id="b-p" class="font-bold text-base">0</p>
-                <p id="b-p-val" class="text-[11px] text-slate-400">R$ 0,00</p>
-            </div>
-        </div>
-
-        <div class="card">
-            <h3 class="font-bold mb-3 text-base flex items-center gap-2">
-                <i class="fa-solid fa-plus text-blue-400"></i> Novo Boleto
-            </h3>
-            <input type="text" id="bol-nome" placeholder="Nome / Empresa *">
-            <input type="text" id="bol-codigo" placeholder="Código de Barras (opcional)">
-            <input type="text" inputmode="decimal" id="bol-valor" placeholder="Valor R$ (ex: 150,00) *">
-            <input type="date" id="bol-data">
-            <button type="button" class="btn btn-azul" onclick="salvarBoleto()">💾 Salvar Boleto</button>
-        </div>
-
-        <div class="card">
-            <h3 class="font-bold mb-3 text-base flex items-center justify-between">
-                <span>📑 Meus Boletos</span>
-                <span id="tot-boletos" class="text-xs font-normal text-slate-400">0 itens</span>
-            </h3>
-            <div id="lista-boletos"></div>
-        </div>
+    <div class="form-card">
+        <h3 class="font-bold mb-3">➕ Novo Boleto</h3>
+        <input type="text" id="bol-nome" placeholder="Nome / Empresa" class="full">
+        <input type="text" id="bol-codigo" placeholder="Código de Barras" class="full">
+        <input type="number" step="0.01" id="bol-valor" placeholder="Valor R$" class="full">
+        <input type="date" id="bol-data" class="full">
+        <button class="btn-verde" onclick="salvarBoleto()">💾 Salvar Boleto</button>
     </div>
 
-    <!-- ========== CHEQUES ========== -->
-    <div id="painel-cheques" class="painel hidden">
-        <div class="contador px-3">
-            <div>
-                <p class="text-slate-400 text-xs font-semibold">Em Aberto</p>
-                <p id="c-a" class="font-bold text-base">0</p>
-                <p id="c-a-val" class="text-[11px] text-slate-400">R$ 0,00</p>
-            </div>
-            <div>
-                <p class="text-green-400 text-xs font-semibold">Compensados</p>
-                <p id="c-p" class="font-bold text-base">0</p>
-                <p id="c-p-val" class="text-[11px] text-slate-400">R$ 0,00</p>
-            </div>
-            <div>
-                <p class="text-red-400 text-xs font-semibold">Devolvidos</p>
-                <p id="c-d" class="font-bold text-base">0</p>
-                <p id="c-d-val" class="text-[11px] text-slate-400">R$ 0,00</p>
-            </div>
-        </div>
+    <div id="listaBoletos"></div>
+</div>
 
-        <div class="card">
-            <h3 class="font-bold mb-3 text-base flex items-center gap-2">
-                <i class="fa-solid fa-plus text-emerald-400"></i> Novo Cheque
-            </h3>
-            <input type="text" id="che-nome" placeholder="Emitente / Quem deu *">
-            <input type="text" id="che-numero" placeholder="Número do Cheque (opcional)">
-            <input type="text" inputmode="decimal" id="che-valor" placeholder="Valor R$ (ex: 500,00) *">
-            <input type="date" id="che-data">
-            <button type="button" class="btn btn-verde" onclick="salvarCheque()">💾 Salvar Cheque</button>
-        </div>
-
-        <div class="card">
-            <h3 class="font-bold mb-3 text-base flex items-center justify-between">
-                <span>📑 Meus Cheques</span>
-                <span id="tot-cheques" class="text-xs font-normal text-slate-400">0 itens</span>
-            </h3>
-            <div id="lista-cheques"></div>
-        </div>
+<!-- ======================================
+   PAINEL 3: CHEQUES
+   ====================================== -->
+<div id="painel-cheques" class="painel">
+    <h2 class="text-center text-indigo-600 mb-4">📑 Controle de Cheques</h2>
+    
+    <div class="contadores">
+        <div><p class="text-indigo-600 text-sm">Em Aberto</p><p id="c-a" class="font-bold text-xl">0</p></div>
+        <div><p class="text-green-600 text-sm">Compensados</p><p id="c-p" class="font-bold text-xl">0</p></div>
+        <div><p class="text-red-600 text-sm">Devolvidos</p><p id="c-d" class="font-bold text-xl">0</p></div>
     </div>
-</main>
+
+    <div class="form-card">
+        <h3 class="font-bold mb-3">➕ Novo Cheque</h3>
+        <input type="text" id="che-nome" placeholder="Emitente / Quem deu" class="full">
+        <input type="text" id="che-numero" placeholder="Número do Cheque" class="full">
+        <input type="number" step="0.01" id="che-valor" placeholder="Valor R$" class="full">
+        <input type="date" id="che-data" class="full">
+        <button class="btn-verde" onclick="salvarCheque()">💾 Salvar Cheque</button>
+    </div>
+
+    <div id="listaCheques"></div>
+</div>
 
 <script>
-// ==============================================
-// 📦 ARMAZENAMENTO COMPATÍVEL COM SAFARI
-// ==============================================
-const CHAVE_LOCAL = 'boletos_cheques_dados_safari_v4';
-
-let dados = {
-    boletos: [],
-    cheques: []
-};
-
-// Funções de leitura e escrita seguras
-function salvarDadosLocalmente() {
-    try {
-        localStorage.setItem(CHAVE_LOCAL, JSON.stringify(dados));
-    } catch(e) {
-        console.warn('LocalStorage inacessível no Safari (Modo Anônimo ou restrição).');
-    }
+// =============================================
+// FUNÇÕES GERAIS
+// =============================================
+function hoje() { const d = new Date(); d.setHours(0,0,0,0); return d; }
+function diasRestantes(dataStr) {
+    if(!dataStr) return 0;
+    const alvo = new Date(dataStr + 'T00:00:00');
+    return Math.ceil((alvo - hoje()) / (1000*60*60*24));
+}
+function fmtDinheiro(v) { return Number(v||0).toLocaleString('pt-BR', {style:'currency', currency:'BRL'}); }
+function fmtData(d) {
+    if(!d) return '';
+    const p = d.split('-'); return `${p[2]}/${p[1]}/${p[0]}`;
+}
+function avisoSalvo() {
+    const el = document.getElementById('avisoSalvo');
+    el.style.display = 'block';
+    setTimeout(() => el.style.display = 'none', 1500);
 }
 
-function carregarDadosIniciais() {
-    try {
-        const salvo = localStorage.getItem(CHAVE_LOCAL);
-        if (salvo) {
-            const parsed = JSON.parse(salvo);
-            dados.boletos = Array.isArray(parsed.boletos) ? parsed.boletos : [];
-            dados.cheques = Array.isArray(parsed.cheques) ? parsed.cheques : [];
-        }
-    } catch(e) {
-        console.warn('Erro ao ler LocalStorage no Safari:', e);
-    }
-    atualizarTela();
-}
-
-// ==============================================
-// 🛠️ TRATAMENTO SEGURO DE DATAS E NÚMEROS (SAFARI FIX)
-// ==============================================
-function hojeData() {
-    const d = new Date();
-    d.setHours(0,0,0,0);
-    return d;
-}
-
-// Converte YYYY-MM-DD para Date sem usar 'T00:00:00' (Bypass do bug do Safari)
-function parseDataSafari(dataStr) {
-    if (!dataStr) return null;
-    const partes = dataStr.split('-');
-    if (partes.length !== 3) return null;
-    const ano = parseInt(partes[0], 10);
-    const mes = parseInt(partes[1], 10) - 1;
-    const dia = parseInt(partes[2], 10);
-    return new Date(ano, mes, dia);
-}
-
-function calcularDiasRestantes(dataStr) {
-    const alvo = parseDataSafari(dataStr);
-    if (!alvo) return 0;
-    const h = hojeData();
-    const diffTime = alvo.getTime() - h.getTime();
-    return Math.round(diffTime / (1000 * 60 * 60 * 24));
-}
-
-function formatarValorMoeda(valor) {
-    return Number(valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-}
-
-function formatarDataBrasil(dataStr) {
-    if (!dataStr) return 'Sem data';
-    const partes = dataStr.split('-');
-    if (partes.length !== 3) return dataStr;
-    return `${partes[2]}/${partes[1]}/${partes[0]}`;
-}
-
-function converterTextoParaNumero(texto) {
-    if (!texto) return 0;
-    // Substitui vírgula por ponto para aceitar teclados do iOS/Safari
-    const limpo = String(texto).replace(',', '.').replace(/[^0-9.]/g, '');
-    return parseFloat(limpo) || 0;
-}
-
-function escapeHtml(str) {
-    if (!str) return '';
-    return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
-}
-
-function mostrarAviso(texto) {
-    const el = document.getElementById('salvo-aviso');
-    document.getElementById('salvo-texto').textContent = texto;
-    el.classList.remove('hidden');
-    setTimeout(() => el.classList.add('hidden'), 2000);
-}
-
-window.copiarCodigo = function(codigo) {
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(codigo).then(() => mostrarAviso("Código copiado!"))
-        .catch(() => prompt("Copie o código:", codigo));
-    } else {
-        prompt("Copie o código:", codigo);
-    }
-};
-
-// ==============================================
-// 📑 GERENCIAR BOLETOS
-// ==============================================
-function salvarBoleto() {
-    try {
-        const nome = document.getElementById('bol-nome').value.trim();
-        const codigo = document.getElementById('bol-codigo').value.trim();
-        const valorRaw = document.getElementById('bol-valor').value;
-        const valor = converterTextoParaNumero(valorRaw);
-        const data = document.getElementById('bol-data').value;
-
-        if (!nome) { alert('Digite o Nome ou Empresa!'); return; }
-        if (!valor || valor <= 0) { alert('Digite um Valor válido!'); return; }
-        if (!data) { alert('Selecione a Data de Vencimento!'); return; }
-
-        dados.boletos.push({
-            id: Date.now(),
-            nome: nome,
-            codigo: codigo,
-            valor: valor,
-            data: data,
-            pago: false
-        });
-
-        salvarDadosLocalmente();
-        
-        // Limpar campos
-        document.getElementById('bol-nome').value = '';
-        document.getElementById('bol-codigo').value = '';
-        document.getElementById('bol-valor').value = '';
-        document.getElementById('bol-data').value = '';
-
-        atualizarTela();
-        mostrarAviso("Boleto Salvo!");
-    } catch(err) {
-        alert("Erro ao salvar boleto: " + err.message);
-    }
-}
-
-window.marcarBoleto = function(index) {
-    if (dados.boletos[index]) {
-        dados.boletos[index].pago = !dados.boletos[index].pago;
-        salvarDadosLocalmente();
-        atualizarTela();
-    }
-};
-
-window.excluirBoleto = function(index) {
-    if (confirm('Deseja excluir este boleto?')) {
-        dados.boletos.splice(index, 1);
-        salvarDadosLocalmente();
-        atualizarTela();
-    }
-};
-
-function montarBoletos() {
-    const lista = document.getElementById('lista-boletos');
-    const busca = (document.getElementById('campo-busca').value || '').toLowerCase();
-    lista.innerHTML = '';
-
-    let v = 0, a = 0, p = 0;
-    let valV = 0, valA = 0, valP = 0;
-    let exibidos = 0;
-
-    dados.boletos.forEach((b, i) => {
-        const d = calcularDiasRestantes(b.data);
-        let cls = '', status = '';
-
-        if (b.pago) {
-            cls = 'linha-pago'; status = '✅ Pago'; p++; valP += b.valor;
-        } else if (d < 0) {
-            cls = 'linha-atrasado'; status = `🔴 ATRASADO ${Math.abs(d)}d`; a++; valA += b.valor;
-        } else if (d === 0) {
-            cls = 'linha-vencer'; status = '⚠️ VENCE HOJE!'; v++; valV += b.valor;
-        } else {
-            cls = 'linha-vencer'; status = `⏳ ${d} dias`; v++; valV += b.valor;
-        }
-
-        const textoBusca = (b.nome + ' ' + (b.codigo || '')).toLowerCase();
-        if (busca && !textoBusca.includes(busca)) return;
-
-        exibidos++;
-
-        lista.innerHTML += `
-        <div class="linha ${cls}">
-            <div class="font-bold text-base">${escapeHtml(b.nome)}</div>
-            <div class="text-sm mt-1 text-slate-300 font-medium">${formatarValorMoeda(b.valor)} — <span class="text-slate-400">${formatarDataBrasil(b.data)}</span></div>
-            ${b.codigo ? `
-                <div class="codigo-barras">
-                    <span class="truncate mr-2">📎 ${escapeHtml(b.codigo)}</span>
-                    <button type="button" onclick="copiarCodigo('${escapeHtml(b.codigo)}')" class="text-xs bg-slate-800 px-2 py-1 rounded text-slate-200 border border-slate-700 flex-shrink-0">
-                        <i class="fa-regular fa-copy"></i>
-                    </button>
-                </div>` : ''}
-            <div class="flex justify-between items-center mt-3">
-                <span class="text-xs font-semibold uppercase">${status}</span>
-                <div class="flex gap-2">
-                    <button type="button" onclick="marcarBoleto(${i})" class="text-green-400 bg-slate-800 px-3 py-1 rounded border border-slate-700 text-sm">
-                        ${b.pago ? '↩ Desfazer' : '✓ Pagar'}
-                    </button>
-                    <button type="button" onclick="excluirBoleto(${i})" class="text-red-400 bg-slate-800 px-2.5 py-1 rounded border border-slate-700 text-sm">
-                        🗑️
-                    </button>
-                </div>
-            </div>
-        </div>`;
-    });
-
-    document.getElementById('b-v').textContent = v;
-    document.getElementById('b-v-val').textContent = formatarValorMoeda(valV);
-    document.getElementById('b-a').textContent = a;
-    document.getElementById('b-a-val').textContent = formatarValorMoeda(valA);
-    document.getElementById('b-p').textContent = p;
-    document.getElementById('b-p-val').textContent = formatarValorMoeda(valP);
-    document.getElementById('tot-boletos').textContent = `${exibidos} itens`;
-
-    if (exibidos === 0) {
-        lista.innerHTML = `<p class="text-slate-400 text-center py-6 text-sm">${dados.boletos.length === 0 ? 'Nenhum boleto cadastrado' : 'Nenhum resultado para a pesquisa'}</p>`;
-    }
-}
-
-// ==============================================
-// 📑 GERENCIAR CHEQUES
-// ==============================================
-function salvarCheque() {
-    try {
-        const nome = document.getElementById('che-nome').value.trim();
-        const numero = document.getElementById('che-numero').value.trim();
-        const valorRaw = document.getElementById('che-valor').value;
-        const valor = converterTextoParaNumero(valorRaw);
-        const data = document.getElementById('che-data').value;
-
-        if (!nome) { alert('Digite o Emitente!'); return; }
-        if (!valor || valor <= 0) { alert('Digite um Valor válido!'); return; }
-        if (!data) { alert('Selecione a Data!'); return; }
-
-        dados.cheques.push({
-            id: Date.now(),
-            nome: nome,
-            numero: numero,
-            valor: valor,
-            data: data,
-            status: 'aberto'
-        });
-
-        salvarDadosLocalmente();
-
-        document.getElementById('che-nome').value = '';
-        document.getElementById('che-numero').value = '';
-        document.getElementById('che-valor').value = '';
-        document.getElementById('che-data').value = '';
-
-        atualizarTela();
-        mostrarAviso("Cheque Salvo!");
-    } catch(err) {
-        alert("Erro ao salvar cheque: " + err.message);
-    }
-}
-
-window.marcarCheque = function(index) {
-    if (dados.cheques[index]) {
-        const st = dados.cheques[index].status;
-        if (st === 'aberto') dados.cheques[index].status = 'pago';
-        else if (st === 'pago') dados.cheques[index].status = 'dev';
-        else dados.cheques[index].status = 'aberto';
-        
-        salvarDadosLocalmente();
-        atualizarTela();
-    }
-};
-
-window.excluirCheque = function(index) {
-    if (confirm('Deseja excluir este cheque?')) {
-        dados.cheques.splice(index, 1);
-        salvarDadosLocalmente();
-        atualizarTela();
-    }
-};
-
-function montarCheques() {
-    const lista = document.getElementById('lista-cheques');
-    const busca = (document.getElementById('campo-busca').value || '').toLowerCase();
-    lista.innerHTML = '';
-
-    let a = 0, p = 0, d = 0;
-    let valA = 0, valP = 0, valD = 0;
-    let exibidos = 0;
-
-    dados.cheques.forEach((c, i) => {
-        let cls = '', status = '';
-        if (c.status === 'pago') {
-            cls = 'linha-pago'; status = '✅ Compensado'; p++; valP += c.valor;
-        } else if (c.status === 'dev') {
-            cls = 'linha-atrasado'; status = '🔴 Devolvido'; d++; valD += c.valor;
-        } else {
-            cls = 'linha-vencer'; status = '⏳ Em Aberto'; a++; valA += c.valor;
-        }
-
-        const textoBusca = (c.nome + ' ' + (c.numero || '')).toLowerCase();
-        if (busca && !textoBusca.includes(busca)) return;
-
-        exibidos++;
-
-        lista.innerHTML += `
-        <div class="linha ${cls}">
-            <div class="font-bold text-base">${escapeHtml(c.nome)}</div>
-            <div class="text-sm mt-1 text-slate-300 font-medium">
-                ${c.numero ? `<span class="text-slate-400">Nº ${escapeHtml(c.numero)}</span> — ` : ''}${formatarValorMoeda(c.valor)} — <span class="text-slate-400">${formatarDataBrasil(c.data)}</span>
-            </div>
-            <div class="flex justify-between items-center mt-3">
-                <span class="text-xs font-semibold uppercase">${status}</span>
-                <div class="flex gap-2">
-                    <button type="button" onclick="marcarCheque(${i})" class="text-green-400 bg-slate-800 px-3 py-1 rounded border border-slate-700 text-sm">
-                        Status 🔄
-                    </button>
-                    <button type="button" onclick="excluirCheque(${i})" class="text-red-400 bg-slate-800 px-2.5 py-1 rounded border border-slate-700 text-sm">
-                        🗑️
-                    </button>
-                </div>
-            </div>
-        </div>`;
-    });
-
-    document.getElementById('c-a').textContent = a;
-    document.getElementById('c-a-val').textContent = formatarValorMoeda(valA);
-    document.getElementById('c-p').textContent = p;
-    document.getElementById('c-p-val').textContent = formatarValorMoeda(valP);
-    document.getElementById('c-d').textContent = d;
-    document.getElementById('c-d-val').textContent = formatarValorMoeda(valD);
-    document.getElementById('tot-cheques').textContent = `${exibidos} itens`;
-
-    if (exibidos === 0) {
-        lista.innerHTML = `<p class="text-slate-400 text-center py-6 text-sm">${dados.cheques.length === 0 ? 'Nenhum cheque cadastrado' : 'Nenhum resultado para a pesquisa'}</p>`;
-    }
-}
-
-// ==============================================
-// 📤 BACKUP EM ARQUIVO .JSON
-// ==============================================
-function exportarBackup() {
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(dados, null, 2));
-    const dlAnchorElem = document.createElement('a');
-    dlAnchorElem.setAttribute("href", dataStr);
-    dlAnchorElem.setAttribute("download", `boletos_backup_${new Date().getTime()}.json`);
-    dlAnchorElem.click();
-}
-
-function importarBackup(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        try {
-            const conteudo = JSON.parse(e.target.result);
-            if (conteudo && (Array.isArray(conteudo.boletos) || Array.isArray(conteudo.cheques))) {
-                dados.boletos = conteudo.boletos || [];
-                dados.cheques = conteudo.cheques || [];
-                salvarDadosLocalmente();
-                atualizarTela();
-                mostrarAviso("Backup Restaurado!");
-            } else {
-                alert("Arquivo de backup inválido!");
-            }
-        } catch(err) {
-            alert("Erro ao ler o arquivo de backup.");
-        }
-    };
-    reader.readAsText(file);
-}
-
-// ==============================================
-// 🧭 ABA NAVEGAÇÃO
-// ==============================================
+// NAVEGAÇÃO
 document.querySelectorAll('.aba').forEach(aba => {
     aba.addEventListener('click', () => {
-        document.querySelectorAll('.aba').forEach(a => { a.classList.remove('ativa'); a.classList.add('text-slate-400'); });
-        aba.classList.add('ativa'); aba.classList.remove('text-slate-400');
-        document.querySelectorAll('.painel').forEach(p => p.classList.add('hidden'));
-        document.getElementById('painel-' + aba.dataset.painel).classList.remove('hidden');
+        document.querySelectorAll('.aba').forEach(a => a.classList.remove('ativa'));
+        aba.classList.add('ativa');
+        document.querySelectorAll('.painel').forEach(p => p.classList.remove('visivel'));
+        document.getElementById('painel-' + aba.dataset.painel).classList.add('visivel');
     });
 });
 
-function atualizarTela() {
-    montarBoletos();
-    montarCheques();
+// =============================================
+// PAINEL 1: DESPESAS DA CASA
+// =============================================
+const ITENS_DESPESAS = [
+    'Aluguel',
+    'Financiamento imobiliário',
+    'IPTU',
+    'Condomínio',
+    'Conta de Água',
+    'Conta de Luz',
+    'Conta de Gás',
+    'Mensalista / Diarista',
+    'Conta de Internet / TV a cabo',
+    'Conta de telefone fixo',
+    'Conta de celular',
+    'Reformas / Consertos',
+    'Seguro da casa',
+    'Animais de estimação',
+    'Outros'
+];
+const MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+let dadosDespesas = {};
+const CHAVE_DESPESAS = 'despesas_casa';
+
+function carregarDespesas() {
+    const salvo = localStorage.getItem(CHAVE_DESPESAS);
+    if(salvo) dadosDespesas = JSON.parse(salvo);
+    montarTabela();
 }
 
-// INICIALIZAR
-carregarDadosIniciais();
+function montarTabela() {
+    const corpo = document.getElementById('corpoTabela');
+    corpo.innerHTML = '';
+    
+    ITENS_DESPESAS.forEach(nome => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${nome}</td>`;
+        MESES.forEach(mes => {
+            const valor = dadosDespesas[nome]?.[mes] || '';
+            tr.innerHTML += `<td><input type="number" step="0.01" data-item="${nome}" data-mes="${mes}" value="${valor}" onblur="atualizarDespesa(this)"></td>`;
+        });
+        corpo.appendChild(tr);
+    });
+    calcularTotais();
+}
+
+function atualizarDespesa(input) {
+    const item = input.dataset.item;
+    const mes = input.dataset.mes;
+    const valor = parseFloat(input.value) || 0;
+    if(!dadosDespesas[item]) dadosDespesas[item] = {};
+    dadosDespesas[item][mes] = valor;
+    localStorage.setItem(CHAVE_DESPESAS, JSON.stringify(dadosDespesas));
+    avisoSalvo();
+    calcularTotais();
+}
+
+function calcularTotais() {
+    MESES.forEach(mes => {
+        let total = 0;
+        ITENS_DESPESAS.forEach(item => {
+            total += parseFloat(dadosDespesas[item]?.[mes]) || 0;
+        });
+        const el = document.getElementById('total' + mes);
+        if(el) el.textContent = total.toFixed(2).replace('.', ',');
+    });
+}
+
+// =============================================
+// PAINEL 2: BOLETOS
+// =============================================
+let boletos = [];
+const CHAVE_BOLETOS = 'lista_boletos';
+
+function carregarBoletos() {
+    const salvo = localStorage.getItem(CHAVE_BOLETOS);
+    if(salvo) boletos = JSON.parse(salvo);
+    renderizarBoletos();
+}
+
+function salvarBoleto() {
+    const nome = document.getElementById('bol-nome').value.trim();
+    const codigo = document.getElementById('bol-codigo').value.trim();
+    const valor = parseFloat(document.getElementById('bol-valor').value) || 0;
+    const data = document.getElementById('bol-data').value;
+    
+    if(!nome || !valor || !data) return alert('Preencha nome, valor e vencimento!');
+    
+    boletos.unshift({ id: Date.now(), nome, codigo, valor, data, pago: false });
+    
+    document.getElementById('bol-nome').value = '';
+    document.getElementById('bol-codigo').value = '';
+    document.getElementById('bol-valor').value = '';
+    document.getElementById('bol-data').value = '';
+    
+    localStorage.setItem(CHAVE_BOLETOS, JSON.stringify(boletos));
+    avisoSalvo();
+    renderizarBoletos();
+}
+
+window.marcarBoleto = function(i) { boletos[i].pago = !boletos[i].pago; localStorage.setItem(CHAVE_BOLETOS, JSON.stringify(boletos)); avisoSalvo(); renderizarBoletos(); };
+window.excluirBoleto = function(i) { if(confirm('Excluir esse boleto?')){ boletos.splice(i,1); localStorage.setItem(CHAVE_BOLETOS, JSON.stringify(boletos)); avisoSalvo(); renderizarBoletos(); } };
+
+function renderizarBoletos() {
+    const lista = document.getElementById('listaBoletos');
+    lista.innerHTML = '';
+    let v=0, a=0, p=0;
+    
+    boletos.forEach((b,i) => {
+        const d = diasRestantes(b.data);
+        let classe='', status='', stClass='';
+        
+        if(b.pago) { classe='pago'; status='✅ Pago'; stClass='status-pago'; p++; }
+        else if(d<0) { classe='atrasado'; status=`🔴 ATRASADO há ${Math.abs(d)} dia(s)`; stClass='status-atrasado'; a++; }
+        else if(d===0) { status='⚠️ VENCE HOJE'; stClass='status-pendente'; v++; }
+        else { status=`⏳ ${d} dia(s) restante(s)`; stClass='status-pendente'; v++; }
+        
+        lista.innerHTML += `
+            <div class="card ${classe}">
+                <div class="flex justify-between items-start mb-2">
+                    <div>
+                        <h3 class="font-bold text-lg">${b.nome}</h3>
+                        <p class="text-sm text-gray-600">Vencimento: ${fmtData(b.data)}</p>
+                    </div>
+                    <span class="status-tag ${stClass}">${status}</span>
+                </div>
+                <p class="text-lg font-semibold">${fmtDinheiro(b.valor)}</p>
+                ${b.codigo ? `<div class="codigo-barras mt-2">📎 ${b.codigo}</div>` : ''}
+                <div class="flex gap-2 mt-3">
+                    <button class="${b.pago?'btn-cinza':'btn-verde'}" onclick="marcarBoleto(${i})">${b.pago?'↩️ Desmarcar':'✓ Marcar Pago'}</button>
+                    <button class="btn-vermelho" onclick="excluirBoleto(${i})">🗑️ Excluir</button>
+                </div>
+            </div>
+        `;
+    });
+    
+    document.getElementById('b-v').textContent = v;
+    document.getElementById('b-a').textContent = a;
+    document.getElementById('b-p').textContent = p;
+    if(boletos.length===0) lista.innerHTML = '<p class="text-center text-gray-500 py-8">Nenhum boleto cadastrado.</p>';
+}
+
+// =============================================
+// PAINEL 3: CHEQUES
+// =============================================
+let cheques = [];
+const CHAVE_CHEQUES = 'lista_cheques';
+
+function carregarCheques() {
+    const salvo = localStorage.getItem(CHAVE_CHEQUES);
+    if(salvo) cheques = JSON.parse(salvo);
+    renderizarCheques();
+}
+
+function salvarCheque() {
+    const nome = document.getElementById('che-nome').value.trim();
+    const numero = document.getElementById('che-numero').value.trim();
+    const valor = parseFloat(document.getElementById('che-valor').value) || 0;
+    const data = document.getElementById('che-data').value;
+    
+    if(!nome || !numero || !valor || !data) return alert('Preencha todos os campos!');
+    
+    cheques.unshift({ id: Date.now(), nome, numero, valor, data, status: 'aberto' });
+    
+    document.getElementById('che-nome').value = '';
+    document.getElementById('che-numero').value = '';
+    document.getElementById('che-valor').value = '';
+    document.getElementById('che-data').value = '';
+    
+    localStorage.setItem(CHAVE_CHEQUES, JSON.stringify(cheques));
+    avisoSalvo();
+    renderizarCheques();
+}
+
+window.mudarStatusCheque = function(i) {
+    if(cheques[i].status==='aberto') cheques[i].status='pago';
+    else if(cheques[i].status==='pago') cheques[i].status='dev';
+    else cheques[i].status='aberto';
+    localStorage.setItem(CHAVE_CHEQUES, JSON.stringify(cheques));
+    avisoSalvo();
+    renderizarCheques();
+};
+window.excluirCheque = function(i) { if(confirm('Excluir esse cheque?')){ cheques.splice(i,1); localStorage.setItem(CHAVE_CHEQUES, JSON.stringify(cheques)); avisoSalvo(); renderizarCheques(); } };
+
+function renderizarCheques() {
+    const lista = document.getElementById('listaCheques');
+    lista.innerHTML = '';
+    let a=0, p=0, d=0;
+    
+    cheques.forEach((c,i) => {
+        let classe='', status='', stClass='';
+        if(c.status==='pago') { classe='pago'; status='✅ Compensado'; stClass='status-pago'; p++; }
+        else if(c.status==='dev') { classe='atrasado'; status='🔴 Devolvido'; stClass='status-dev'; d++; }
+        else { status='⏳ Em Aberto'; stClass='status-aberto'; a++; }
+        
+        lista.innerHTML += `
+            <div class="card ${classe}">
+                <div class="flex justify-between items-start mb-2">
+                    <div>
+                        <h3 class="font-bold text-lg">${c.nome}</h3>
+                        <p class="text-sm text-gray-600">Nº ${c.numero} — Emissão: ${fmtData(c.data)}</p>
+                    </div>
+                    <span class="status-tag ${stClass}">${status}</span>
+                </div>
+                <p class="text-lg font-semibold">${fmtDinheiro(c.valor)}</p>
+                <div class="flex gap-2 mt-3">
+                    <button class="btn-azul" onclick="mudarStatusCheque(${i})">↻ Mudar Status</button>
+                    <button class="btn-vermelho" onclick="excluirCheque(${i})">🗑️ Excluir</button>
+                </div>
+            </div>
+        `;
+    });
+    
+    document.getElementById('c-a').textContent = a;
+    document.getElementById('c-p').textContent = p;
+    document.getElementById('c-d').textContent = d;
+    if(cheques.length===0) lista.innerHTML = '<p class="text-center text-gray-500 py-8">Nenhum cheque cadastrado.</p>';
+}
+
+// =============================================
+// INICIAR TUDO
+// =============================================
+carregarDespesas();
+carregarBoletos();
+carregarCheques();
 </script>
+
 </body>
 </html>
