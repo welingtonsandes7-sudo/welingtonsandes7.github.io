@@ -16,6 +16,17 @@
         .painel { display: none; padding: 16px; max-width: 1200px; margin: 0 auto; }
         .painel.visivel { display: block; }
         
+        /* Resumo e Alertas */
+        .resumo { background: linear-gradient(135deg, #1e40af, #3b82f6); color: white; border-radius: 10px; padding: 16px; margin-bottom: 20px; }
+        .resumo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; text-align: center; }
+        .resumo-valor { font-size: 22px; font-weight: bold; }
+        .alerta-vencimento { background: #fffbeb; border-left: 4px solid #f59e0b; padding: 12px 16px; border-radius: 6px; margin-bottom: 16px; display: none; }
+        .alerta-vencimento.mostrar { display: block; }
+        
+        /* Busca e Filtro */
+        .busca { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+        select, input.busca-input { padding: 8px 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; flex: 1; min-width: 150px; }
+        
         /* Tabela Despesas */
         .tabela-wrapper { overflow-x: auto; background: white; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
         table { width: 100%; border-collapse: collapse; min-width: 900px; }
@@ -25,17 +36,19 @@
         input { width: 100%; border: none; text-align: center; font-size: 13px; padding: 4px; background: transparent; }
         input:focus { outline: 2px solid #2563eb; background: #f0f7ff; border-radius: 4px; }
         .linha-total { background: #dbeafe; font-weight: bold; }
-        .categoria-titulo { background: #1e40af; color: white; padding: 10px 14px; font-weight: bold; font-size: 15px; border-radius: 10px 10px 0 0; }
         
-        /* Boletos e Cheques */
-        .card { background: white; border-radius: 10px; padding: 16px; margin-bottom: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); border-left: 4px solid #f59e0b; }
-        .card.pago { border-left-color: #16a34a; }
-        .card.atrasado { border-left-color: #ef4444; }
+        /* Cards Boletos e Cheques */
+        .card { background: white; border-radius: 10px; padding: 16px; margin-bottom: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); border-left: 4px solid #f59e0b; transition: all 0.2s; }
+        .card.avisa-vencer { border-left-color: #f97316; background: #fffaf5; }
+        .card.pago { border-left-color: #16a34a; opacity: 0.9; }
+        .card.atrasado { border-left-color: #ef4444; background: #fef2f2; }
+        .card.oculto { display: none; }
         .codigo-barras { font-family: monospace; font-size: 12px; color: #6b7280; background: #f3f4f6; padding: 6px 8px; border-radius: 4px; margin-top: 4px; word-break: break-all; }
         .status-tag { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
         .status-pendente { background: #fef3c7; color: #92400e; }
         .status-pago { background: #d1fae5; color: #065f46; }
         .status-atrasado { background: #fee2e2; color: #991b1b; }
+        .status-avisa { background: #fed7aa; color: #9a3412; }
         .status-aberto { background: #e0e7ff; color: #3730a3; }
         .status-dev { background: #fee2e2; color: #991b1b; }
         .contadores { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
@@ -67,6 +80,26 @@
    ====================================== -->
 <div id="painel-despesas" class="painel visivel">
     <h2 class="text-center text-blue-700 mb-4">🏠 Despesas da Casa</h2>
+    
+    <!-- RESUMO MENSAL -->
+    <div class="resumo">
+        <h3 class="font-bold mb-3 text-center">📊 Resumo — <span id="mesAtual"></span></h3>
+        <div class="resumo-grid">
+            <div>
+                <div class="text-sm opacity-80">Total do Mês</div>
+                <div class="resumo-valor" id="resumoMes">R$ 0,00</div>
+            </div>
+            <div>
+                <div class="text-sm opacity-80">Itens Ativos</div>
+                <div class="resumo-valor" id="qtdItens">0</div>
+            </div>
+            <div>
+                <div class="text-sm opacity-80">Mês Seguinte</div>
+                <div class="resumo-valor" id="resumoProx">R$ 0,00</div>
+            </div>
+        </div>
+    </div>
+
     <div class="tabela-wrapper">
         <table id="tabelaDespesas">
             <thead>
@@ -114,10 +147,28 @@
 <div id="painel-boletos" class="painel">
     <h2 class="text-center text-amber-600 mb-4">🧾 Controle de Boletos</h2>
     
+    <!-- ALERTA DE VENCIMENTO PRÓXIMO -->
+    <div class="alerta-vencimento" id="alertaVencimento">
+        ⚠️ <strong>Atenção:</strong> Você tem <span id="qtdVencer">0</span> boleto(s) vencendo nos próximos 3 dias!
+    </div>
+    
     <div class="contadores">
         <div><p class="text-amber-600 text-sm">A Vencer</p><p id="b-v" class="font-bold text-xl">0</p></div>
+        <div><p class="text-orange-500 text-sm">Próximos 3 dias</p><p id="b-3d" class="font-bold text-xl">0</p></div>
         <div><p class="text-red-600 text-sm">Atrasados</p><p id="b-a" class="font-bold text-xl">0</p></div>
         <div><p class="text-green-600 text-sm">Pagos</p><p id="b-p" class="font-bold text-xl">0</p></div>
+    </div>
+
+    <!-- BUSCA E FILTRO -->
+    <div class="busca">
+        <input type="text" class="busca-input" id="buscaBoleto" placeholder="🔍 Buscar por nome...">
+        <select id="filtroBoleto">
+            <option value="todos">Todos os boletos</option>
+            <option value="avencer">A vencer</option>
+            <option value="3d">Vencendo em 3 dias</option>
+            <option value="atrasado">Atrasados</option>
+            <option value="pago">Pagos</option>
+        </select>
     </div>
 
     <div class="form-card">
@@ -144,6 +195,17 @@
         <div><p class="text-red-600 text-sm">Devolvidos</p><p id="c-d" class="font-bold text-xl">0</p></div>
     </div>
 
+    <!-- BUSCA E FILTRO CHEQUES -->
+    <div class="busca">
+        <input type="text" class="busca-input" id="buscaCheque" placeholder="🔍 Buscar por nome ou número...">
+        <select id="filtroCheque">
+            <option value="todos">Todos os cheques</option>
+            <option value="aberto">Em Aberto</option>
+            <option value="pago">Compensados</option>
+            <option value="dev">Devolvidos</option>
+        </select>
+    </div>
+
     <div class="form-card">
         <h3 class="font-bold mb-3">➕ Novo Cheque</h3>
         <input type="text" id="che-nome" placeholder="Emitente / Quem deu" class="full">
@@ -162,7 +224,7 @@
 // =============================================
 function hoje() { const d = new Date(); d.setHours(0,0,0,0); return d; }
 function diasRestantes(dataStr) {
-    if(!dataStr) return 0;
+    if(!dataStr) return 9999;
     const alvo = new Date(dataStr + 'T00:00:00');
     return Math.ceil((alvo - hoje()) / (1000*60*60*24));
 }
@@ -170,6 +232,22 @@ function fmtDinheiro(v) { return Number(v||0).toLocaleString('pt-BR', {style:'cu
 function fmtData(d) {
     if(!d) return '';
     const p = d.split('-'); return `${p[2]}/${p[1]}/${p[0]}`;
+}
+function mesAtualNome() {
+    const m = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+    return m[new Date().getMonth()];
+}
+function mesSeguinteNome() {
+    const m = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+    return m[(new Date().getMonth()+1)%12];
+}
+function mesAtualSigla() {
+    const m = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+    return m[new Date().getMonth()];
+}
+function mesSeguinteSigla() {
+    const m = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+    return m[(new Date().getMonth()+1)%12];
 }
 function avisoSalvo() {
     const el = document.getElementById('avisoSalvo');
@@ -214,6 +292,7 @@ const CHAVE_DESPESAS = 'despesas_casa';
 function carregarDespesas() {
     const salvo = localStorage.getItem(CHAVE_DESPESAS);
     if(salvo) dadosDespesas = JSON.parse(salvo);
+    document.getElementById('mesAtual').textContent = mesAtualNome();
     montarTabela();
 }
 
@@ -231,6 +310,7 @@ function montarTabela() {
         corpo.appendChild(tr);
     });
     calcularTotais();
+    atualizarResumo();
 }
 
 function atualizarDespesa(input) {
@@ -242,6 +322,7 @@ function atualizarDespesa(input) {
     localStorage.setItem(CHAVE_DESPESAS, JSON.stringify(dadosDespesas));
     avisoSalvo();
     calcularTotais();
+    atualizarResumo();
 }
 
 function calcularTotais() {
@@ -253,6 +334,23 @@ function calcularTotais() {
         const el = document.getElementById('total' + mes);
         if(el) el.textContent = total.toFixed(2).replace('.', ',');
     });
+}
+
+function atualizarResumo() {
+    const mesCorrente = mesAtualSigla();
+    const proxMes = mesSeguinteSigla();
+    let totalMes = 0, totalProx = 0, qtd = 0;
+    
+    ITENS_DESPESAS.forEach(item => {
+        const vMes = parseFloat(dadosDespesas[item]?.[mesCorrente]) || 0;
+        const vProx = parseFloat(dadosDespesas[item]?.[proxMes]) || 0;
+        if(vMes > 0) { totalMes += vMes; qtd++; }
+        if(vProx > 0) totalProx += vProx;
+    });
+    
+    document.getElementById('resumoMes').textContent = fmtDinheiro(totalMes);
+    document.getElementById('resumoProx').textContent = totalProx > 0 ? fmtDinheiro(totalProx) : '—';
+    document.getElementById('qtdItens').textContent = qtd;
 }
 
 // =============================================
@@ -292,42 +390,76 @@ window.excluirBoleto = function(i) { if(confirm('Excluir esse boleto?')){ boleto
 
 function renderizarBoletos() {
     const lista = document.getElementById('listaBoletos');
+    const busca = (document.getElementById('buscaBoleto').value || '').toLowerCase();
+    const filtro = document.getElementById('filtroBoleto').value;
     lista.innerHTML = '';
-    let v=0, a=0, p=0;
+    let v=0, a=0, p=0, v3=0;
     
     boletos.forEach((b,i) => {
         const d = diasRestantes(b.data);
-        let classe='', status='', stClass='';
+        let classe='', status='', stClass='', mostrar=true;
         
-        if(b.pago) { classe='pago'; status='✅ Pago'; stClass='status-pago'; p++; }
-        else if(d<0) { classe='atrasado'; status=`🔴 ATRASADO há ${Math.abs(d)} dia(s)`; stClass='status-atrasado'; a++; }
-        else if(d===0) { status='⚠️ VENCE HOJE'; stClass='status-pendente'; v++; }
-        else { status=`⏳ ${d} dia(s) restante(s)`; stClass='status-pendente'; v++; }
+        // Filtros
+        if(busca && !b.nome.toLowerCase().includes(busca)) mostrar = false;
+        if(filtro==='avencer' && (b.pago || d<0)) mostrar = false;
+        if(filtro==='3d' && (b.pago || d<0 || d>3)) mostrar = false;
+        if(filtro==='atrasado' && (b.pago || d>=0)) mostrar = false;
+        if(filtro==='pago' && !b.pago) mostrar = false;
         
-        lista.innerHTML += `
-            <div class="card ${classe}">
-                <div class="flex justify-between items-start mb-2">
-                    <div>
-                        <h3 class="font-bold text-lg">${b.nome}</h3>
-                        <p class="text-sm text-gray-600">Vencimento: ${fmtData(b.data)}</p>
+        if(b.pago) {
+            classe='pago'; status='✅ Pago'; stClass='status-pago'; p++;
+        } else if(d<0) {
+            classe='atrasado'; status=`🔴 ATRASADO há ${Math.abs(d)} dia(s)`; stClass='status-atrasado'; a++;
+        } else if(d<=3) {
+            classe='avisa-vencer'; status=`⚠️ Vence em ${d} dia(s)!`; stClass='status-avisa'; v3++; v++;
+        } else if(d===0) {
+            status='⚠️ VENCE HOJE'; stClass='status-pendente'; v++;
+        } else {
+            status=`⏳ ${d} dia(s) restante(s)`; stClass='status-pendente'; v++;
+        }
+        
+        if(mostrar) {
+            lista.innerHTML += `
+                <div class="card ${classe}">
+                    <div class="flex justify-between items-start mb-2">
+                        <div>
+                            <h3 class="font-bold text-lg">${b.nome}</h3>
+                            <p class="text-sm text-gray-600">Vencimento: ${fmtData(b.data)}</p>
+                        </div>
+                        <span class="status-tag ${stClass}">${status}</span>
                     </div>
-                    <span class="status-tag ${stClass}">${status}</span>
+                    <p class="text-lg font-semibold">${fmtDinheiro(b.valor)}</p>
+                    ${b.codigo ? `<div class="codigo-barras mt-2">📎 ${b.codigo}</div>` : ''}
+                    <div class="flex gap-2 mt-3">
+                        <button class="${b.pago?'btn-cinza':'btn-verde'}" onclick="marcarBoleto(${i})">${b.pago?'↩️ Desmarcar':'✓ Marcar Pago'}</button>
+                        <button class="btn-vermelho" onclick="excluirBoleto(${i})">🗑️ Excluir</button>
+                    </div>
                 </div>
-                <p class="text-lg font-semibold">${fmtDinheiro(b.valor)}</p>
-                ${b.codigo ? `<div class="codigo-barras mt-2">📎 ${b.codigo}</div>` : ''}
-                <div class="flex gap-2 mt-3">
-                    <button class="${b.pago?'btn-cinza':'btn-verde'}" onclick="marcarBoleto(${i})">${b.pago?'↩️ Desmarcar':'✓ Marcar Pago'}</button>
-                    <button class="btn-vermelho" onclick="excluirBoleto(${i})">🗑️ Excluir</button>
-                </div>
-            </div>
-        `;
+            `;
+        }
     });
     
     document.getElementById('b-v').textContent = v;
+    document.getElementById('b-3d').textContent = v3;
     document.getElementById('b-a').textContent = a;
     document.getElementById('b-p').textContent = p;
+    
+    // Alerta de vencimento
+    const alerta = document.getElementById('alertaVencimento');
+    if(v3 > 0) {
+        alerta.classList.add('mostrar');
+        document.getElementById('qtdVencer').textContent = v3;
+    } else {
+        alerta.classList.remove('mostrar');
+    }
+    
     if(boletos.length===0) lista.innerHTML = '<p class="text-center text-gray-500 py-8">Nenhum boleto cadastrado.</p>';
+    else if(lista.innerHTML==='') lista.innerHTML = '<p class="text-center text-gray-500 py-8">Nenhum boleto encontrado.</p>';
 }
+
+// Eventos busca e filtro boletos
+document.getElementById('buscaBoleto').addEventListener('input', renderizarBoletos);
+document.getElementById('filtroBoleto').addEventListener('change', renderizarBoletos);
 
 // =============================================
 // PAINEL 3: CHEQUES
@@ -373,38 +505,54 @@ window.excluirCheque = function(i) { if(confirm('Excluir esse cheque?')){ cheque
 
 function renderizarCheques() {
     const lista = document.getElementById('listaCheques');
+    const busca = (document.getElementById('buscaCheque').value || '').toLowerCase();
+    const filtro = document.getElementById('filtroCheque').value;
     lista.innerHTML = '';
     let a=0, p=0, d=0;
     
     cheques.forEach((c,i) => {
+        let mostrar = true;
+        if(busca && !c.nome.toLowerCase().includes(busca) && !c.numero.includes(busca)) mostrar = false;
+        if(filtro==='aberto' && c.status!=='aberto') mostrar = false;
+        if(filtro==='pago' && c.status!=='pago') mostrar = false;
+        if(filtro==='dev' && c.status!=='dev') mostrar = false;
+        
         let classe='', status='', stClass='';
         if(c.status==='pago') { classe='pago'; status='✅ Compensado'; stClass='status-pago'; p++; }
         else if(c.status==='dev') { classe='atrasado'; status='🔴 Devolvido'; stClass='status-dev'; d++; }
         else { status='⏳ Em Aberto'; stClass='status-aberto'; a++; }
         
-        lista.innerHTML += `
-            <div class="card ${classe}">
-                <div class="flex justify-between items-start mb-2">
-                    <div>
-                        <h3 class="font-bold text-lg">${c.nome}</h3>
-                        <p class="text-sm text-gray-600">Nº ${c.numero} — Emissão: ${fmtData(c.data)}</p>
+        if(mostrar) {
+            lista.innerHTML += `
+                <div class="card ${classe}">
+                    <div class="flex justify-between items-start mb-2">
+                        <div>
+                            <h3 class="font-bold text-lg">${c.nome}</h3>
+                            <p class="text-sm text-gray-600">Nº ${c.numero} — Emissão: ${fmtData(c.data)}</p>
+                        </div>
+                        <span class="status-tag ${stClass}">${status}</span>
                     </div>
-                    <span class="status-tag ${stClass}">${status}</span>
+                    <p class="text-lg font-semibold">${fmtDinheiro(c.valor)}</p>
+                    <div class="flex gap-2 mt-3">
+                        <button class="btn-azul" onclick="mudarStatusCheque(${i})">↻ Mudar Status</button>
+                        <button class="btn-vermelho" onclick="excluirCheque(${i})">🗑️ Excluir</button>
+                    </div>
                 </div>
-                <p class="text-lg font-semibold">${fmtDinheiro(c.valor)}</p>
-                <div class="flex gap-2 mt-3">
-                    <button class="btn-azul" onclick="mudarStatusCheque(${i})">↻ Mudar Status</button>
-                    <button class="btn-vermelho" onclick="excluirCheque(${i})">🗑️ Excluir</button>
-                </div>
-            </div>
-        `;
+            `;
+        }
     });
     
     document.getElementById('c-a').textContent = a;
     document.getElementById('c-p').textContent = p;
     document.getElementById('c-d').textContent = d;
+    
     if(cheques.length===0) lista.innerHTML = '<p class="text-center text-gray-500 py-8">Nenhum cheque cadastrado.</p>';
+    else if(lista.innerHTML==='') lista.innerHTML = '<p class="text-center text-gray-500 py-8">Nenhum cheque encontrado.</p>';
 }
+
+// Eventos busca e filtro cheques
+document.getElementById('buscaCheque').addEventListener('input', renderizarCheques);
+document.getElementById('filtroCheque').addEventListener('change', renderizarCheques);
 
 // =============================================
 // INICIAR TUDO
