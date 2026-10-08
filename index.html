@@ -3,743 +3,526 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Controle de Finanças ☁️</title>
+    <title>Controle de Finanças ✅</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
     <style>
-        :root {
-            --bg-main: #0f172a; --bg-card: #1e293b; --bg-hover: #334155;
-            --text-primary: #f1f5f9; --accent-blue: #3b82f6; --accent-green: #10b981;
-            --accent-red: #ef4444; --accent-amber: #f59e0b; --border-color: #475569;
-        }
-        * { font-family: 'Segoe UI', system-ui, sans-serif; box-sizing: border-box; }
-        body { background: var(--bg-main); color: var(--text-primary); margin: 0; padding: 0; min-height: 100vh; }
-        .aba { cursor: pointer; transition: all 0.2s; border-bottom: 2px solid transparent; white-space: nowrap; }
-        .aba.ativa { border-bottom-color: var(--accent-blue); color: var(--accent-blue); background: rgba(59,130,246,0.1); }
-        .card { background: var(--bg-card); border-radius: 12px; }
-        .linha-vencer { border-left: 4px solid var(--accent-amber); }
-        .linha-vencido { border-left: 4px solid var(--accent-red); }
-        .linha-pago { border-left: 4px solid var(--accent-green); }
-        input, select { background: var(--bg-hover); border: 1px solid var(--border-color); color: white; border-radius: 8px; padding: 10px; width: 100%; }
-        input:focus, select:focus { outline: none; border-color: var(--accent-blue); }
-        .btn { padding: 10px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; border: none; transition: 0.2s; }
-        .btn-blue { background: var(--accent-blue); color: white; }
-        .btn-blue:hover { background: #2563eb; }
-        .btn-green { background: var(--accent-green); color: white; }
+        * { box-sizing: border-box; touch-action: manipulation; }
+        body { background: #0f172a; color: #f1f5f9; font-family: system-ui, sans-serif; min-height: 100vh; margin: 0; padding: 0; }
+        .aba { padding: 12px 10px; font-size: 14px; border-bottom: 3px solid transparent; cursor: pointer; white-space: nowrap; }
+        .aba.ativa { border-bottom-color: #3b82f6; color: #3b82f6; background: rgba(59,130,246,0.1); }
+        .card { background: #1e293b; border-radius: 12px; padding: 16px; margin-bottom: 16px; }
         .hidden { display: none !important; }
-        .avisa-hoje { background: rgba(239,68,68,0.15) !important; }
-        .avisa-amanha { background: rgba(245,158,11,0.15) !important; }
-        .status-salvo { position: fixed; top: 10px; right: 10px; background: rgba(16,185,129,0.9); padding: 8px 16px; border-radius: 20px; font-size: 12px; z-index: 1000; }
+        input, select { width: 100%; padding: 12px; background: #334155; border: 1px solid #475569; border-radius: 8px; color: white; font-size: 16px; margin-bottom: 10px; }
+        input:focus, select:focus { outline: none; border-color: #3b82f6; }
+        .btn { padding: 12px; border-radius: 8px; font-weight: bold; border: none; cursor: pointer; font-size: 16px; width: 100%; }
+        .btn-azul { background: #3b82f6; color: white; }
+        .btn-azul:hover { background: #2563eb; }
+        .btn-verde { background: #10b981; color: white; }
+        .btn-verde:hover { background: #059669; }
+        .linha { padding: 12px; border-radius: 8px; margin-bottom: 8px; background: #334155/50; border-left: 4px solid; }
+        .linha-pago { border-left-color: #10b981; }
+        .linha-vencer { border-left-color: #f59e0b; }
+        .linha-atrasado { border-left-color: #ef4444; }
+        .codigo-barras { font-family: monospace; font-size: 13px; color: #94a3b8; margin-top: 4px; word-break: break-all; }
+        .salvo-indicador { position: fixed; top: 10px; right: 10px; background: #10b981; color: white; padding: 6px 12px; border-radius: 20px; font-size: 12px; z-index: 100; }
+        .resumo-box { text-align: center; padding: 16px; border-radius: 10px; background: #334155/50; }
     </style>
 </head>
 <body>
 
-<div id="status-salvo" class="status-salvo hidden">
-    <i class="fa-solid fa-cloud"></i> Salvo na nuvem
+<div id="salvo-aviso" class="salvo-indicador hidden">
+    <i class="fa-solid fa-check"></i> Salvo!
 </div>
 
-<header class="bg-slate-900/90 backdrop-blur py-4 px-4 sticky top-0 z-50 border-b border-slate-700">
-    <h1 class="text-xl font-bold flex items-center gap-2">
-        <i class="fa-solid fa-chart-line text-blue-500"></i> Controle de Finanças
-        <span id="indicador-nuvem" class="text-xs bg-green-600/20 text-green-400 px-2 py-0.5 rounded-full">☁️ Nuvem</span>
-    </h1>
+<header class="bg-slate-900/80 py-4 px-4 sticky top-0 z-50 border-b border-slate-700">
+    <h1 class="text-xl font-bold">📋 Controle de Finanças</h1>
 </header>
 
-<main class="max-w-6xl mx-auto px-3 py-4">
-    <div class="mb-4">
-        <label class="text-sm text-slate-400">📅 Filtrar mês:</label>
-        <select id="filtro-mes" class="mt-1">
-            <option value="todos">Todos os meses</option>
-        </select>
-    </div>
+<main class="px-4 py-4">
 
-    <div class="flex overflow-x-auto border-b border-slate-700 mb-4 gap-0 pb-0">
-        <button class="aba ativa px-3 py-3 text-sm" data-painel="resumo">Resumo</button>
-        <button class="aba px-3 py-3 text-sm text-slate-400" data-painel="boletos">Boletos</button>
-        <button class="aba px-3 py-3 text-sm text-slate-400" data-painel="cheques">Cheques</button>
-        <button class="aba px-3 py-3 text-sm text-slate-400" data-painel="lotes">Lotes</button>
-        <button class="aba px-3 py-3 text-sm text-slate-400" data-painel="caixa">Caixa</button>
-        <button class="aba px-3 py-3 text-sm text-slate-400" data-painel="receber">A Receber</button>
+    <!-- ABAS -->
+    <div class="flex overflow-x-auto border-b border-slate-700 mb-4">
+        <button class="aba ativa" data-painel="resumo">Resumo</button>
+        <button class="aba text-slate-400" data-painel="boletos">Boletos</button>
+        <button class="aba text-slate-400" data-painel="cheques">Cheques</button>
+        <button class="aba text-slate-400" data-painel="lotes">Lotes</button>
+        <button class="aba text-slate-400" data-painel="caixa">Caixa</button>
+        <button class="aba text-slate-400" data-painel="receber">A Receber</button>
     </div>
 
     <!-- ========== RESUMO ========== -->
     <div id="painel-resumo" class="painel">
-        <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
-            <div class="card p-4">
-                <p class="text-amber-400 text-xs">Boletos a Vencer</p>
-                <p id="r-bol-vencer" class="text-xl font-bold">0</p>
+        <div class="grid grid-cols-2 gap-3 mb-4">
+            <div class="resumo-box">
+                <p class="text-amber-400 text-sm">A Vencer</p>
+                <p id="r-vencer" class="text-xl font-bold">0</p>
             </div>
-            <div class="card p-4">
-                <p class="text-red-400 text-xs">Boletos Atrasados</p>
-                <p id="r-bol-atraso" class="text-xl font-bold">0</p>
+            <div class="resumo-box">
+                <p class="text-red-400 text-sm">Atrasados</p>
+                <p id="r-atrasado" class="text-xl font-bold">0</p>
             </div>
-            <div class="card p-4">
-                <p class="text-green-400 text-xs">Boletos Pagos</p>
-                <p id="r-bol-pago" class="text-xl font-bold">0</p>
+            <div class="resumo-box">
+                <p class="text-green-400 text-sm">Pagos</p>
+                <p id="r-pago" class="text-xl font-bold">0</p>
             </div>
-            <div class="card p-4">
-                <p class="text-indigo-400 text-xs">Cheques em Aberto</p>
-                <p id="r-che-aberto" class="text-xl font-bold">0</p>
-            </div>
-            <div class="card p-4">
-                <p class="text-purple-400 text-xs">A Receber</p>
-                <p id="r-rec-valor" class="text-xl font-bold">R$ 0,00</p>
-            </div>
-            <div class="card p-4">
-                <p class="text-blue-400 text-xs">Saldo Caixa</p>
-                <p id="r-cx-saldo" class="text-xl font-bold">R$ 0,00</p>
+            <div class="resumo-box">
+                <p class="text-blue-400 text-sm">Saldo Caixa</p>
+                <p id="r-saldo" class="text-xl font-bold">R$0</p>
             </div>
         </div>
-
-        <div class="card p-5">
-            <h3 class="font-semibold mb-3">🔔 Próximos Vencimentos</h3>
-            <div id="proximos" class="space-y-2 text-sm">
-                <p class="text-slate-400">Nenhum vencimento próximo.</p>
-            </div>
+        <div class="card">
+            <h3 class="font-bold mb-3">🔔 Próximos Vencimentos</h3>
+            <div id="proximos-lista"></div>
         </div>
     </div>
 
-    <!-- ========== BOLETOS ========== -->
+    <!-- ========== BOLETOS — CÓDIGO DE BARRAS INCLUÍDO ========== -->
     <div id="painel-boletos" class="painel hidden">
-        <div class="grid grid-cols-3 gap-3 mb-4">
-            <div class="card p-3 text-center">
-                <p class="text-amber-400 text-xs">A Vencer</p>
-                <p id="bol-v" class="text-lg font-bold">0</p>
-            </div>
-            <div class="card p-3 text-center">
-                <p class="text-red-400 text-xs">Atrasados</p>
-                <p id="bol-a" class="text-lg font-bold">0</p>
-            </div>
-            <div class="card p-3 text-center">
-                <p class="text-green-400 text-xs">Pagos</p>
-                <p id="bol-p" class="text-lg font-bold">0</p>
-            </div>
+        <div class="card">
+            <h3 class="font-bold mb-3">➕ Novo Boleto</h3>
+            <input type="text" id="bol-nome" placeholder="Nome da Empresa">
+            <input type="text" id="bol-codigo" placeholder="Código de Barras ✅">
+            <input type="number" step="0.01" id="bol-valor" placeholder="Valor R$">
+            <input type="date" id="bol-data">
+            <button class="btn btn-azul" onclick="cadastrarBoleto()">💾 Salvar Boleto</button>
         </div>
 
-        <div class="card p-4 mb-4">
-            <h3 class="font-semibold mb-3">➕ Cadastrar Boleto</h3>
-            <form id="f-boleto" class="space-y-3">
-                <div><input type="text" id="bnome" placeholder="Nome da Empresa" required></div>
-                <div><input type="number" step="0.01" id="bvalor" placeholder="Valor R$" required></div>
-                <div><input type="date" id="bvencto" required></div>
-                <button type="submit" class="btn btn-blue w-full">Salvar Boleto ☁️</button>
-            </form>
-        </div>
-
-        <div class="card p-4">
-            <h3 class="font-semibold mb-3">📑 Lista</h3>
-            <div id="lista-bol" class="space-y-2 text-sm"></div>
-            <p id="bol-vazio" class="text-slate-500 text-center py-4">Nenhum boleto</p>
+        <div class="card">
+            <h3 class="font-bold mb-3">📑 Meus Boletos</h3>
+            <div id="lista-boletos"></div>
         </div>
     </div>
 
     <!-- ========== CHEQUES ========== -->
     <div id="painel-cheques" class="painel hidden">
-        <div class="grid grid-cols-3 gap-3 mb-4">
-            <div class="card p-3 text-center">
-                <p class="text-indigo-400 text-xs">Em Aberto</p>
-                <p id="che-a" class="text-lg font-bold">0</p>
-            </div>
-            <div class="card p-3 text-center">
-                <p class="text-green-400 text-xs">Compensados</p>
-                <p id="che-p" class="text-lg font-bold">0</p>
-            </div>
-            <div class="card p-3 text-center">
-                <p class="text-red-400 text-xs">Devolvidos</p>
-                <p id="che-d" class="text-lg font-bold">0</p>
-            </div>
+        <div class="card">
+            <h3 class="font-bold mb-3">➕ Novo Cheque</h3>
+            <input type="text" id="che-nome" placeholder="Quem deu">
+            <input type="text" id="che-numero" placeholder="Número">
+            <input type="number" step="0.01" id="che-valor" placeholder="Valor R$">
+            <input type="date" id="che-data">
+            <button class="btn btn-verde" onclick="cadastrarCheque()">💾 Salvar Cheque</button>
         </div>
-
-        <div class="card p-4 mb-4">
-            <h3 class="font-semibold mb-3">➕ Cadastrar Cheque</h3>
-            <form id="f-cheque" class="space-y-3">
-                <div><input type="text" id="chnome" placeholder="Emitente" required></div>
-                <div><input type="text" id="chnum" placeholder="Número" required></div>
-                <div><input type="number" step="0.01" id="chvalor" placeholder="Valor R$" required></div>
-                <div><input type="date" id="chvencto" required></div>
-                <select id="chstat">
-                    <option value="aberto">Em Aberto</option>
-                    <option value="pago">Compensado</option>
-                    <option value="dev">Devolvido</option>
-                </select>
-                <button type="submit" class="btn btn-green w-full">Salvar Cheque ☁️</button>
-            </form>
-        </div>
-
-        <div class="card p-4">
-            <h3 class="font-semibold mb-3">📑 Lista</h3>
-            <div id="lista-che" class="space-y-2 text-sm"></div>
-            <p id="che-vazio" class="text-slate-500 text-center py-4">Nenhum cheque</p>
+        <div class="card">
+            <h3 class="font-bold mb-3">📑 Meus Cheques</h3>
+            <div id="lista-cheques"></div>
         </div>
     </div>
 
     <!-- ========== LOTES ========== -->
     <div id="painel-lotes" class="painel hidden">
-        <div class="grid grid-cols-3 gap-3 mb-4">
-            <div class="card p-3 text-center">
-                <p class="text-amber-400 text-xs">A Pagar</p>
-                <p id="lot-a" class="text-lg font-bold">0</p>
-            </div>
-            <div class="card p-3 text-center">
-                <p class="text-red-400 text-xs">Atrasados</p>
-                <p id="lot-at" class="text-lg font-bold">0</p>
-            </div>
-            <div class="card p-3 text-center">
-                <p class="text-green-400 text-xs">Pagos</p>
-                <p id="lot-p" class="text-lg font-bold">0</p>
-            </div>
+        <div class="card">
+            <h3 class="font-bold mb-3">➕ Novo Lote/Imóvel</h3>
+            <input type="text" id="lot-nome" placeholder="Descrição">
+            <input type="number" step="0.01" id="lot-valor" placeholder="Valor R$">
+            <input type="number" id="lot-dia" placeholder="Dia do mês" min="1" max="31">
+            <input type="text" id="lot-quem" placeholder="Quem recebe">
+            <button class="btn btn-azul" onclick="cadastrarLote()">💾 Salvar Lote</button>
         </div>
-
-        <div class="card p-4 mb-4">
-            <h3 class="font-semibold mb-3">➕ Cadastrar Lote/Imóvel</h3>
-            <form id="f-lote" class="space-y-3">
-                <div><input type="text" id="lotnome" placeholder="Descrição" required></div>
-                <div><input type="number" step="0.01" id="lotvalor" placeholder="Valor R$" required></div>
-                <div><input type="number" id="lotdia" placeholder="Dia do vencimento" min="1" max="31" required></div>
-                <div><input type="text" id="lotquem" placeholder="Quem recebe"></div>
-                <button type="submit" class="btn btn-blue w-full">Salvar Lote ☁️</button>
-            </form>
-        </div>
-
-        <div class="card p-4">
-            <h3 class="font-semibold mb-3">📑 Lista</h3>
-            <div id="lista-lot" class="space-y-2 text-sm"></div>
-            <p id="lot-vazio" class="text-slate-500 text-center py-4">Nenhum registro</p>
+        <div class="card">
+            <h3 class="font-bold mb-3">📑 Meus Lotes</h3>
+            <div id="lista-lotes"></div>
         </div>
     </div>
 
     <!-- ========== CAIXA ========== -->
     <div id="painel-caixa" class="painel hidden">
-        <div class="grid grid-cols-3 gap-3 mb-4">
-            <div class="card p-3 text-center">
-                <p class="text-green-400 text-xs">Entradas</p>
-                <p id="cx-e" class="text-lg font-bold">R$ 0,00</p>
-            </div>
-            <div class="card p-3 text-center">
-                <p class="text-red-400 text-xs">Saídas</p>
-                <p id="cx-s" class="text-lg font-bold">R$ 0,00</p>
-            </div>
-            <div class="card p-3 text-center">
-                <p class="text-blue-400 text-xs">Saldo</p>
-                <p id="cx-saldo" class="text-lg font-bold">R$ 0,00</p>
-            </div>
+        <div class="card">
+            <h3 class="font-bold mb-3">➕ Lançamento</h3>
+            <input type="text" id="cx-desc" placeholder="Descrição">
+            <input type="number" step="0.01" id="cx-valor" placeholder="Valor R$">
+            <select id="cx-tipo">
+                <option value="entrada">✅ Entrada</option>
+                <option value="saida">❌ Saída</option>
+            </select>
+            <input type="date" id="cx-data">
+            <button class="btn btn-verde" onclick="cadastrarCaixa()">💾 Salvar</button>
         </div>
-
-        <div class="card p-4 mb-4">
-            <h3 class="font-semibold mb-3">➕ Lançamento</h3>
-            <form id="f-caixa" class="space-y-3">
-                <div><input type="text" id="cxdsc" placeholder="Descrição" required></div>
-                <div><input type="number" step="0.01" id="cxvalor" placeholder="Valor R$" required></div>
-                <select id="cxtipo">
-                    <option value="entrada">✅ Entrada</option>
-                    <option value="saida">❌ Saída</option>
-                </select>
-                <div><input type="date" id="cxdata" required></div>
-                <button type="submit" class="btn btn-green w-full">Salvar ☁️</button>
-            </form>
-        </div>
-
-        <div class="card p-4">
-            <h3 class="font-semibold mb-3">📊 Movimentação</h3>
-            <div id="lista-cx" class="space-y-2 text-sm"></div>
+        <div class="card">
+            <h3 class="font-bold mb-3">💰 Movimentação</h3>
+            <div id="lista-caixa"></div>
         </div>
     </div>
 
     <!-- ========== A RECEBER ========== -->
     <div id="painel-receber" class="painel hidden">
-        <div class="grid grid-cols-3 gap-3 mb-4">
-            <div class="card p-3 text-center">
-                <p class="text-purple-400 text-xs">A Receber</p>
-                <p id="rec-a" class="text-lg font-bold">0</p>
-            </div>
-            <div class="card p-3 text-center">
-                <p class="text-red-400 text-xs">Atrasados</p>
-                <p id="rec-at" class="text-lg font-bold">0</p>
-            </div>
-            <div class="card p-3 text-center">
-                <p class="text-green-400 text-xs">Recebidos</p>
-                <p id="rec-p" class="text-lg font-bold">0</p>
-            </div>
+        <div class="card">
+            <h3 class="font-bold mb-3">➕ A Receber</h3>
+            <input type="text" id="rec-nome" placeholder="Quem vai pagar">
+            <input type="number" step="0.01" id="rec-valor" placeholder="Valor R$">
+            <input type="date" id="rec-data">
+            <button class="btn btn-azul" onclick="cadastrarReceber()">💾 Salvar</button>
         </div>
-
-        <div class="card p-4 mb-4">
-            <h3 class="font-semibold mb-3">➕ Cadastrar a Receber</h3>
-            <form id="f-receber" class="space-y-3">
-                <div><input type="text" id="recnome" placeholder="Quem vai pagar" required></div>
-                <div><input type="number" step="0.01" id="recvalor" placeholder="Valor R$" required></div>
-                <div><input type="date" id="recdata" required></div>
-                <button type="submit" class="btn btn-blue w-full">Salvar ☁️</button>
-            </form>
-        </div>
-
-        <div class="card p-4">
-            <h3 class="font-semibold mb-3">📑 Contas</h3>
-            <div id="lista-rec" class="space-y-2 text-sm"></div>
+        <div class="card">
+            <h3 class="font-bold mb-3">📑 Contas a Receber</h3>
+            <div id="lista-receber"></div>
         </div>
     </div>
+
 </main>
 
 <script>
 // ==============================================
-// 🔧 CONFIGURAÇÃO DA NUVEM — FIREBASE
+// BANCO DE DADOS — SALVA NO CELULAR
 // ==============================================
-const firebaseConfig = {
-    apiKey: "AIzaSyDvKxLbYdXzEa8yC9uT-sXbQfGdR7cM8nY",
-    authDomain: "controle-financas-w.firebaseapp.com",
-    projectId: "controle-financas-w",
-    storageBucket: "controle-financas-w.appspot.com",
-    messagingSenderId: "123456789012",
-    appId: "1:123456789012:web:abc123def456ghi789jkl01"
-};
+let boletos = [];
+let cheques = [];
+let lotes = [];
+let caixa = [];
+let receber = [];
 
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+const CHAVE = 'meu_controle_2026';
 
-// ==============================================
-// 📦 BANCO DE DADOS
-// ==============================================
-let boletos = [], cheques = [], lotes = [], caixa = [], receber = [];
-let carregado = false;
+// Carregar ao abrir
+function carregar() {
+    const salvo = localStorage.getItem(CHAVE);
+    if (salvo) {
+        const dados = JSON.parse(salvo);
+        boletos = dados.boletos || [];
+        cheques = dados.cheques || [];
+        lotes = dados.lotes || [];
+        caixa = dados.caixa || [];
+        receber = dados.receber || [];
+    }
+    atualizarTela();
+}
 
+// Salvar TUDO
+function salvar() {
+    localStorage.setItem(CHAVE, JSON.stringify({boletos, cheques, lotes, caixa, receber}));
+    const aviso = document.getElementById('salvo-aviso');
+    aviso.classList.remove('hidden');
+    setTimeout(() => aviso.classList.add('hidden'), 1500);
+    atualizarTela();
+}
+
+// Funções auxiliares
 function hoje() { const d = new Date(); d.setHours(0,0,0,0); return d; }
-function fmtData(d) { if(!d) return '-'; return new Date(d+'T00:00:00').toLocaleDateString('pt-BR'); }
-function fmtValor(v) { return Number(v||0).toLocaleString('pt-BR', {style:'currency', currency:'BRL'}); }
-function diasVenc(data) {
-    const alvo = new Date(data+'T00:00:00');
+function diasRestantes(dataStr) {
+    const alvo = new Date(dataStr + 'T00:00:00');
     return Math.ceil((alvo - hoje()) / (1000*60*60*24));
 }
+function fmtDinheiro(v) { return Number(v).toLocaleString('pt-BR', {style:'currency', currency:'BRL'}); }
+function fmtData(d) { return new Date(d+'T00:00:00').toLocaleDateString('pt-BR'); }
 function dataProxDia(dia) {
     const agora = new Date();
     let v = new Date(agora.getFullYear(), agora.getMonth(), dia);
-    if(v < hoje()) v = new Date(agora.getFullYear(), agora.getMonth()+1, dia);
+    if (v < hoje()) v = new Date(agora.getFullYear(), agora.getMonth()+1, dia);
     return v.toISOString().split('T')[0];
 }
-function mes(d) { return d ? d.slice(0,7) : 'todos'; }
-function filtroOk(d) {
-    const sel = document.getElementById('filtro-mes').value;
-    return sel === 'todos' || mes(d) === sel;
-}
-function avisoSalvo() {
-    const el = document.getElementById('status-salvo');
-    el.classList.remove('hidden');
-    setTimeout(() => el.classList.add('hidden'), 1500);
-}
 
 // ==============================================
-// ☁️ SINCRONIZAR COM A NUVEM
-// ==============================================
-async function salvarNaNuvem() {
-    try {
-        await db.collection('dados').doc('principal').set({
-            boletos, cheques, lotes, caixa, receber,
-            atualizado: new Date()
-        });
-        avisoSalvo();
-    } catch(e) {
-        console.error('Erro ao salvar:', e);
-    }
-}
-
-async function carregarDaNuvem() {
-    try {
-        const doc = await db.collection('dados').doc('principal').get();
-        if(doc.exists) {
-            const d = doc.data();
-            boletos = d.boletos || [];
-            cheques = d.cheques || [];
-            lotes = d.lotes || [];
-            caixa = d.caixa || [];
-            receber = d.receber || [];
-            console.log('☁️ Dados carregados da nuvem!');
-        }
-        carregado = true;
-        atualizarTela();
-        atualizarFiltroMeses();
-    } catch(e) {
-        console.error('Erro ao carregar:', e);
-        // Fallback: carregar do navegador se não conseguir nuvem
-        boletos = JSON.parse(localStorage.getItem('wf_boletos') || '[]');
-        cheques = JSON.parse(localStorage.getItem('wf_cheques') || '[]');
-        lotes = JSON.parse(localStorage.getItem('wf_lotes') || '[]');
-        caixa = JSON.parse(localStorage.getItem('wf_caixa') || '[]');
-        receber = JSON.parse(localStorage.getItem('wf_receber') || '[]');
-        carregado = true;
-        atualizarTela();
-        atualizarFiltroMeses();
-    }
-}
-
-function atualizarFiltroMeses() {
-    const ms = new Set();
-    [...boletos, ...cheques, ...receber].forEach(x => x.vencimento && ms.add(mes(x.vencimento)));
-    lotes.forEach(l => ms.add(mes(dataProxDia(l.diaVencimento))));
-    caixa.forEach(c => ms.add(mes(c.data)));
-    const sel = document.getElementById('filtro-mes');
-    const atual = sel.value;
-    sel.innerHTML = '<option value="todos">Todos os meses</option>';
-    [...ms].sort().reverse().forEach(m => {
-        const opt = document.createElement('option');
-        opt.value = m;
-        const [ano, me] = m.split('-');
-        const nomes = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-        opt.textContent = `${nomes[Number(me)-1]} / ${ano}`;
-        sel.appendChild(opt);
-    });
-    sel.value = atual || 'todos';
-}
-
-// ==============================================
-// 🧭 NAVEGAÇÃO ENTRE ABAS
+// NAVEGAÇÃO
 // ==============================================
 document.querySelectorAll('.aba').forEach(aba => {
-    aba.addEventListener('click', e => {
-        e.preventDefault();
-        document.querySelectorAll('.aba').forEach(a => {
-            a.classList.remove('ativa'); a.classList.add('text-slate-400');
-        });
+    aba.addEventListener('click', () => {
+        document.querySelectorAll('.aba').forEach(a => { a.classList.remove('ativa'); a.classList.add('text-slate-400'); });
         aba.classList.add('ativa'); aba.classList.remove('text-slate-400');
         document.querySelectorAll('.painel').forEach(p => p.classList.add('hidden'));
         document.getElementById('painel-' + aba.dataset.painel).classList.remove('hidden');
     });
 });
-document.getElementById('filtro-mes').addEventListener('change', atualizarTela);
 
 // ==============================================
-// 📑 BOLETOS
+// BOLETOS — CÓDIGO DE BARRAS SALVA E EXIBIDA ✅
 // ==============================================
-document.getElementById('f-boleto').addEventListener('submit', async e => {
-    e.preventDefault();
-    boletos.push({
-        id: Date.now(),
-        nome: document.getElementById('bnome').value,
-        valor: Number(document.getElementById('bvalor').value),
-        vencimento: document.getElementById('bvencto').value,
-        status: 'aberto'
-    });
-    e.target.reset();
-    await salvarNaNuvem();
-    atualizarTela();
-});
+function cadastrarBoleto() {
+    const nome = document.getElementById('bol-nome').value.trim();
+    const codigo = document.getElementById('bol-codigo').value.trim();
+    const valor = Number(document.getElementById('bol-valor').value);
+    const data = document.getElementById('bol-data').value;
+    
+    if (!nome || !valor || !data) { alert('Preencha nome, valor e data!'); return; }
+    
+    boletos.push({ id: Date.now(), nome, codigo, valor, data, pago: false });
+    
+    // Limpar campos
+    document.getElementById('bol-nome').value = '';
+    document.getElementById('bol-codigo').value = '';
+    document.getElementById('bol-valor').value = '';
+    document.getElementById('bol-data').value = '';
+    
+    salvar();
+}
 
-window.marcarBoleto = async i => {
-    boletos[i].status = boletos[i].status === 'pago' ? 'aberto' : 'pago';
-    await salvarNaNuvem();
-    atualizarTela();
-};
+function marcarBoletoPago(indice) {
+    boletos[indice].pago = !boletos[indice].pago;
+    salvar();
+}
 
-window.excluirBoleto = async i => {
-    if(confirm('Excluir?')) {
-        boletos.splice(i, 1);
-        await salvarNaNuvem();
-        atualizarTela();
+function excluirBoleto(indice) {
+    if (confirm('Excluir esse boleto?')) {
+        boletos.splice(indice, 1);
+        salvar();
     }
-};
+}
 
 function montarBoletos() {
-    const div = document.getElementById('lista-bol');
-    div.innerHTML = '';
-    let v=0,a=0,p=0;
-    boletos.filter(b => filtroOk(b.vencimento)).forEach((b,i) => {
-        const d = diasVenc(b.vencimento);
-        let cls='', txt='';
-        if(b.status==='pago') { cls='linha-pago'; txt='🟢 Pago'; p++; }
-        else if(d<0) { cls='linha-vencido'; txt=`🔴 ATRASADO ${Math.abs(d)}d`; a++; }
-        else if(d===0) { cls='linha-vencer avisa-hoje'; txt='🟡 HOJE!'; v++; }
-        else if(d===1) { cls='linha-vencer avisa-amanha'; txt='🟡 Amanhã'; v++; }
-        else { cls='linha-vencer'; txt=`🟡 ${d}d`; v++; }
-
-        div.innerHTML += `
-        <div class="p-3 rounded ${cls} bg-slate-800/50 flex justify-between items-center">
-            <div>
-                <div class="font-medium">${b.nome}</div>
-                <div class="text-xs text-slate-400">${fmtValor(b.valor)} — ${fmtData(b.vencimento)}</div>
-            </div>
-            <div class="flex gap-2 items-center">
-                <span class="text-xs">${txt}</span>
-                <button onclick="marcarBoleto(${i})" class="text-green-400">✓</button>
-                <button onclick="excluirBoleto(${i})" class="text-red-400">✕</button>
+    const lista = document.getElementById('lista-boletos');
+    lista.innerHTML = '';
+    
+    let vencer = 0, atrasado = 0, pago = 0;
+    
+    boletos.forEach((b, i) => {
+        const dias = diasRestantes(b.data);
+        let classe = 'linha-vencer', status = '';
+        
+        if (b.pago) {
+            classe = 'linha-pago';
+            status = '✅ Pago';
+            pago++;
+        } else if (dias < 0) {
+            classe = 'linha-atrasado';
+            status = `🔴 ATRASADO ${Math.abs(dias)}d`;
+            atrasado++;
+        } else if (dias === 0) {
+            status = '⚠️ VENCE HOJE';
+            vencer++;
+        } else {
+            status = `${dias} dias`;
+            vencer++;
+        }
+        
+        lista.innerHTML += `
+        <div class="linha ${classe}">
+            <div class="font-bold">${b.nome}</div>
+            <div class="text-sm">${fmtDinheiro(b.valor)} — ${fmtData(b.data)}</div>
+            ${b.codigo ? `<div class="codigo-barras">📎 ${b.codigo}</div>` : ''}
+            <div class="flex justify-between items-center mt-2">
+                <span class="text-sm">${status}</span>
+                <div>
+                    <button onclick="marcarBoletoPago(${i})" class="text-green-400 px-2">✓</button>
+                    <button onclick="excluirBoleto(${i})" class="text-red-400 px-2">🗑️</button>
+                </div>
             </div>
         </div>`;
     });
-    document.getElementById('bol-v').textContent = v;
-    document.getElementById('bol-a').textContent = a;
-    document.getElementById('bol-p').textContent = p;
-    document.getElementById('bol-vazio').style.display = boletos.length===0 ? 'block' : 'none';
-    return {v,a,p};
+    
+    document.getElementById('r-vencer').textContent = vencer;
+    document.getElementById('r-atrasado').textContent = atrasado;
+    document.getElementById('r-pago').textContent = pago;
+    
+    if (boletos.length === 0) lista.innerHTML = '<p class="text-slate-400">Nenhum boleto cadastrado</p>';
 }
 
 // ==============================================
-// 📑 CHEQUES
+// CHEQUES
 // ==============================================
-document.getElementById('f-cheque').addEventListener('submit', async e => {
-    e.preventDefault();
-    cheques.push({
-        id: Date.now(),
-        nome: document.getElementById('chnome').value,
-        numero: document.getElementById('chnum').value,
-        valor: Number(document.getElementById('chvalor').value),
-        vencimento: document.getElementById('chvencto').value,
-        status: document.getElementById('chstat').value
-    });
-    e.target.reset();
-    await salvarNaNuvem();
-    atualizarTela();
-});
+function cadastrarCheque() {
+    const nome = document.getElementById('che-nome').value.trim();
+    const numero = document.getElementById('che-numero').value.trim();
+    const valor = Number(document.getElementById('che-valor').value);
+    const data = document.getElementById('che-data').value;
+    
+    if (!nome || !valor || !data) { alert('Preencha tudo!'); return; }
+    
+    cheques.push({ id: Date.now(), nome, numero, valor, data, pago: false });
+    
+    document.getElementById('che-nome').value = '';
+    document.getElementById('che-numero').value = '';
+    document.getElementById('che-valor').value = '';
+    document.getElementById('che-data').value = '';
+    
+    salvar();
+}
 
-window.marcarCheque = async i => {
-    cheques[i].status = cheques[i].status === 'pago' ? 'aberto' : 'pago';
-    await salvarNaNuvem();
-    atualizarTela();
-};
-
-window.excluirCheque = async i => {
-    if(confirm('Excluir?')) { cheques.splice(i,1); await salvarNaNuvem(); atualizarTela(); }
-};
+function marcarChequePago(i) { cheques[i].pago = !cheques[i].pago; salvar(); }
+function excluirCheque(i) { if(confirm('Excluir?')){ cheques.splice(i,1); salvar(); } }
 
 function montarCheques() {
-    const div = document.getElementById('lista-che');
-    div.innerHTML = '';
-    let a=0,p=0,d=0;
-    cheques.filter(c => filtroOk(c.vencimento)).forEach((c,i) => {
-        let cls='', txt='';
-        if(c.status==='pago') { txt='🟢 Compensado'; p++; }
-        else if(c.status==='dev') { txt='🔴 Devolvido'; d++; }
-        else { txt='🟡 Em Aberto'; a++; }
-
-        div.innerHTML += `
-        <div class="p-3 rounded bg-slate-800/50 flex justify-between items-center">
-            <div>
-                <div class="font-medium">${c.nome} — ${c.numero}</div>
-                <div class="text-xs text-slate-400">${fmtValor(c.valor)} — ${fmtData(c.vencimento)}</div>
-            </div>
-            <div class="flex gap-2 items-center">
-                <span class="text-xs">${txt}</span>
-                <button onclick="marcarCheque(${i})" class="text-green-400">✓</button>
-                <button onclick="excluirCheque(${i})" class="text-red-400">✕</button>
+    const lista = document.getElementById('lista-cheques');
+    lista.innerHTML = '';
+    cheques.forEach((c, i) => {
+        lista.innerHTML += `
+        <div class="linha ${c.pago ? 'linha-pago' : 'linha-vencer'}">
+            <div class="font-bold">${c.nome}</div>
+            <div class="text-sm">Nº ${c.numero} — ${fmtDinheiro(c.valor)} — ${fmtData(c.data)}</div>
+            <div class="flex justify-between mt-2">
+                <span>${c.pago ? '✅ Compensado' : '⏳ Em aberto'}</span>
+                <div>
+                    <button onclick="marcarChequePago(${i})" class="text-green-400 px-2">✓</button>
+                    <button onclick="excluirCheque(${i})" class="text-red-400 px-2">🗑️</button>
+                </div>
             </div>
         </div>`;
     });
-    document.getElementById('che-a').textContent = a;
-    document.getElementById('che-p').textContent = p;
-    document.getElementById('che-d').textContent = d;
-    document.getElementById('che-vazio').style.display = cheques.length===0 ? 'block' : 'none';
-    return {a,p,d};
+    if (cheques.length === 0) lista.innerHTML = '<p class="text-slate-400">Nenhum cheque</p>';
 }
 
 // ==============================================
-// 📑 LOTES
+// LOTES
 // ==============================================
-document.getElementById('f-lote').addEventListener('submit', async e => {
-    e.preventDefault();
-    lotes.push({
-        id: Date.now(),
-        nome: document.getElementById('lotnome').value,
-        valor: Number(document.getElementById('lotvalor').value),
-        diaVencimento: Number(document.getElementById('lotdia').value),
-        quemRecebe: document.getElementById('lotquem').value,
-        status: 'aberto'
-    });
-    e.target.reset();
-    await salvarNaNuvem();
-    atualizarTela();
-});
+function cadastrarLote() {
+    const nome = document.getElementById('lot-nome').value.trim();
+    const valor = Number(document.getElementById('lot-valor').value);
+    const dia = Number(document.getElementById('lot-dia').value);
+    const quem = document.getElementById('lot-quem').value.trim();
+    
+    if (!nome || !valor || !dia) { alert('Preencha nome, valor e dia!'); return; }
+    
+    lotes.push({ id: Date.now(), nome, valor, dia, quem, pago: false });
+    
+    document.getElementById('lot-nome').value = '';
+    document.getElementById('lot-valor').value = '';
+    document.getElementById('lot-dia').value = '';
+    document.getElementById('lot-quem').value = '';
+    
+    salvar();
+}
 
-window.marcarLote = async i => {
-    lotes[i].status = lotes[i].status === 'pago' ? 'aberto' : 'pago';
-    await salvarNaNuvem();
-    atualizarTela();
-};
-
-window.excluirLote = async i => {
-    if(confirm('Excluir?')) { lotes.splice(i,1); await salvarNaNuvem(); atualizarTela(); }
-};
+function marcarLotePago(i) { lotes[i].pago = !lotes[i].pago; salvar(); }
+function excluirLote(i) { if(confirm('Excluir?')){ lotes.splice(i,1); salvar(); } }
 
 function montarLotes() {
-    const div = document.getElementById('lista-lot');
-    div.innerHTML = '';
-    let a=0,at=0,p=0;
-    lotes.filter(l => filtroOk(dataProxDia(l.diaVencimento))).forEach((l,i) => {
-        const d = diasVenc(dataProxDia(l.diaVencimento));
-        let cls='', txt='';
-        if(l.status==='pago') { txt='🟢 Pago'; p++; }
-        else if(d<0) { txt='🔴 ATRASADO'; at++; }
-        else { txt='🟡 A Pagar'; a++; }
-
-        div.innerHTML += `
-        <div class="p-3 rounded bg-slate-800/50 flex justify-between items-center">
-            <div>
-                <div class="font-medium">${l.nome}</div>
-                <div class="text-xs text-slate-400">${fmtValor(l.valor)} — dia ${l.diaVencimento} — ${l.quemRecebe||''}</div>
-            </div>
-            <div class="flex gap-2 items-center">
-                <span class="text-xs">${txt}</span>
-                <button onclick="marcarLote(${i})" class="text-green-400">✓</button>
-                <button onclick="excluirLote(${i})" class="text-red-400">✕</button>
+    const lista = document.getElementById('lista-lotes');
+    lista.innerHTML = '';
+    lotes.forEach((l, i) => {
+        const proxData = dataProxDia(l.dia);
+        const dias = diasRestantes(proxData);
+        lista.innerHTML += `
+        <div class="linha ${l.pago ? 'linha-pago' : dias<0 ? 'linha-atrasado' : 'linha-vencer'}">
+            <div class="font-bold">${l.nome}</div>
+            <div class="text-sm">${fmtDinheiro(l.valor)} — dia ${l.dia} — ${l.quem || ''}</div>
+            <div class="flex justify-between mt-2">
+                <span>${l.pago ? '✅ Pago' : dias<0 ? '🔴 Atrasado' : `${dias} dias`}</span>
+                <div>
+                    <button onclick="marcarLotePago(${i})" class="text-green-400 px-2">✓</button>
+                    <button onclick="excluirLote(${i})" class="text-red-400 px-2">🗑️</button>
+                </div>
             </div>
         </div>`;
     });
-    document.getElementById('lot-a').textContent = a;
-    document.getElementById('lot-at').textContent = at;
-    document.getElementById('lot-p').textContent = p;
-    document.getElementById('lot-vazio').style.display = lotes.length===0 ? 'block' : 'none';
-    return {a,at,p};
+    if (lotes.length === 0) lista.innerHTML = '<p class="text-slate-400">Nenhum lote</p>';
 }
 
 // ==============================================
-// 📑 CAIXA
+// CAIXA
 // ==============================================
-document.getElementById('f-caixa').addEventListener('submit', async e => {
-    e.preventDefault();
-    caixa.push({
-        id: Date.now(),
-        descricao: document.getElementById('cxdsc').value,
-        valor: Number(document.getElementById('cxvalor').value),
-        tipo: document.getElementById('cxtipo').value,
-        data: document.getElementById('cxdata').value
-    });
-    e.target.reset();
-    await salvarNaNuvem();
-    atualizarTela();
-});
+function cadastrarCaixa() {
+    const desc = document.getElementById('cx-desc').value.trim();
+    const valor = Number(document.getElementById('cx-valor').value);
+    const tipo = document.getElementById('cx-tipo').value;
+    const data = document.getElementById('cx-data').value;
+    
+    if (!desc || !valor || !data) { alert('Preencha tudo!'); return; }
+    
+    caixa.push({ id: Date.now(), desc, valor, tipo, data });
+    
+    document.getElementById('cx-desc').value = '';
+    document.getElementById('cx-valor').value = '';
+    document.getElementById('cx-data').value = '';
+    
+    salvar();
+}
 
-window.excluirCaixa = async i => {
-    if(confirm('Excluir?')) { caixa.splice(i,1); await salvarNaNuvem(); atualizarTela(); }
-};
+function excluirCaixa(i) { if(confirm('Excluir?')){ caixa.splice(i,1); salvar(); } }
 
 function montarCaixa() {
-    const div = document.getElementById('lista-cx');
-    div.innerHTML = '';
-    let entr=0, sai=0;
-    caixa.filter(c => filtroOk(c.data)).forEach((c,i) => {
-        if(c.tipo==='entrada') entr += c.valor;
-        else sai += c.valor;
-        div.innerHTML += `
-        <div class="p-3 rounded bg-slate-800/50 flex justify-between items-center">
+    const lista = document.getElementById('lista-caixa');
+    lista.innerHTML = '';
+    let saldo = 0;
+    caixa.forEach((c, i) => {
+        if (c.tipo === 'entrada') saldo += c.valor;
+        else saldo -= c.valor;
+        lista.innerHTML += `
+        <div class="py-2 border-b border-slate-700 flex justify-between">
             <div>
-                <div class="font-medium">${c.descricao}</div>
+                <div class="font-medium">${c.desc}</div>
                 <div class="text-xs text-slate-400">${fmtData(c.data)}</div>
             </div>
-            <div class="flex gap-2 items-center">
-                <span class="${c.tipo==='entrada'?'text-green-400':'text-red-400'} font-medium">
-                    ${c.tipo==='entrada'?'+':'-'}${fmtValor(c.valor)}
+            <div class="flex items-center gap-2">
+                <span class="${c.tipo==='entrada'?'text-green-400':'text-red-400'}">
+                    ${c.tipo==='entrada'?'+':'-'}${fmtDinheiro(c.valor)}
                 </span>
-                <button onclick="excluirCaixa(${i})" class="text-red-400">✕</button>
+                <button onclick="excluirCaixa(${i})" class="text-red-400">🗑️</button>
             </div>
         </div>`;
     });
-    document.getElementById('cx-e').textContent = fmtValor(entr);
-    document.getElementById('cx-s').textContent = fmtValor(sai);
-    document.getElementById('cx-saldo').textContent = fmtValor(entr - sai);
-    return {entr, sai, saldo: entr - sai};
+    document.getElementById('r-saldo').textContent = fmtDinheiro(saldo);
+    if (caixa.length === 0) lista.innerHTML = '<p class="text-slate-400">Sem movimentação</p>';
 }
 
 // ==============================================
-// 📑 A RECEBER
+// A RECEBER
 // ==============================================
-document.getElementById('f-receber').addEventListener('submit', async e => {
-    e.preventDefault();
-    receber.push({
-        id: Date.now(),
-        nome: document.getElementById('recnome').value,
-        valor: Number(document.getElementById('recvalor').value),
-        vencimento: document.getElementById('recdata').value,
-        status: 'aberto'
-    });
-    e.target.reset();
-    await salvarNaNuvem();
-    atualizarTela();
-});
+function cadastrarReceber() {
+    const nome = document.getElementById('rec-nome').value.trim();
+    const valor = Number(document.getElementById('rec-valor').value);
+    const data = document.getElementById('rec-data').value;
+    
+    if (!nome || !valor || !data) { alert('Preencha tudo!'); return; }
+    
+    receber.push({ id: Date.now(), nome, valor, data, pago: false });
+    
+    document.getElementById('rec-nome').value = '';
+    document.getElementById('rec-valor').value = '';
+    document.getElementById('rec-data').value = '';
+    
+    salvar();
+}
 
-window.marcarReceber = async i => {
-    receber[i].status = receber[i].status === 'pago' ? 'aberto' : 'pago';
-    await salvarNaNuvem();
-    atualizarTela();
-};
-
-window.excluirReceber = async i => {
-    if(confirm('Excluir?')) { receber.splice(i,1); await salvarNaNuvem(); atualizarTela(); }
-};
+function marcarReceberPago(i) { receber[i].pago = !receber[i].pago; salvar(); }
+function excluirReceber(i) { if(confirm('Excluir?')){ receber.splice(i,1); salvar(); } }
 
 function montarReceber() {
-    const div = document.getElementById('lista-rec');
-    div.innerHTML = '';
-    let a=0,at=0,p=0, valorTotal=0;
-    receber.filter(r => filtroOk(r.vencimento)).forEach((r,i) => {
-        const d = diasVenc(r.vencimento);
-        if(r.status==='pago') p++;
-        else if(d<0) { at++; valorTotal += r.valor; }
-        else { a++; valorTotal += r.valor; }
-
-        let txt = r.status==='pago' ? '🟢 Recebido' : d<0 ? '🔴 Atrasado' : '🟡 A Receber';
-        div.innerHTML += `
-        <div class="p-3 rounded bg-slate-800/50 flex justify-between items-center">
-            <div>
-                <div class="font-medium">${r.nome}</div>
-                <div class="text-xs text-slate-400">${fmtValor(r.valor)} — ${fmtData(r.vencimento)}</div>
-            </div>
-            <div class="flex gap-2 items-center">
-                <span class="text-xs">${txt}</span>
-                <button onclick="marcarReceber(${i})" class="text-green-400">✓</button>
-                <button onclick="excluirReceber(${i})" class="text-red-400">✕</button>
+    const lista = document.getElementById('lista-receber');
+    lista.innerHTML = '';
+    receber.forEach((r, i) => {
+        const dias = diasRestantes(r.data);
+        lista.innerHTML += `
+        <div class="linha ${r.pago ? 'linha-pago' : dias<0 ? 'linha-atrasado' : 'linha-vencer'}">
+            <div class="font-bold">${r.nome}</div>
+            <div class="text-sm">${fmtDinheiro(r.valor)} — ${fmtData(r.data)}</div>
+            <div class="flex justify-between mt-2">
+                <span>${r.pago ? '✅ Recebido' : dias<0 ? '🔴 Atrasado' : `${dias} dias`}</span>
+                <div>
+                    <button onclick="marcarReceberPago(${i})" class="text-green-400 px-2">✓</button>
+                    <button onclick="excluirReceber(${i})" class="text-red-400 px-2">🗑️</button>
+                </div>
             </div>
         </div>`;
     });
-    document.getElementById('rec-a').textContent = a;
-    document.getElementById('rec-at').textContent = at;
-    document.getElementById('rec-p').textContent = p;
-    document.getElementById('r-rec-valor').textContent = fmtValor(valorTotal);
-    return {a,at,p,valorTotal};
+    if (receber.length === 0) lista.innerHTML = '<p class="text-slate-400">Nenhuma conta</p>';
 }
 
 // ==============================================
-// 📊 ATUALIZAR TUDO
+// ATUALIZAR TUDO
 // ==============================================
 function atualizarTela() {
-    if(!carregado) return;
-
-    const bol = montarBoletos();
-    const che = montarCheques();
+    montarBoletos();
+    montarCheques();
     montarLotes();
-    const cx = montarCaixa();
+    montarCaixa();
     montarReceber();
-
-    document.getElementById('r-bol-vencer').textContent = bol.v;
-    document.getElementById('r-bol-atraso').textContent = bol.a;
-    document.getElementById('r-bol-pago').textContent = bol.p;
-    document.getElementById('r-che-aberto').textContent = che.a;
-    document.getElementById('r-cx-saldo').textContent = fmtValor(cx.saldo);
-
-    // Próximos vencimentos no resumo
+    
+    // Próximos vencimentos
     const proximos = [];
-    boletos.filter(b => b.status !== 'pago').forEach(b => {
-        const d = diasVenc(b.vencimento);
-        if(d <= 7) proximos.push({nome: b.nome, valor: b.valor, data: b.vencimento, dias: d});
+    boletos.filter(b => !b.pago).forEach(b => {
+        const d = diasRestantes(b.data);
+        if (d <= 7) proximos.push({nome: b.nome, valor: b.valor, data: b.data, dias: d});
     });
-    lotes.filter(l => l.status !== 'pago').forEach(l => {
-        const d = diasVenc(dataProxDia(l.diaVencimento));
-        if(d <= 7) proximos.push({nome: l.nome, valor: l.valor, data: dataProxDia(l.diaVencimento), dias: d});
+    lotes.filter(l => !l.pago).forEach(l => {
+        const d = diasRestantes(dataProxDia(l.dia));
+        if (d <= 7) proximos.push({nome: l.nome, valor: l.valor, data: dataProxDia(l.dia), dias: d});
     });
-
-    const divProx = document.getElementById('proximos');
-    if(proximos.length === 0) {
-        divProx.innerHTML = '<p class="text-slate-400">Nenhum vencimento próximo.</p>';
+    
+    const listaProx = document.getElementById('proximos-lista');
+    if (proximos.length === 0) {
+        listaProx.innerHTML = '<p class="text-slate-400">Nenhum vencimento próximo</p>';
     } else {
-        divProx.innerHTML = proximos.sort((a,b) => a.dias - b.dias).map(x => `
-        <div class="p-2 rounded ${x.dias<0?'bg-red-900/20':x.dias<=1?'bg-amber-900/20':'bg-slate-800/50'}">
-            <span class="font-medium">${x.nome}</span> — ${fmtValor(x.valor)} — ${fmtData(x.data)}
-            ${x.dias<0?`<span class="text-red-400 ml-2">ATRASADO</span>`:
-              x.dias===0?`<span class="text-amber-400 ml-2 font-bold">HOJE!</span>`:
-              `<span class="text-slate-400 ml-2">faltam ${x.dias} dias</span>`}
+        listaProx.innerHTML = proximos.sort((a,b) => a.dias - b.dias).map(x => `
+        <div class="py-2 border-b border-slate-700">
+            <span class="font-bold">${x.nome}</span> — ${fmtDinheiro(x.valor)} — ${fmtData(x.data)}
+            <span class="text-sm ml-2 ${x.dias<0?'text-red-400':x.dias<=1?'text-amber-400':'text-slate-400'}">
+                ${x.dias<0?`ATRASADO ${Math.abs(x.dias)}d`:x.dias===0?'HOJE!':`${x.dias}d`}
+            </span>
         </div>`).join('');
     }
 }
 
-// ==============================================
-// 🚀 INICIAR
-// ==============================================
-carregarDaNuvem();
+// INICIAR
+carregar();
 </script>
 </body>
 </html>
