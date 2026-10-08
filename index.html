@@ -1,4 +1,4 @@
-m<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
@@ -10,62 +10,96 @@ m<!DOCTYPE html>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <style>
         * { box-sizing: border-box; touch-action: manipulation; }
-        body { background: #0f172a; color: #f1f5f9; font-family: system-ui, sans-serif; margin: 0; padding: 0; min-height: 100vh; }
+        body { background: #0f172a; color: #f1f5f9; font-family: system-ui, -apple-system, sans-serif; margin: 0; padding: 0; min-height: 100vh; }
         .aba { padding: 14px 16px; font-size: 15px; border-bottom: 3px solid transparent; cursor: pointer; font-weight: 600; }
         .aba.ativa { border-bottom-color: #3b82f6; color: #3b82f6; background: rgba(59,130,246,0.1); }
-        .card { background: #1e293b; border-radius: 12px; padding: 18px; margin: 12px; }
+        .card { background: #1e293b; border-radius: 12px; padding: 18px; margin: 12px; border: 1px solid #334155; }
         .hidden { display: none !important; }
-        input { width: 100%; padding: 14px; background: #334155; border: 1px solid #475569; border-radius: 8px; color: white; font-size: 16px; margin-bottom: 12px; }
+        input { width: 100%; padding: 12px 14px; background: #334155; border: 1px solid #475569; border-radius: 8px; color: white; font-size: 15px; margin-bottom: 12px; }
         input:focus { outline: none; border-color: #3b82f6; }
-        .btn { padding: 14px; border-radius: 8px; font-weight: bold; border: none; cursor: pointer; font-size: 16px; width: 100%; }
+        .btn { padding: 12px 16px; border-radius: 8px; font-weight: bold; border: none; cursor: pointer; font-size: 15px; width: 100%; transition: all 0.2s; }
         .btn-azul { background: #3b82f6; color: white; }
         .btn-azul:hover { background: #2563eb; }
         .btn-verde { background: #10b981; color: white; }
-        .linha { padding: 14px; border-radius: 8px; margin-bottom: 10px; background: #334155/40; border-left: 4px solid; }
+        .btn-verde:hover { background: #059669; }
+        .linha { padding: 14px; border-radius: 8px; margin-bottom: 10px; background: rgba(51, 65, 85, 0.4); border-left: 4px solid; }
         .linha-pago { border-left-color: #10b981; }
         .linha-vencer { border-left-color: #f59e0b; }
         .linha-atrasado { border-left-color: #ef4444; }
-        .codigo-barras { font-family: monospace; font-size: 13px; color: #94a3b8; margin-top: 6px; word-break: break-all; background: #0f172a; padding: 6px; border-radius: 4px; }
-        .salvo-aviso { position: fixed; top: 10px; right: 10px; background: #10b981; color: white; padding: 8px 16px; border-radius: 20px; font-size: 13px; z-index: 999; }
-        .contador { display: flex; gap: 10px; margin-bottom: 16px; }
-        .contador div { flex: 1; text-align: center; padding: 12px; border-radius: 10px; background: #334155/50; }
+        .codigo-barras { font-family: monospace; font-size: 13px; color: #94a3b8; margin-top: 8px; word-break: break-all; background: #0f172a; padding: 8px 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; }
+        .salvo-aviso { position: fixed; top: 12px; right: 12px; background: #10b981; color: white; padding: 8px 16px; border-radius: 20px; font-size: 13px; z-index: 999; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+        .contador { display: flex; gap: 8px; margin-bottom: 12px; }
+        .contador div { flex: 1; text-align: center; padding: 10px; border-radius: 10px; background: rgba(51, 65, 85, 0.5); border: 1px solid #334155; }
     </style>
 </head>
 <body>
 
 <div id="salvo-aviso" class="salvo-aviso hidden">
-    <i class="fa-solid fa-cloud"></i> Salvo na nuvem!
+    <i class="fa-solid fa-check"></i> <span id="salvo-texto">Salvo!</span>
 </div>
 
-<header class="bg-slate-900/90 py-4 px-5 sticky top-0 z-50 border-b border-slate-700">
-    <h1 class="text-xl font-bold">📋 Boletos & Cheques ☁️</h1>
+<header class="bg-slate-900/95 py-4 px-4 sticky top-0 z-50 border-b border-slate-700 flex justify-between items-center">
+    <h1 class="text-lg font-bold flex items-center gap-2">
+        <span>📋 Boletos & Cheques</span>
+        <span id="status-nuvem" class="text-xs font-normal bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full border border-slate-700">📱 Local</span>
+    </h1>
+    <div class="flex gap-2">
+        <button onclick="exportarBackup()" title="Baixar Backup" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-lg border border-slate-700">
+            <i class="fa-solid fa-download"></i> Backup
+        </button>
+        <button onclick="document.getElementById('input-importar').click()" title="Restaurar Backup" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-lg border border-slate-700">
+            <i class="fa-solid fa-upload"></i> Importar
+        </button>
+        <input type="file" id="input-importar" class="hidden" accept=".json" onchange="importarBackup(event)">
+    </div>
 </header>
 
-<div class="flex border-b border-slate-700 px-3">
+<div class="flex border-b border-slate-700 px-3 bg-slate-900">
     <button class="aba ativa" data-painel="boletos">Boletos</button>
     <button class="aba text-slate-400" data-painel="cheques">Cheques</button>
 </div>
 
-<main>
+<main class="max-w-xl mx-auto pb-8">
+    <div class="px-3 pt-3">
+        <input type="text" id="campo-busca" placeholder="🔍 Pesquisar por nome ou código..." oninput="atualizarTela()">
+    </div>
+
     <!-- ========== BOLETOS ========== -->
     <div id="painel-boletos" class="painel">
         <div class="contador px-3">
-            <div><p class="text-amber-400 text-xs">A Vencer</p><p id="b-v" class="font-bold text-lg">0</p></div>
-            <div><p class="text-red-400 text-xs">Atrasados</p><p id="b-a" class="font-bold text-lg">0</p></div>
-            <div><p class="text-green-400 text-xs">Pagos</p><p id="b-p" class="font-bold text-lg">0</p></div>
+            <div>
+                <p class="text-amber-400 text-xs font-semibold">A Vencer</p>
+                <p id="b-v" class="font-bold text-base">0</p>
+                <p id="b-v-val" class="text-[11px] text-slate-400">R$ 0,00</p>
+            </div>
+            <div>
+                <p class="text-red-400 text-xs font-semibold">Atrasados</p>
+                <p id="b-a" class="font-bold text-base">0</p>
+                <p id="b-a-val" class="text-[11px] text-slate-400">R$ 0,00</p>
+            </div>
+            <div>
+                <p class="text-green-400 text-xs font-semibold">Pagos</p>
+                <p id="b-p" class="font-bold text-base">0</p>
+                <p id="b-p-val" class="text-[11px] text-slate-400">R$ 0,00</p>
+            </div>
         </div>
 
         <div class="card">
-            <h3 class="font-bold mb-4 text-lg">➕ Novo Boleto</h3>
-            <input type="text" id="bol-nome" placeholder="Nome / Empresa">
-            <input type="text" id="bol-codigo" placeholder="Código de Barras ✅">
-            <input type="number" step="0.01" id="bol-valor" placeholder="Valor R$">
+            <h3 class="font-bold mb-3 text-base flex items-center gap-2">
+                <i class="fa-solid fa-plus text-blue-400"></i> Novo Boleto
+            </h3>
+            <input type="text" id="bol-nome" placeholder="Nome / Empresa *">
+            <input type="text" id="bol-codigo" placeholder="Código de Barras (opcional)">
+            <input type="number" step="0.01" id="bol-valor" placeholder="Valor R$ *">
             <input type="date" id="bol-data">
-            <button class="btn btn-azul" onclick="salvarBoleto()">☁️ Salvar Boleto</button>
+            <button class="btn btn-azul" onclick="salvarBoleto()">💾 Salvar Boleto</button>
         </div>
 
         <div class="card">
-            <h3 class="font-bold mb-4 text-lg">📑 Meus Boletos</h3>
+            <h3 class="font-bold mb-3 text-base flex items-center justify-between">
+                <span>📑 Meus Boletos</span>
+                <span id="tot-boletos" class="text-xs font-normal text-slate-400">0 itens</span>
+            </h3>
             <div id="lista-boletos"></div>
         </div>
     </div>
@@ -73,22 +107,39 @@ m<!DOCTYPE html>
     <!-- ========== CHEQUES ========== -->
     <div id="painel-cheques" class="painel hidden">
         <div class="contador px-3">
-            <div><p class="text-slate-400 text-xs">Em Aberto</p><p id="c-a" class="font-bold text-lg">0</p></div>
-            <div><p class="text-green-400 text-xs">Compensados</p><p id="c-p" class="font-bold text-lg">0</p></div>
-            <div><p class="text-red-400 text-xs">Devolvidos</p><p id="c-d" class="font-bold text-lg">0</p></div>
+            <div>
+                <p class="text-slate-400 text-xs font-semibold">Em Aberto</p>
+                <p id="c-a" class="font-bold text-base">0</p>
+                <p id="c-a-val" class="text-[11px] text-slate-400">R$ 0,00</p>
+            </div>
+            <div>
+                <p class="text-green-400 text-xs font-semibold">Compensados</p>
+                <p id="c-p" class="font-bold text-base">0</p>
+                <p id="c-p-val" class="text-[11px] text-slate-400">R$ 0,00</p>
+            </div>
+            <div>
+                <p class="text-red-400 text-xs font-semibold">Devolvidos</p>
+                <p id="c-d" class="font-bold text-base">0</p>
+                <p id="c-d-val" class="text-[11px] text-slate-400">R$ 0,00</p>
+            </div>
         </div>
 
         <div class="card">
-            <h3 class="font-bold mb-4 text-lg">➕ Novo Cheque</h3>
-            <input type="text" id="che-nome" placeholder="Emitente / Quem deu">
-            <input type="text" id="che-numero" placeholder="Número">
-            <input type="number" step="0.01" id="che-valor" placeholder="Valor R$">
+            <h3 class="font-bold mb-3 text-base flex items-center gap-2">
+                <i class="fa-solid fa-plus text-emerald-400"></i> Novo Cheque
+            </h3>
+            <input type="text" id="che-nome" placeholder="Emitente / Quem deu *">
+            <input type="text" id="che-numero" placeholder="Número do Cheque (opcional)">
+            <input type="number" step="0.01" id="che-valor" placeholder="Valor R$ *">
             <input type="date" id="che-data">
-            <button class="btn btn-verde" onclick="salvarCheque()">☁️ Salvar Cheque</button>
+            <button class="btn btn-verde" onclick="salvarCheque()">💾 Salvar Cheque</button>
         </div>
 
         <div class="card">
-            <h3 class="font-bold mb-4 text-lg">📑 Meus Cheques</h3>
+            <h3 class="font-bold mb-3 text-base flex items-center justify-between">
+                <span>📑 Meus Cheques</span>
+                <span id="tot-cheques" class="text-xs font-normal text-slate-400">0 itens</span>
+            </h3>
             <div id="lista-cheques"></div>
         </div>
     </div>
@@ -96,7 +147,17 @@ m<!DOCTYPE html>
 
 <script>
 // ==============================================
-// 🔧 NUVEM FIREBASE — SALVA SEMPRE
+// 📦 CONFIGURAÇÃO E ESTADO DO APP
+// ==============================================
+const CHAVE_LOCAL = 'boletos_cheques_dados_v3';
+
+let dados = {
+    boletos: [],
+    cheques: []
+};
+
+// ==============================================
+// ☁️ OPÇÕES DE FIREBASE (SEGURA E RESILIENTE)
 // ==============================================
 const firebaseConfig = {
     apiKey: "AIzaSyB9x6bQb4zKzqKfYb48T5vHtqXz9hG7xQcR0",
@@ -107,61 +168,166 @@ const firebaseConfig = {
     appId: "1:109876543210:web:fedcba0987654321abc123"
 };
 
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-
-let boletos = [];
-let cheques = [];
-let carregado = false;
+let db = null;
+try {
+    firebase.initializeApp(firebaseConfig);
+    db = firebase.firestore();
+} catch (e) {
+    console.warn("Firebase não inicializado. Rodando em modo 100% Local.");
+}
 
 // ==============================================
-// 📦 FUNÇÕES BASE
+// 💾 PERSISTÊNCIA DE DADOS
+// ==============================================
+function carregarDados() {
+    const salvo = localStorage.getItem(CHAVE_LOCAL);
+    if (salvo) {
+        try {
+            const parsed = JSON.parse(salvo);
+            dados.boletos = Array.isArray(parsed.boletos) ? parsed.boletos : [];
+            dados.cheques = Array.isArray(parsed.cheques) ? parsed.cheques : [];
+        } catch(e) {
+            console.error("Erro ao ler LocalStorage:", e);
+        }
+    }
+    atualizarTela();
+    sincronizarComNuvem();
+}
+
+async function salvarEAtualizar(msg = "Salvo com sucesso!") {
+    // 1. Salva imediatamente no LocalStorage (Garantia Local)
+    localStorage.setItem(CHAVE_LOCAL, JSON.stringify(dados));
+    
+    // 2. Atualiza a interface do usuário
+    atualizarTela();
+    mostrarAviso(msg);
+    
+    // 3. Tenta sincronizar com Firebase em segundo plano sem travar
+    if (db) {
+        try {
+            await db.collection('dados').doc('principal').set({
+                boletos: dados.boletos,
+                cheques: dados.cheques,
+                atualizado: new Date().toISOString()
+            });
+            atualizarBadgeNuvem(true);
+        } catch(e) {
+            console.warn("Nuvem indisponível ou sem permissão. Mantido no storage local.");
+            atualizarBadgeNuvem(false);
+        }
+    }
+}
+
+async function sincronizarComNuvem() {
+    if (!db) { atualizarBadgeNuvem(false); return; }
+    try {
+        const doc = await db.collection('dados').doc('principal').get({ source: 'server' });
+        if (doc.exists) {
+            const d = doc.data();
+            if (d && (d.boletos || d.cheques)) {
+                // Se a nuvem tiver dados e o local estiver vazio, absorve a nuvem
+                if (dados.boletos.length === 0 && dados.cheques.length === 0) {
+                    dados.boletos = d.boletos || [];
+                    dados.cheques = d.cheques || [];
+                    localStorage.setItem(CHAVE_LOCAL, JSON.stringify(dados));
+                    atualizarTela();
+                }
+            }
+        }
+        atualizarBadgeNuvem(true);
+    } catch (e) {
+        atualizarBadgeNuvem(false);
+    }
+}
+
+function atualizarBadgeNuvem(online) {
+    const el = document.getElementById('status-nuvem');
+    if (online) {
+        el.className = "text-xs font-normal bg-emerald-950 text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-800";
+        el.textContent = "☁️ Nuvem OK";
+    } else {
+        el.className = "text-xs font-normal bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full border border-slate-700";
+        el.textContent = "📱 Modo Local";
+    }
+}
+
+// ==============================================
+// 🛠️ FUNÇÕES AUXILIARES
 // ==============================================
 function hoje() { const d = new Date(); d.setHours(0,0,0,0); return d; }
+
 function diasRestantes(dataStr) {
+    if (!dataStr) return 0;
     const alvo = new Date(dataStr + 'T00:00:00');
-    return Math.ceil((alvo - hoje()) / (1000*60*60*24));
+    return Math.round((alvo - hoje()) / (1000 * 60 * 60 * 24));
 }
-function fmtDinheiro(v) { return Number(v).toLocaleString('pt-BR', {style:'currency', currency:'BRL'}); }
-function fmtData(d) { return new Date(d+'T00:00:00').toLocaleDateString('pt-BR'); }
-function avisoSalvo() {
+
+function fmtDinheiro(v) { 
+    return Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); 
+}
+
+function fmtData(d) { 
+    if (!d) return 'Sem data';
+    return new Date(d + 'T00:00:00').toLocaleDateString('pt-BR'); 
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
+function mostrarAviso(texto) {
     const el = document.getElementById('salvo-aviso');
+    document.getElementById('salvo-texto').textContent = texto;
     el.classList.remove('hidden');
-    setTimeout(() => el.classList.add('hidden'), 1800);
+    setTimeout(() => el.classList.add('hidden'), 2000);
 }
 
+window.copiarCodigo = function(codigo) {
+    navigator.clipboard.writeText(codigo).then(() => {
+        mostrarAviso("Código copiado!");
+    }).catch(() => {
+        prompt("Copie o código manualmente:", codigo);
+    });
+};
+
 // ==============================================
-// ☁️ SINCRONIZAR
+// 📤 BACKUP EM ARQUIVO (EXPORT / IMPORT)
 // ==============================================
-async function salvarNaNuvem() {
-    try {
-        await db.collection('dados').doc('principal').set({ boletos, cheques, atualizado: new Date() });
-        avisoSalvo();
-    } catch(e) {
-        console.log('Nuvem indisponível, salvo localmente');
-        localStorage.setItem('dados', JSON.stringify({ boletos, cheques }));
-        avisoSalvo();
-    }
+function exportarBackup() {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(dados, null, 2));
+    const dlAnchorElem = document.createElement('a');
+    const dataHoje = new Date().toISOString().split('T')[0];
+    dlAnchorElem.setAttribute("href", dataStr);
+    dlAnchorElem.setAttribute("download", `backup_boletos_cheques_${dataHoje}.json`);
+    dlAnchorElem.click();
 }
 
-async function carregarDaNuvem() {
-    try {
-        const doc = await db.collection('dados').doc('principal').get();
-        if(doc.exists) {
-            const d = doc.data();
-            boletos = d.boletos || [];
-            cheques = d.cheques || [];
+function importarBackup(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const conteudo = JSON.parse(e.target.result);
+            if (conteudo && (Array.isArray(conteudo.boletos) || Array.isArray(conteudo.cheques))) {
+                dados.boletos = conteudo.boletos || [];
+                dados.cheques = conteudo.cheques || [];
+                salvarEAtualizar("Backup restaurado!");
+            } else {
+                alert("Arquivo de backup inválido!");
+            }
+        } catch(err) {
+            alert("Erro ao ler arquivo de backup.");
         }
-    } catch(e) {
-        const local = localStorage.getItem('dados');
-        if(local) {
-            const d = JSON.parse(local);
-            boletos = d.boletos || [];
-            cheques = d.cheques || [];
-        }
-    }
-    carregado = true;
-    atualizarTela();
+    };
+    reader.readAsText(file);
 }
 
 // ==============================================
@@ -185,54 +351,98 @@ async function salvarBoleto() {
     const valor = Number(document.getElementById('bol-valor').value);
     const data = document.getElementById('bol-data').value;
     
-    if(!nome || !valor || !data) { alert('Preencha nome, valor e data!'); return; }
+    if(!nome || !valor || !data) { 
+        alert('Por favor, preencha o Nome, Valor e Data de Vencimento!'); 
+        return; 
+    }
     
-    boletos.push({ id: Date.now(), nome, codigo, valor, data, pago: false });
+    dados.boletos.push({ id: Date.now(), nome, codigo, valor, data, pago: false });
     
     document.getElementById('bol-nome').value = '';
     document.getElementById('bol-codigo').value = '';
     document.getElementById('bol-valor').value = '';
     document.getElementById('bol-data').value = '';
     
-    await salvarNaNuvem();
+    salvarEAtualizar("Boleto salvo!");
 }
 
-window.marcarBoleto = async i => { boletos[i].pago = !boletos[i].pago; await salvarNaNuvem(); };
-window.excluirBoleto = async i => { if(confirm('Excluir?')){ boletos.splice(i,1); await salvarNaNuvem(); } };
+window.marcarBoleto = index => { 
+    dados.boletos[index].pago = !dados.boletos[index].pago; 
+    salvarEAtualizar("Status atualizado!"); 
+};
+
+window.excluirBoleto = index => { 
+    if(confirm('Excluir este boleto?')) { 
+        dados.boletos.splice(index, 1); 
+        salvarEAtualizar("Boleto removido!"); 
+    } 
+};
 
 function montarBoletos() {
     const lista = document.getElementById('lista-boletos');
+    const busca = document.getElementById('campo-busca').value.toLowerCase();
     lista.innerHTML = '';
-    let v=0,a=0,p=0;
     
-    boletos.forEach((b,i) => {
+    let v=0, a=0, p=0;
+    let valV=0, valA=0, valP=0;
+    let totalExibidos = 0;
+    
+    dados.boletos.forEach((b, i) => {
         const d = diasRestantes(b.data);
         let cls='', status='';
         
-        if(b.pago) { cls='linha-pago'; status='✅ Pago'; p++; }
-        else if(d<0) { cls='linha-atrasado'; status=`🔴 ATRASADO ${Math.abs(d)}d`; a++; }
-        else if(d===0) { status='⚠️ HOJE!'; v++; }
-        else { status=`${d} dias`; v++; }
+        if (b.pago) { 
+            cls='linha-pago'; status='✅ Pago'; p++; valP += b.valor; 
+        } else if (d < 0) { 
+            cls='linha-atrasado'; status=`🔴 ATRASADO ${Math.abs(d)}d`; a++; valA += b.valor; 
+        } else if (d === 0) { 
+            cls='linha-vencer'; status='⚠️ VENCE HOJE!'; v++; valV += b.valor; 
+        } else { 
+            cls='linha-vencer'; status=`⏳ ${d} dias`; v++; valV += b.valor; 
+        }
+
+        // Filtro de Busca
+        const atendeBusca = b.nome.toLowerCase().includes(busca) || (b.codigo && b.codigo.toLowerCase().includes(busca));
+        if (!atendeBusca) return;
         
+        totalExibidos++;
+
         lista.innerHTML += `
         <div class="linha ${cls}">
-            <div class="font-bold text-base">${b.nome}</div>
-            <div class="text-sm mt-1">${fmtDinheiro(b.valor)} — ${fmtData(b.data)}</div>
-            ${b.codigo ? `<div class="codigo-barras mt-2">📎 ${b.codigo}</div>` : ''}
+            <div class="font-bold text-base">${escapeHtml(b.nome)}</div>
+            <div class="text-sm mt-1 text-slate-300 font-medium">${fmtDinheiro(b.valor)} — <span class="text-slate-400">${fmtData(b.data)}</span></div>
+            ${b.codigo ? `
+                <div class="codigo-barras">
+                    <span class="truncate mr-2">📎 ${escapeHtml(b.codigo)}</span>
+                    <button onclick="copiarCodigo('${escapeHtml(b.codigo)}')" class="text-xs bg-slate-800 hover:bg-slate-700 px-2 py-1 rounded text-slate-200 border border-slate-700 flex-shrink-0">
+                        <i class="fa-regular fa-copy"></i>
+                    </button>
+                </div>` : ''}
             <div class="flex justify-between items-center mt-3">
-                <span class="text-sm">${status}</span>
-                <div>
-                    <button onclick="marcarBoleto(${i})" class="text-green-400 px-3 text-lg">✓</button>
-                    <button onclick="excluirBoleto(${i})" class="text-red-400 px-3 text-lg">🗑️</button>
+                <span class="text-xs font-semibold uppercase tracking-wider">${status}</span>
+                <div class="flex gap-2">
+                    <button onclick="marcarBoleto(${i})" title="Mudar Status" class="text-green-400 hover:text-green-300 bg-slate-800/80 px-3 py-1 rounded border border-slate-700 text-sm">
+                        ${b.pago ? '↩ Desfazer' : '✓ Pagar'}
+                    </button>
+                    <button onclick="excluirBoleto(${i})" title="Excluir" class="text-red-400 hover:text-red-300 bg-slate-800/80 px-2.5 py-1 rounded border border-slate-700 text-sm">
+                        🗑️
+                    </button>
                 </div>
             </div>
         </div>`;
     });
     
     document.getElementById('b-v').textContent = v;
+    document.getElementById('b-v-val').textContent = fmtDinheiro(valV);
     document.getElementById('b-a').textContent = a;
+    document.getElementById('b-a-val').textContent = fmtDinheiro(valA);
     document.getElementById('b-p').textContent = p;
-    if(boletos.length===0) lista.innerHTML = '<p class="text-slate-400 text-center py-4">Nenhum boleto</p>';
+    document.getElementById('b-p-val').textContent = fmtDinheiro(valP);
+    document.getElementById('tot-boletos').textContent = `${totalExibidos} itens`;
+
+    if (totalExibidos === 0) {
+        lista.innerHTML = `<p class="text-slate-400 text-center py-6 text-sm">${dados.boletos.length === 0 ? 'Nenhum boleto cadastrado' : 'Nenhum boleto encontrado na busca'}</p>`;
+    }
 }
 
 // ==============================================
@@ -244,68 +454,103 @@ async function salvarCheque() {
     const valor = Number(document.getElementById('che-valor').value);
     const data = document.getElementById('che-data').value;
     
-    if(!nome || !valor || !data) { alert('Preencha tudo!'); return; }
+    if(!nome || !valor || !data) { 
+        alert('Por favor, preencha o Emitente, Valor e Data!'); 
+        return; 
+    }
     
-    cheques.push({ id: Date.now(), nome, numero, valor, data, status: 'aberto' });
+    dados.cheques.push({ id: Date.now(), nome, numero, valor, data, status: 'aberto' });
     
     document.getElementById('che-nome').value = '';
     document.getElementById('che-numero').value = '';
     document.getElementById('che-valor').value = '';
     document.getElementById('che-data').value = '';
     
-    await salvarNaNuvem();
+    salvarEAtualizar("Cheque salvo!");
 }
 
-window.marcarCheque = async i => {
-    if(cheques[i].status==='aberto') cheques[i].status='pago';
-    else if(cheques[i].status==='pago') cheques[i].status='dev';
-    else cheques[i].status='aberto';
-    await salvarNaNuvem();
+window.marcarCheque = index => {
+    const st = dados.cheques[index].status;
+    if(st === 'aberto') dados.cheques[index].status = 'pago';
+    else if(st === 'pago') dados.cheques[index].status = 'dev';
+    else dados.cheques[index].status = 'aberto';
+    salvarEAtualizar("Status atualizado!");
 };
-window.excluirCheque = async i => { if(confirm('Excluir?')){ cheques.splice(i,1); await salvarNaNuvem(); } };
+
+window.excluirCheque = index => { 
+    if(confirm('Excluir este cheque?')) { 
+        dados.cheques.splice(index, 1); 
+        salvarEAtualizar("Cheque removido!"); 
+    } 
+};
 
 function montarCheques() {
     const lista = document.getElementById('lista-cheques');
+    const busca = document.getElementById('campo-busca').value.toLowerCase();
     lista.innerHTML = '';
-    let a=0,p=0,d=0;
     
-    cheques.forEach((c,i) => {
+    let a=0, p=0, d=0;
+    let valA=0, valP=0, valD=0;
+    let totalExibidos = 0;
+    
+    dados.cheques.forEach((c, i) => {
         let cls='', status='';
-        if(c.status==='pago') { cls='linha-pago'; status='✅ Compensado'; p++; }
-        else if(c.status==='dev') { cls='linha-atrasado'; status='🔴 Devolvido'; d++; }
-        else { cls='linha-vencer'; status='⏳ Em Aberto'; a++; }
+        if (c.status === 'pago') { 
+            cls='linha-pago'; status='✅ Compensado'; p++; valP += c.valor; 
+        } else if (c.status === 'dev') { 
+            cls='linha-atrasado'; status='🔴 Devolvido'; d++; valD += c.valor; 
+        } else { 
+            cls='linha-vencer'; status='⏳ Em Aberto'; a++; valA += c.valor; 
+        }
+
+        const atendeBusca = c.nome.toLowerCase().includes(busca) || (c.numero && c.numero.toLowerCase().includes(busca));
+        if (!atendeBusca) return;
+
+        totalExibidos++;
         
         lista.innerHTML += `
         <div class="linha ${cls}">
-            <div class="font-bold text-base">${c.nome}</div>
-            <div class="text-sm mt-1">Nº ${c.numero} — ${fmtDinheiro(c.valor)} — ${fmtData(c.data)}</div>
+            <div class="font-bold text-base">${escapeHtml(c.nome)}</div>
+            <div class="text-sm mt-1 text-slate-300 font-medium">
+                ${c.numero ? `<span class="text-slate-400">Nº ${escapeHtml(c.numero)}</span> — ` : ''}${fmtDinheiro(c.valor)} — <span class="text-slate-400">${fmtData(c.data)}</span>
+            </div>
             <div class="flex justify-between items-center mt-3">
-                <span class="text-sm">${status}</span>
-                <div>
-                    <button onclick="marcarCheque(${i})" class="text-green-400 px-3 text-lg">✓</button>
-                    <button onclick="excluirCheque(${i})" class="text-red-400 px-3 text-lg">🗑️</button>
+                <span class="text-xs font-semibold uppercase tracking-wider">${status}</span>
+                <div class="flex gap-2">
+                    <button onclick="marcarCheque(${i})" title="Alternar Status" class="text-green-400 hover:text-green-300 bg-slate-800/80 px-3 py-1 rounded border border-slate-700 text-sm">
+                        Status 🔄
+                    </button>
+                    <button onclick="excluirCheque(${i})" title="Excluir" class="text-red-400 hover:text-red-300 bg-slate-800/80 px-2.5 py-1 rounded border border-slate-700 text-sm">
+                        🗑️
+                    </button>
                 </div>
             </div>
         </div>`;
     });
     
     document.getElementById('c-a').textContent = a;
+    document.getElementById('c-a-val').textContent = fmtDinheiro(valA);
     document.getElementById('c-p').textContent = p;
+    document.getElementById('c-p-val').textContent = fmtDinheiro(valP);
     document.getElementById('c-d').textContent = d;
-    if(cheques.length===0) lista.innerHTML = '<p class="text-slate-400 text-center py-4">Nenhum cheque</p>';
+    document.getElementById('c-d-val').textContent = fmtDinheiro(valD);
+    document.getElementById('tot-cheques').textContent = `${totalExibidos} itens`;
+
+    if (totalExibidos === 0) {
+        lista.innerHTML = `<p class="text-slate-400 text-center py-6 text-sm">${dados.cheques.length === 0 ? 'Nenhum cheque cadastrado' : 'Nenhum cheque encontrado na busca'}</p>`;
+    }
 }
 
 // ==============================================
-// 📊 ATUALIZAR
+// 📊 ATUALIZAÇÃO DA TELA
 // ==============================================
 function atualizarTela() {
-    if(!carregado) return;
     montarBoletos();
     montarCheques();
 }
 
-// INICIAR
-carregarDaNuvem();
+// INICIALIZAR
+carregarDados();
 </script>
 </body>
 </html>
