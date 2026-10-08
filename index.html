@@ -3,100 +3,121 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Controle Completo 📋</title>
+    <title>Sistema de Controle Financeiro 📋</title>
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js para Gráficos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- SheetJS para Exportar Excel (.xlsx) -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
         * { box-sizing: border-box; }
-        body { background: #f0f4f8; min-height: 100vh; margin: 0; font-family: Arial, sans-serif; }
+        body { background: #f1f5f9; min-height: 100vh; margin: 0; font-family: system-ui, -apple-system, sans-serif; color: #334155; }
         
-        /* Abas */
-        .abas { display: flex; background: white; border-bottom: 2px solid #e5e7eb; position: sticky; top: 0; z-index: 50; overflow-x: auto; }
-        .aba { padding: 12px 16px; font-weight: 600; cursor: pointer; border-bottom: 3px solid transparent; white-space: nowrap; font-size: 14px; }
+        /* Abas Navegação */
+        .abas { display: flex; background: #ffffff; border-bottom: 2px solid #e2e8f0; position: sticky; top: 0; z-index: 50; overflow-x: auto; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+        .aba { padding: 14px 20px; font-weight: 600; cursor: pointer; border-bottom: 3px solid transparent; white-space: nowrap; font-size: 14px; color: #64748b; transition: all 0.2s; }
         .aba.ativa { border-bottom-color: #2563eb; color: #2563eb; background: #eff6ff; }
-        .painel { display: none; padding: 16px; max-width: 1200px; margin: 0 auto; }
+        .painel { display: none; padding: 20px; max-width: 1280px; margin: 0 auto; }
         .painel.visivel { display: block; }
         
-        /* Resumo e Alertas */
-        .resumo { background: linear-gradient(135deg, #1e40af, #3b82f6); color: white; border-radius: 10px; padding: 16px; margin-bottom: 20px; }
-        .resumo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; text-align: center; }
-        .resumo-valor { font-size: 22px; font-weight: bold; }
-        .alerta-vencimento { background: #fffbeb; border-left: 4px solid #f59e0b; padding: 12px 16px; border-radius: 6px; margin-bottom: 16px; display: none; }
-        .alerta-vencimento.mostrar { display: block; }
-        
-        /* Busca e Filtro */
-        .busca { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
-        select, input.busca-input { padding: 8px 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; flex: 1; min-width: 150px; }
-        
         /* Tabela Despesas */
-        .tabela-wrapper { overflow-x: auto; background: white; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
-        table { width: 100%; border-collapse: collapse; min-width: 900px; }
-        th, td { border: 1px solid #d1d5db; padding: 8px 6px; text-align: center; font-size: 13px; }
-        th { background: #2563eb; color: white; font-weight: bold; }
-        td:first-child { background: #eff6ff; text-align: left; font-weight: 500; white-space: nowrap; }
-        input { width: 100%; border: none; text-align: center; font-size: 13px; padding: 4px; background: transparent; }
-        input:focus { outline: 2px solid #2563eb; background: #f0f7ff; border-radius: 4px; }
-        .linha-total { background: #dbeafe; font-weight: bold; }
+        .tabela-wrapper { overflow-x: auto; background: white; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
+        table { width: 100%; border-collapse: collapse; min-width: 1000px; }
+        th, td { border: 1px solid #e2e8f0; padding: 10px 8px; text-align: center; font-size: 13px; }
+        th { background: #1e40af; color: white; font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; }
+        td:first-child { background: #f8fafc; text-align: left; font-weight: 600; white-space: nowrap; min-width: 180px; }
+        input.val-inp { width: 100%; border: 1px solid transparent; text-align: center; font-size: 13px; padding: 6px; background: transparent; border-radius: 4px; }
+        input.val-inp:hover { background: #f1f5f9; }
+        input.val-inp:focus { outline: none; border-color: #2563eb; background: #ffffff; box-shadow: 0 0 0 2px rgba(37,99,235,0.2); }
+        .linha-total { background: #dbeafe; font-weight: bold; color: #1e3a8a; }
         
         /* Cards Boletos e Cheques */
-        .card { background: white; border-radius: 10px; padding: 16px; margin-bottom: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); border-left: 4px solid #f59e0b; transition: all 0.2s; }
-        .card.avisa-vencer { border-left-color: #f97316; background: #fffaf5; }
-        .card.pago { border-left-color: #16a34a; opacity: 0.9; }
-        .card.atrasado { border-left-color: #ef4444; background: #fef2f2; }
-        .card.oculto { display: none; }
-        .codigo-barras { font-family: monospace; font-size: 12px; color: #6b7280; background: #f3f4f6; padding: 6px 8px; border-radius: 4px; margin-top: 4px; word-break: break-all; }
-        .status-tag { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+        .card { background: white; border-radius: 12px; padding: 18px; margin-bottom: 14px; box-shadow: 0 2px 4px rgba(0,0,0,0.04); border: 1px solid #e2e8f0; border-left: 5px solid #f59e0b; transition: transform 0.1s, box-shadow 0.1s; }
+        .card:hover { box-shadow: 0 4px 8px rgba(0,0,0,0.08); }
+        .card.avisa-vencer { border-left-color: #ea580c; background: #fff7ed; }
+        .card.pago { border-left-color: #16a34a; opacity: 0.85; background: #f0fdf4; }
+        .card.atrasado { border-left-color: #dc2626; background: #fef2f2; }
+        .codigo-barras { font-family: monospace; font-size: 12px; color: #475569; background: #f8fafc; border: 1px solid #e2e8f0; padding: 8px; border-radius: 6px; margin-top: 8px; word-break: break-all; display: flex; justify-content: space-between; align-items: center; }
+        
+        /* Badges de Status */
+        .status-tag { display: inline-block; padding: 4px 10px; border-radius: 9999px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
         .status-pendente { background: #fef3c7; color: #92400e; }
-        .status-pago { background: #d1fae5; color: #065f46; }
+        .status-pago { background: #dcfce7; color: #166534; }
         .status-atrasado { background: #fee2e2; color: #991b1b; }
-        .status-avisa { background: #fed7aa; color: #9a3412; }
+        .status-avisa { background: #ffedd5; color: #9a3412; }
         .status-aberto { background: #e0e7ff; color: #3730a3; }
         .status-dev { background: #fee2e2; color: #991b1b; }
-        .contadores { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
-        .contadores div { flex: 1; min-width: 100px; text-align: center; padding: 12px; border-radius: 10px; background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        input.full { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; margin-bottom: 10px; font-size: 14px; }
-        button { border: none; border-radius: 6px; padding: 10px 14px; cursor: pointer; font-size: 14px; font-weight: 500; }
+
+        .btn { border: none; border-radius: 6px; padding: 8px 14px; cursor: pointer; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; transition: opacity 0.2s; }
+        .btn:hover { opacity: 0.9; }
         .btn-azul { background: #2563eb; color: white; }
         .btn-verde { background: #16a34a; color: white; }
-        .btn-vermelho { background: #ef4444; color: white; }
-        .btn-cinza { background: #e5e7eb; color: #333; }
-        .salvo { position: fixed; top: 12px; right: 12px; background: #16a34a; color: white; padding: 8px 16px; border-radius: 20px; font-size: 13px; display: none; z-index: 999; }
-        .form-card { background: white; border-radius: 10px; padding: 18px; margin-bottom: 20px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
-        h2 { font-size: 18px; font-weight: bold; margin-bottom: 16px; color: #1f2937; }
+        .btn-vermelho { background: #dc2626; color: white; }
+        .btn-cinza { background: #64748b; color: white; }
+        .btn-outline { background: white; border: 1px solid #cbd5e1; color: #334155; }
+        
+        .salvo-toast { position: fixed; bottom: 20px; right: 20px; background: #10b981; color: white; padding: 12px 20px; border-radius: 8px; font-weight: 600; font-size: 14px; display: none; z-index: 999; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
     </style>
 </head>
 <body>
 
-<div class="salvo" id="avisoSalvo">✅ Salvo!</div>
+<div class="salvo-toast" id="avisoSalvo">✅ Alterações Salvas!</div>
+
+<!-- BARRA DE FERRAMENTAS GLOBAL (BACKUP E EXPORTAÇÃO) -->
+<div class="bg-slate-900 text-white px-4 py-2 text-xs flex flex-wrap justify-between items-center gap-2">
+    <div class="font-semibold flex items-center gap-2">
+        <span>💾 Central de Arquivos & Backups</span>
+    </div>
+    <div class="flex items-center gap-2">
+        <button onclick="exportarExcel()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1 rounded font-medium">📊 Salvar em Excel (.xlsx)</button>
+        <button onclick="exportarBackup()" class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1 rounded font-medium">📥 Baixar Backup (.json)</button>
+        <label class="bg-slate-700 hover:bg-slate-600 text-white px-3 py-1 rounded font-medium cursor-pointer">
+            📤 Restaurar Backup
+            <input type="file" id="inputImportar" accept=".json" class="hidden" onchange="importarBackup(event)">
+        </label>
+    </div>
+</div>
 
 <!-- ABAS -->
 <div class="abas">
     <div class="aba ativa" data-painel="despesas">🏠 Despesas da Casa</div>
     <div class="aba" data-painel="boletos">🧾 Boletos</div>
     <div class="aba" data-painel="cheques">📑 Cheques</div>
+    <div class="aba" data-painel="graficos">📊 Gráficos & Relatórios</div>
 </div>
 
 <!-- ======================================
    PAINEL 1: DESPESAS DA CASA
    ====================================== -->
 <div id="painel-despesas" class="painel visivel">
-    <h2 class="text-center text-blue-700 mb-4">🏠 Despesas da Casa</h2>
+    <div class="flex flex-wrap justify-between items-center mb-4 gap-3">
+        <div>
+            <h2 class="text-2xl font-bold text-slate-800">🏠 Despesas da Casa</h2>
+            <p class="text-sm text-slate-500">Acompanhamento mensal de custos fixos e variáveis</p>
+        </div>
+        <div class="flex items-center gap-3">
+            <label class="font-semibold text-sm">Ano:</label>
+            <select id="seletorAno" onchange="mudarAno()" class="p-2 border rounded-lg bg-white font-bold text-blue-600 shadow-sm">
+                <!-- Preenchido via JS -->
+            </select>
+            <button onclick="adicionarItemPersonalizado()" class="btn btn-azul">➕ Novo Item</button>
+        </div>
+    </div>
     
-    <!-- RESUMO MENSAL -->
-    <div class="resumo">
-        <h3 class="font-bold mb-3 text-center">📊 Resumo — <span id="mesAtual"></span></h3>
-        <div class="resumo-grid">
-            <div>
-                <div class="text-sm opacity-80">Total do Mês</div>
-                <div class="resumo-valor" id="resumoMes">R$ 0,00</div>
-            </div>
-            <div>
-                <div class="text-sm opacity-80">Itens Ativos</div>
-                <div class="resumo-valor" id="qtdItens">0</div>
-            </div>
-            <div>
-                <div class="text-sm opacity-80">Mês Seguinte</div>
-                <div class="resumo-valor" id="resumoProx">R$ 0,00</div>
-            </div>
+    <!-- RESUMO -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div class="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-5 rounded-xl shadow-sm">
+            <div class="text-xs uppercase opacity-80 font-bold">Total Mês Atual (<span class="mes-nome-atual"></span>)</div>
+            <div class="text-3xl font-extrabold mt-1" id="resumoMes">R$ 0,00</div>
+        </div>
+        <div class="bg-gradient-to-r from-indigo-600 to-indigo-700 text-white p-5 rounded-xl shadow-sm">
+            <div class="text-xs uppercase opacity-80 font-bold">Lançamentos no Mês</div>
+            <div class="text-3xl font-extrabold mt-1" id="qtdItens">0</div>
+        </div>
+        <div class="bg-gradient-to-r from-slate-700 to-slate-800 text-white p-5 rounded-xl shadow-sm">
+            <div class="text-xs uppercase opacity-80 font-bold">Projeção Próximo Mês</div>
+            <div class="text-3xl font-extrabold mt-1" id="resumoProx">R$ 0,00</div>
         </div>
     </div>
 
@@ -105,36 +126,20 @@
             <thead>
                 <tr>
                     <th>Despesa</th>
-                    <th>Jan</th>
-                    <th>Fev</th>
-                    <th>Mar</th>
-                    <th>Abr</th>
-                    <th>Mai</th>
-                    <th>Jun</th>
-                    <th>Jul</th>
-                    <th>Ago</th>
-                    <th>Set</th>
-                    <th>Out</th>
-                    <th>Nov</th>
-                    <th>Dez</th>
+                    <th>Jan</th><th>Fev</th><th>Mar</th><th>Abr</th><th>Mai</th><th>Jun</th>
+                    <th>Jul</th><th>Ago</th><th>Set</th><th>Out</th><th>Nov</th><th>Dez</th>
+                    <th>Ações</th>
                 </tr>
             </thead>
             <tbody id="corpoTabela"></tbody>
             <tfoot>
                 <tr class="linha-total">
-                    <td>💰 TOTAL</td>
-                    <td id="totalJan">0,00</td>
-                    <td id="totalFev">0,00</td>
-                    <td id="totalMar">0,00</td>
-                    <td id="totalAbr">0,00</td>
-                    <td id="totalMai">0,00</td>
-                    <td id="totalJun">0,00</td>
-                    <td id="totalJul">0,00</td>
-                    <td id="totalAgo">0,00</td>
-                    <td id="totalSet">0,00</td>
-                    <td id="totalOut">0,00</td>
-                    <td id="totalNov">0,00</td>
-                    <td id="totalDez">0,00</td>
+                    <td>💰 TOTAL GERAL</td>
+                    <td id="totalJan">0,00</td><td id="totalFev">0,00</td><td id="totalMar">0,00</td>
+                    <td id="totalAbr">0,00</td><td id="totalMai">0,00</td><td id="totalJun">0,00</td>
+                    <td id="totalJul">0,00</td><td id="totalAgo">0,00</td><td id="totalSet">0,00</td>
+                    <td id="totalOut">0,00</td><td id="totalNov">0,00</td><td id="totalDez">0,00</td>
+                    <td>—</td>
                 </tr>
             </tfoot>
         </table>
@@ -145,24 +150,29 @@
    PAINEL 2: BOLETOS
    ====================================== -->
 <div id="painel-boletos" class="painel">
-    <h2 class="text-center text-amber-600 mb-4">🧾 Controle de Boletos</h2>
-    
-    <!-- ALERTA DE VENCIMENTO PRÓXIMO -->
-    <div class="alerta-vencimento" id="alertaVencimento">
-        ⚠️ <strong>Atenção:</strong> Você tem <span id="qtdVencer">0</span> boleto(s) vencendo nos próximos 3 dias!
-    </div>
-    
-    <div class="contadores">
-        <div><p class="text-amber-600 text-sm">A Vencer</p><p id="b-v" class="font-bold text-xl">0</p></div>
-        <div><p class="text-orange-500 text-sm">Próximos 3 dias</p><p id="b-3d" class="font-bold text-xl">0</p></div>
-        <div><p class="text-red-600 text-sm">Atrasados</p><p id="b-a" class="font-bold text-xl">0</p></div>
-        <div><p class="text-green-600 text-sm">Pagos</p><p id="b-p" class="font-bold text-xl">0</p></div>
+    <div class="flex flex-wrap justify-between items-center mb-4 gap-3">
+        <div>
+            <h2 class="text-2xl font-bold text-slate-800">🧾 Controle de Boletos</h2>
+            <p class="text-sm text-slate-500">Gerencie vencimentos e evite juros por atraso</p>
+        </div>
     </div>
 
-    <!-- BUSCA E FILTRO -->
-    <div class="busca">
-        <input type="text" class="busca-input" id="buscaBoleto" placeholder="🔍 Buscar por nome...">
-        <select id="filtroBoleto">
+    <!-- ALERTA VENCIMENTO -->
+    <div id="alertaVencimento" class="hidden bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-lg mb-4 text-amber-800 font-medium">
+        ⚠️ <strong>Atenção:</strong> Você possui <span id="qtdVencer" class="font-bold underline">0</span> boleto(s) vencendo nos próximos 3 dias!
+    </div>
+    
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+        <div class="bg-white p-4 rounded-xl border border-slate-200 text-center"><p class="text-xs text-slate-500 font-bold uppercase">A Vencer</p><p id="b-v" class="text-2xl font-extrabold text-amber-600">0</p></div>
+        <div class="bg-white p-4 rounded-xl border border-slate-200 text-center"><p class="text-xs text-slate-500 font-bold uppercase">Próximos 3 dias</p><p id="b-3d" class="text-2xl font-extrabold text-orange-600">0</p></div>
+        <div class="bg-white p-4 rounded-xl border border-slate-200 text-center"><p class="text-xs text-slate-500 font-bold uppercase">Atrasados</p><p id="b-a" class="text-2xl font-extrabold text-red-600">0</p></div>
+        <div class="bg-white p-4 rounded-xl border border-slate-200 text-center"><p class="text-xs text-slate-500 font-bold uppercase">Pagos</p><p id="b-p" class="text-2xl font-extrabold text-emerald-600">0</p></div>
+    </div>
+
+    <!-- FILTROS -->
+    <div class="flex flex-wrap gap-3 mb-4">
+        <input type="text" id="buscaBoleto" placeholder="🔍 Buscar por nome..." class="p-2 border rounded-lg flex-1 min-w-[200px]" oninput="renderizarBoletos()">
+        <select id="filtroBoleto" class="p-2 border rounded-lg bg-white" onchange="renderizarBoletos()">
             <option value="todos">Todos os boletos</option>
             <option value="avencer">A vencer</option>
             <option value="3d">Vencendo em 3 dias</option>
@@ -171,13 +181,16 @@
         </select>
     </div>
 
-    <div class="form-card">
-        <h3 class="font-bold mb-3">➕ Novo Boleto</h3>
-        <input type="text" id="bol-nome" placeholder="Nome / Empresa" class="full">
-        <input type="text" id="bol-codigo" placeholder="Código de Barras" class="full">
-        <input type="number" step="0.01" id="bol-valor" placeholder="Valor R$" class="full">
-        <input type="date" id="bol-data" class="full">
-        <button class="btn-verde" onclick="salvarBoleto()">💾 Salvar Boleto</button>
+    <!-- FORMULARIO -->
+    <div class="bg-white p-5 rounded-xl border border-slate-200 mb-6 shadow-sm">
+        <h3 class="font-bold text-slate-800 mb-3 flex items-center gap-2">➕ Cadastrar Novo Boleto</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+            <input type="text" id="bol-nome" placeholder="Empresa / Favorecido" class="p-2 border rounded-lg">
+            <input type="text" id="bol-codigo" placeholder="Código de Barras / Linha Digitável" class="p-2 border rounded-lg">
+            <input type="number" step="0.01" id="bol-valor" placeholder="Valor R$" class="p-2 border rounded-lg">
+            <input type="date" id="bol-data" class="p-2 border rounded-lg">
+        </div>
+        <button class="btn btn-verde mt-3" onclick="salvarBoleto()">💾 Salvar Boleto</button>
     </div>
 
     <div id="listaBoletos"></div>
@@ -187,18 +200,23 @@
    PAINEL 3: CHEQUES
    ====================================== -->
 <div id="painel-cheques" class="painel">
-    <h2 class="text-center text-indigo-600 mb-4">📑 Controle de Cheques</h2>
+    <div class="flex flex-wrap justify-between items-center mb-4 gap-3">
+        <div>
+            <h2 class="text-2xl font-bold text-slate-800">📑 Controle de Cheques</h2>
+            <p class="text-sm text-slate-500">Gestão de cheques emitidos e recebidos</p>
+        </div>
+    </div>
     
-    <div class="contadores">
-        <div><p class="text-indigo-600 text-sm">Em Aberto</p><p id="c-a" class="font-bold text-xl">0</p></div>
-        <div><p class="text-green-600 text-sm">Compensados</p><p id="c-p" class="font-bold text-xl">0</p></div>
-        <div><p class="text-red-600 text-sm">Devolvidos</p><p id="c-d" class="font-bold text-xl">0</p></div>
+    <div class="grid grid-cols-3 gap-3 mb-6">
+        <div class="bg-white p-4 rounded-xl border border-slate-200 text-center"><p class="text-xs text-slate-500 font-bold uppercase">Em Aberto</p><p id="c-a" class="text-2xl font-extrabold text-indigo-600">0</p></div>
+        <div class="bg-white p-4 rounded-xl border border-slate-200 text-center"><p class="text-xs text-slate-500 font-bold uppercase">Compensados</p><p id="c-p" class="text-2xl font-extrabold text-emerald-600">0</p></div>
+        <div class="bg-white p-4 rounded-xl border border-slate-200 text-center"><p class="text-xs text-slate-500 font-bold uppercase">Devolvidos</p><p id="c-d" class="text-2xl font-extrabold text-red-600">0</p></div>
     </div>
 
-    <!-- BUSCA E FILTRO CHEQUES -->
-    <div class="busca">
-        <input type="text" class="busca-input" id="buscaCheque" placeholder="🔍 Buscar por nome ou número...">
-        <select id="filtroCheque">
+    <!-- FILTROS -->
+    <div class="flex flex-wrap gap-3 mb-4">
+        <input type="text" id="buscaCheque" placeholder="🔍 Buscar por emitente ou nº..." class="p-2 border rounded-lg flex-1 min-w-[200px]" oninput="renderizarCheques()">
+        <select id="filtroCheque" class="p-2 border rounded-lg bg-white" onchange="renderizarCheques()">
             <option value="todos">Todos os cheques</option>
             <option value="aberto">Em Aberto</option>
             <option value="pago">Compensados</option>
@@ -206,361 +224,528 @@
         </select>
     </div>
 
-    <div class="form-card">
-        <h3 class="font-bold mb-3">➕ Novo Cheque</h3>
-        <input type="text" id="che-nome" placeholder="Emitente / Quem deu" class="full">
-        <input type="text" id="che-numero" placeholder="Número do Cheque" class="full">
-        <input type="number" step="0.01" id="che-valor" placeholder="Valor R$" class="full">
-        <input type="date" id="che-data" class="full">
-        <button class="btn-verde" onclick="salvarCheque()">💾 Salvar Cheque</button>
+    <div class="bg-white p-5 rounded-xl border border-slate-200 mb-6 shadow-sm">
+        <h3 class="font-bold text-slate-800 mb-3">➕ Cadastrar Novo Cheque</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+            <input type="text" id="che-nome" placeholder="Emitente / Beneficiário" class="p-2 border rounded-lg">
+            <input type="text" id="che-numero" placeholder="Número do Cheque" class="p-2 border rounded-lg">
+            <input type="number" step="0.01" id="che-valor" placeholder="Valor R$" class="p-2 border rounded-lg">
+            <input type="date" id="che-data" class="p-2 border rounded-lg">
+        </div>
+        <button class="btn btn-verde mt-3" onclick="salvarCheque()">💾 Salvar Cheque</button>
     </div>
 
     <div id="listaCheques"></div>
 </div>
 
+<!-- ======================================
+   PAINEL 4: GRÁFICOS & RELATÓRIOS
+   ====================================== -->
+<div id="painel-graficos" class="painel">
+    <h2 class="text-2xl font-bold text-slate-800 mb-4">📊 Evolução Financeira</h2>
+    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+        <canvas id="graficoGastos" class="max-h-[400px]"></canvas>
+    </div>
+</div>
+
 <script>
 // =============================================
-// FUNÇÕES GERAIS
+// ESTADO GLOBAL E BANCO DE DADOS LOCAL
 // =============================================
-function hoje() { const d = new Date(); d.setHours(0,0,0,0); return d; }
-function diasRestantes(dataStr) {
-    if(!dataStr) return 9999;
-    const alvo = new Date(dataStr + 'T00:00:00');
-    return Math.ceil((alvo - hoje()) / (1000*60*60*24));
+const CHAVE_STORAGE = 'SISTEMA_FINANCEIRO_COMPLETO_V3';
+
+const CATEGORIAS_PADRAO = [
+    'Aluguel', 'Financiamento Imobiliário', 'IPTU', 'Condomínio',
+    'Conta de Água', 'Conta de Luz', 'Conta de Gás', 'Diarista / Mensalista',
+    'Internet / TV', 'Celular', 'Supermercado', 'Seguro', 'Outros'
+];
+
+const MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+const MESES_NOMES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+let db = {
+    anoAtual: new Date().getFullYear(),
+    itensCategorias: [...CATEGORIAS_PADRAO],
+    despesas: {}, // formato: { "2026": { "Aluguel": { "Jan": 1500 } } }
+    boletos: [],  // [{ id, nome, codigo, valor, data, pago }]
+    cheques: []   // [{ id, nome, numero, valor, data, status }]
+};
+
+function carregarDados() {
+    const salvo = localStorage.getItem(CHAVE_STORAGE);
+    if(salvo) {
+        try {
+            db = JSON.parse(salvo);
+            if(!db.itensCategorias) db.itensCategorias = [...CATEGORIAS_PADRAO];
+            if(!db.anoAtual) db.anoAtual = new Date().getFullYear();
+        } catch(e) { console.error("Erro ao carregar dados", e); }
+    }
+    inicializarSeletorAno();
+    atualizarTudo();
 }
-function fmtDinheiro(v) { return Number(v||0).toLocaleString('pt-BR', {style:'currency', currency:'BRL'}); }
-function fmtData(d) {
-    if(!d) return '';
-    const p = d.split('-'); return `${p[2]}/${p[1]}/${p[0]}`;
+
+function salvarDados() {
+    localStorage.setItem(CHAVE_STORAGE, JSON.stringify(db));
+    mostrarToast();
+    atualizarTudo();
 }
-function mesAtualNome() {
-    const m = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-    return m[new Date().getMonth()];
-}
-function mesSeguinteNome() {
-    const m = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-    return m[(new Date().getMonth()+1)%12];
-}
-function mesAtualSigla() {
-    const m = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
-    return m[new Date().getMonth()];
-}
-function mesSeguinteSigla() {
-    const m = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
-    return m[(new Date().getMonth()+1)%12];
-}
-function avisoSalvo() {
+
+function mostrarToast() {
     const el = document.getElementById('avisoSalvo');
     el.style.display = 'block';
     setTimeout(() => el.style.display = 'none', 1500);
 }
 
-// NAVEGAÇÃO
+function atualizarTudo() {
+    montarTabelaDespesas();
+    renderizarBoletos();
+    renderizarCheques();
+    renderizarGrafico();
+}
+
+// =============================================
+// UTILITÁRIOS DE DATA E FORMATAÇÃO
+// =============================================
+function fmtMoeda(v) {
+    return Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
+
+function fmtDataBR(dataIso) {
+    if(!dataIso) return '';
+    const p = dataIso.split('-');
+    return `${p[2]}/${p[1]}/${p[0]}`;
+}
+
+function calcDiasRestantes(dataIso) {
+    if(!dataIso) return 9999;
+    const [ano, mes, dia] = dataIso.split('-').map(Number);
+    const alvo = new Date(ano, mes - 1, dia);
+    const hoje = new Date();
+    hoje.setHours(0,0,0,0);
+    return Math.round((alvo - hoje) / (1000 * 60 * 60 * 24));
+}
+
+// =============================================
+// PAINEL 1: DESPESAS DA CASA
+// =============================================
+function inicializarSeletorAno() {
+    const sel = document.getElementById('seletorAno');
+    sel.innerHTML = '';
+    const anoAtual = new Date().getFullYear();
+    for(let a = anoAtual - 2; a <= anoAtual + 3; a++) {
+        sel.innerHTML += `<option value="${a}" ${a === db.anoAtual ? 'selected' : ''}>${a}</option>`;
+    }
+}
+
+function mudarAno() {
+    db.anoAtual = parseInt(document.getElementById('seletorAno').value);
+    salvarDados();
+}
+
+function montarTabelaDespesas() {
+    const ano = db.anoAtual;
+    if(!db.despesas[ano]) db.despesas[ano] = {};
+    
+    const corpo = document.getElementById('corpoTabela');
+    corpo.innerHTML = '';
+    
+    // Atualizar labels dos meses atuais
+    const mesIdx = new Date().getMonth();
+    document.querySelectorAll('.mes-nome-atual').forEach(el => el.textContent = MESES_NOMES[mesIdx] + ' / ' + ano);
+
+    db.itensCategorias.forEach((item) => {
+        const tr = document.createElement('tr');
+        let html = `<td>${item}</td>`;
+        
+        MESES.forEach(mes => {
+            const val = db.despesas[ano]?.[item]?.[mes] || '';
+            html += `<td><input type="number" step="0.01" class="val-inp" data-item="${item}" data-mes="${mes}" value="${val}" onchange="salvarValorDespesa(this)"></td>`;
+        });
+
+        const ePadrao = CATEGORIAS_PADRAO.includes(item);
+        html += `<td>
+            ${!ePadrao ? `<button class="text-red-500 hover:text-red-700 font-bold" onclick="removerItemPersonalizado('${item}')">🗑️</button>` : '—'}
+        </td>`;
+        
+        tr.innerHTML = html;
+        corpo.appendChild(tr);
+    });
+
+    calcularTotaisDespesas();
+}
+
+function salvarValorDespesa(input) {
+    const ano = db.anoAtual;
+    const item = input.dataset.item;
+    const mes = input.dataset.mes;
+    const val = parseFloat(input.value) || 0;
+
+    if(!db.despesas[ano]) db.despesas[ano] = {};
+    if(!db.despesas[ano][item]) db.despesas[ano][item] = {};
+    
+    db.despesas[ano][item][mes] = val;
+    salvarDados();
+}
+
+function calcularTotaisDespesas() {
+    const ano = db.anoAtual;
+    const mesIdx = new Date().getMonth();
+    const mesSigla = MESES[mesIdx];
+    const proxMesSigla = MESES[(mesIdx + 1) % 12];
+    
+    let totalMesAtual = 0, totalProxMes = 0, qtdLancados = 0;
+
+    MESES.forEach(mes => {
+        let totalMes = 0;
+        db.itensCategorias.forEach(item => {
+            const v = parseFloat(db.despesas[ano]?.[item]?.[mes]) || 0;
+            totalMes += v;
+            if(mes === mesSigla && v > 0) { totalMesAtual += v; qtdLancados++; }
+            if(mes === proxMesSigla && v > 0) { totalProxMes += v; }
+        });
+        
+        const cell = document.getElementById('total' + mes);
+        if(cell) cell.textContent = totalMes.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    });
+
+    document.getElementById('resumoMes').textContent = fmtMoeda(totalMesAtual);
+    document.getElementById('resumoProx').textContent = totalProxMes > 0 ? fmtMoeda(totalProxMes) : '—';
+    document.getElementById('qtdItens').textContent = qtdLancados;
+}
+
+function adicionarItemPersonalizado() {
+    const nome = prompt("Digite o nome da nova categoria de despesa:");
+    if(nome && nome.trim() !== "") {
+        const formatado = nome.trim();
+        if(!db.itensCategorias.includes(formatado)) {
+            db.itensCategorias.push(formatado);
+            salvarDados();
+        } else {
+            alert("Esta categoria já existe!");
+        }
+    }
+}
+
+function removerItemPersonalizado(item) {
+    if(confirm(`Deseja remover a categoria "${item}"?`)) {
+        db.itensCategorias = db.itensCategorias.filter(i => i !== item);
+        salvarDados();
+    }
+}
+
+// =============================================
+// PAINEL 2: BOLETOS
+// =============================================
+function salvarBoleto() {
+    const nome = document.getElementById('bol-nome').value.trim();
+    const codigo = document.getElementById('bol-codigo').value.trim();
+    const valor = parseFloat(document.getElementById('bol-valor').value) || 0;
+    const data = document.getElementById('bol-data').value;
+
+    if(!nome || !valor || !data) return alert("Por favor, preencha Nome, Valor e Data de Vencimento.");
+
+    db.boletos.push({ id: Date.now(), nome, codigo, valor, data, pago: false });
+    
+    document.getElementById('bol-nome').value = '';
+    document.getElementById('bol-codigo').value = '';
+    document.getElementById('bol-valor').value = '';
+    document.getElementById('bol-data').value = '';
+
+    salvarDados();
+}
+
+function alternarPagoBoleto(id) {
+    const b = db.boletos.find(x => x.id === id);
+    if(b) { b.pago = !b.pago; salvarDados(); }
+}
+
+function excluirBoleto(id) {
+    if(confirm("Confirma a exclusão deste boleto?")) {
+        db.boletos = db.boletos.filter(x => x.id !== id);
+        salvarDados();
+    }
+}
+
+function copiarCodigo(texto) {
+    navigator.clipboard.writeText(texto);
+    alert("Código de barras copiado!");
+}
+
+function renderizarBoletos() {
+    const lista = document.getElementById('listaBoletos');
+    const busca = (document.getElementById('buscaBoleto').value || '').toLowerCase();
+    const filtro = document.getElementById('filtroBoleto').value;
+    
+    lista.innerHTML = '';
+    let v = 0, a = 0, p = 0, v3 = 0;
+
+    // Ordenar: Não pagos primeiro, depois por data
+    const ordenados = [...db.boletos].sort((x, y) => x.pago - y.pago || new Date(x.data) - new Date(y.data));
+
+    ordenados.forEach(b => {
+        const d = calcDiasRestantes(b.data);
+        let classe = '', status = '', stClass = '', mostrar = true;
+
+        if(busca && !b.nome.toLowerCase().includes(busca) && !b.codigo.includes(busca)) mostrar = false;
+        if(filtro === 'avencer' && (b.pago || d < 0)) mostrar = false;
+        if(filtro === '3d' && (b.pago || d < 0 || d > 3)) mostrar = false;
+        if(filtro === 'atrasado' && (b.pago || d >= 0)) mostrar = false;
+        if(filtro === 'pago' && !b.pago) mostrar = false;
+
+        if(b.pago) {
+            classe = 'pago'; status = '✅ Pago'; stClass = 'status-pago'; p++;
+        } else if(d < 0) {
+            classe = 'atrasado'; status = `🔴 Atrasado há ${Math.abs(d)} dia(s)`; stClass = 'status-atrasado'; a++;
+        } else if(d <= 3) {
+            classe = 'avisa-vencer'; status = `⚠️ Vence em ${d} dia(s)`; stClass = 'status-avisa'; v3++; v++;
+        } else {
+            status = `⏳ Vence em ${d} dia(s)`; stClass = 'status-pendente'; v++;
+        }
+
+        if(mostrar) {
+            lista.innerHTML += `
+                <div class="card ${classe}">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h3 class="font-bold text-lg text-slate-800">${b.nome}</h3>
+                            <p class="text-sm text-slate-500">Vencimento: <strong>${fmtDataBR(b.data)}</strong></p>
+                        </div>
+                        <span class="status-tag ${stClass}">${status}</span>
+                    </div>
+                    <p class="text-xl font-extrabold text-slate-900 mt-2">${fmtMoeda(b.valor)}</p>
+                    ${b.codigo ? `
+                        <div class="codigo-barras">
+                            <span>📎 ${b.codigo}</span>
+                            <button onclick="copiarCodigo('${b.codigo}')" class="text-blue-600 font-sans text-xs underline">Copiar</button>
+                        </div>
+                    ` : ''}
+                    <div class="flex gap-2 mt-4">
+                        <button class="btn ${b.pago ? 'btn-cinza' : 'btn-verde'}" onclick="alternarPagoBoleto(${b.id})">${b.pago ? '↩️ Desmarcar' : '✓ Marcar Pago'}</button>
+                        <button class="btn btn-vermelho" onclick="excluirBoleto(${b.id})">🗑️ Excluir</button>
+                    </div>
+                </div>
+            `;
+        }
+    });
+
+    document.getElementById('b-v').textContent = v;
+    document.getElementById('b-3d').textContent = v3;
+    document.getElementById('b-a').textContent = a;
+    document.getElementById('b-p').textContent = p;
+
+    const alerta = document.getElementById('alertaVencimento');
+    if(v3 > 0) {
+        alerta.classList.remove('hidden');
+        document.getElementById('qtdVencer').textContent = v3;
+    } else {
+        alerta.classList.add('hidden');
+    }
+
+    if(lista.innerHTML === '') lista.innerHTML = '<p class="text-center text-slate-400 py-8">Nenhum boleto encontrado.</p>';
+}
+
+// =============================================
+// PAINEL 3: CHEQUES
+// =============================================
+function salvarCheque() {
+    const nome = document.getElementById('che-nome').value.trim();
+    const numero = document.getElementById('che-numero').value.trim();
+    const valor = parseFloat(document.getElementById('che-valor').value) || 0;
+    const data = document.getElementById('che-data').value;
+
+    if(!nome || !numero || !valor || !data) return alert("Preencha todos os campos do cheque.");
+
+    db.cheques.push({ id: Date.now(), nome, numero, valor, data, status: 'aberto' });
+
+    document.getElementById('che-nome').value = '';
+    document.getElementById('che-numero').value = '';
+    document.getElementById('che-valor').value = '';
+    document.getElementById('che-data').value = '';
+
+    salvarDados();
+}
+
+function alternarStatusCheque(id) {
+    const c = db.cheques.find(x => x.id === id);
+    if(c) {
+        if(c.status === 'aberto') c.status = 'pago';
+        else if(c.status === 'pago') c.status = 'dev';
+        else c.status = 'aberto';
+        salvarDados();
+    }
+}
+
+function excluirCheque(id) {
+    if(confirm("Confirma a exclusão deste cheque?")) {
+        db.cheques = db.cheques.filter(x => x.id !== id);
+        salvarDados();
+    }
+}
+
+function renderizarCheques() {
+    const lista = document.getElementById('listaCheques');
+    const busca = (document.getElementById('buscaCheque').value || '').toLowerCase();
+    const filtro = document.getElementById('filtroCheque').value;
+
+    lista.innerHTML = '';
+    let a = 0, p = 0, d = 0;
+
+    db.cheques.forEach(c => {
+        let mostrar = true;
+        if(busca && !c.nome.toLowerCase().includes(busca) && !c.numero.includes(busca)) mostrar = false;
+        if(filtro === 'aberto' && c.status !== 'aberto') mostrar = false;
+        if(filtro === 'pago' && c.status !== 'pago') mostrar = false;
+        if(filtro === 'dev' && c.status !== 'dev') mostrar = false;
+
+        let classe = '', statusTag = '', stClass = '';
+        if(c.status === 'pago') { classe = 'pago'; statusTag = '✅ Compensado'; stClass = 'status-pago'; p++; }
+        else if(c.status === 'dev') { classe = 'atrasado'; statusTag = '🔴 Devolvido'; stClass = 'status-dev'; d++; }
+        else { statusTag = '⏳ Em Aberto'; stClass = 'status-aberto'; a++; }
+
+        if(mostrar) {
+            lista.innerHTML += `
+                <div class="card ${classe}">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h3 class="font-bold text-lg text-slate-800">${c.nome}</h3>
+                            <p class="text-sm text-slate-500">Nº Cheque: <strong>${c.numero}</strong> — Data: <strong>${fmtDataBR(c.data)}</strong></p>
+                        </div>
+                        <span class="status-tag ${stClass}">${statusTag}</span>
+                    </div>
+                    <p class="text-xl font-extrabold text-slate-900 mt-2">${fmtMoeda(c.valor)}</p>
+                    <div class="flex gap-2 mt-4">
+                        <button class="btn btn-azul" onclick="alternarStatusCheque(${c.id})">↻ Alterar Status</button>
+                        <button class="btn btn-vermelho" onclick="excluirCheque(${c.id})">🗑️ Excluir</button>
+                    </div>
+                </div>
+            `;
+        }
+    });
+
+    document.getElementById('c-a').textContent = a;
+    document.getElementById('c-p').textContent = p;
+    document.getElementById('c-d').textContent = d;
+
+    if(lista.innerHTML === '') lista.innerHTML = '<p class="text-center text-slate-400 py-8">Nenhum cheque encontrado.</p>';
+}
+
+// =============================================
+// PAINEL 4: GRÁFICOS (CHART.JS)
+// =============================================
+let meuGrafico = null;
+
+function renderizarGrafico() {
+    const ctx = document.getElementById('graficoGastos').getContext('2d');
+    const ano = db.anoAtual;
+
+    const totaisMensais = MESES.map(mes => {
+        let total = 0;
+        db.itensCategorias.forEach(item => {
+            total += parseFloat(db.despesas[ano]?.[item]?.[mes]) || 0;
+        });
+        return total;
+    });
+
+    if(meuGrafico) meuGrafico.destroy();
+
+    meuGrafico = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: MESES,
+            datasets: [{
+                label: `Gastos Totais em ${ano} (R$)`,
+                data: totaisMensais,
+                backgroundColor: '#2563eb',
+                borderRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { position: 'top' }
+            }
+        }
+    });
+}
+
+// =============================================
+// IMPORTAÇÃO / EXPORTAÇÃO DE ARQUIVOS LOCALMENTE
+// =============================================
+function exportarBackup() {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(db, null, 2));
+    const a = document.createElement('a');
+    const dataHoje = new Date().toISOString().split('T')[0];
+    a.setAttribute("href", dataStr);
+    a.setAttribute("download", `backup_financeiro_${dataHoje}.json`);
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+}
+
+function importarBackup(event) {
+    const file = event.target.files[0];
+    if(!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const dados = JSON.parse(e.target.result);
+            if(confirm("Esta ação vai substituir seus dados atuais pelos dados do arquivo. Deseja continuar?")) {
+                db = dados;
+                salvarDados();
+                alert("Backup restaurado com sucesso!");
+            }
+        } catch(err) {
+            alert("Erro ao ler o arquivo JSON. Certifique-se de que é um arquivo de backup válido.");
+        }
+    };
+    reader.readAsText(file);
+}
+
+function exportarExcel() {
+    const wb = XLSX.utils.book_new();
+
+    // 1. Aba Despesas
+    const ano = db.anoAtual;
+    const dadosDespesasEx = [];
+    db.itensCategorias.forEach(item => {
+        const linha = { "Despesa": item };
+        MESES.forEach(mes => {
+            linha[mes] = db.despesas[ano]?.[item]?.[mes] || 0;
+        });
+        dadosDespesasEx.push(linha);
+    });
+    const wsDespesas = XLSX.utils.json_to_sheet(dadosDespesasEx);
+    XLSX.utils.book_append_sheet(wb, wsDespesas, `Despesas ${ano}`);
+
+    // 2. Aba Boletos
+    const wsBoletos = XLSX.utils.json_to_sheet(db.boletos);
+    XLSX.utils.book_append_sheet(wb, wsBoletos, "Boletos");
+
+    // 3. Aba Cheques
+    const wsCheques = XLSX.utils.json_to_sheet(db.cheques);
+    XLSX.utils.book_append_sheet(wb, wsCheques, "Cheques");
+
+    // Download
+    const dataHoje = new Date().toISOString().split('T')[0];
+    XLSX.writeFile(wb, `Controle_Financeiro_${ano}_${dataHoje}.xlsx`);
+}
+
+// =============================================
+// TROCA DE ABAS E INICIALIZAÇÃO
+// =============================================
 document.querySelectorAll('.aba').forEach(aba => {
     aba.addEventListener('click', () => {
         document.querySelectorAll('.aba').forEach(a => a.classList.remove('ativa'));
         aba.classList.add('ativa');
         document.querySelectorAll('.painel').forEach(p => p.classList.remove('visivel'));
         document.getElementById('painel-' + aba.dataset.painel).classList.add('visivel');
+        if(aba.dataset.painel === 'graficos') renderizarGrafico();
     });
 });
 
-// =============================================
-// PAINEL 1: DESPESAS DA CASA
-// =============================================
-const ITENS_DESPESAS = [
-    'Aluguel',
-    'Financiamento imobiliário',
-    'IPTU',
-    'Condomínio',
-    'Conta de Água',
-    'Conta de Luz',
-    'Conta de Gás',
-    'Mensalista / Diarista',
-    'Conta de Internet / TV a cabo',
-    'Conta de telefone fixo',
-    'Conta de celular',
-    'Reformas / Consertos',
-    'Seguro da casa',
-    'Animais de estimação',
-    'Outros'
-];
-const MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
-let dadosDespesas = {};
-const CHAVE_DESPESAS = 'despesas_casa';
-
-function carregarDespesas() {
-    const salvo = localStorage.getItem(CHAVE_DESPESAS);
-    if(salvo) dadosDespesas = JSON.parse(salvo);
-    document.getElementById('mesAtual').textContent = mesAtualNome();
-    montarTabela();
-}
-
-function montarTabela() {
-    const corpo = document.getElementById('corpoTabela');
-    corpo.innerHTML = '';
-    
-    ITENS_DESPESAS.forEach(nome => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${nome}</td>`;
-        MESES.forEach(mes => {
-            const valor = dadosDespesas[nome]?.[mes] || '';
-            tr.innerHTML += `<td><input type="number" step="0.01" data-item="${nome}" data-mes="${mes}" value="${valor}" onblur="atualizarDespesa(this)"></td>`;
-        });
-        corpo.appendChild(tr);
-    });
-    calcularTotais();
-    atualizarResumo();
-}
-
-function atualizarDespesa(input) {
-    const item = input.dataset.item;
-    const mes = input.dataset.mes;
-    const valor = parseFloat(input.value) || 0;
-    if(!dadosDespesas[item]) dadosDespesas[item] = {};
-    dadosDespesas[item][mes] = valor;
-    localStorage.setItem(CHAVE_DESPESAS, JSON.stringify(dadosDespesas));
-    avisoSalvo();
-    calcularTotais();
-    atualizarResumo();
-}
-
-function calcularTotais() {
-    MESES.forEach(mes => {
-        let total = 0;
-        ITENS_DESPESAS.forEach(item => {
-            total += parseFloat(dadosDespesas[item]?.[mes]) || 0;
-        });
-        const el = document.getElementById('total' + mes);
-        if(el) el.textContent = total.toFixed(2).replace('.', ',');
-    });
-}
-
-function atualizarResumo() {
-    const mesCorrente = mesAtualSigla();
-    const proxMes = mesSeguinteSigla();
-    let totalMes = 0, totalProx = 0, qtd = 0;
-    
-    ITENS_DESPESAS.forEach(item => {
-        const vMes = parseFloat(dadosDespesas[item]?.[mesCorrente]) || 0;
-        const vProx = parseFloat(dadosDespesas[item]?.[proxMes]) || 0;
-        if(vMes > 0) { totalMes += vMes; qtd++; }
-        if(vProx > 0) totalProx += vProx;
-    });
-    
-    document.getElementById('resumoMes').textContent = fmtDinheiro(totalMes);
-    document.getElementById('resumoProx').textContent = totalProx > 0 ? fmtDinheiro(totalProx) : '—';
-    document.getElementById('qtdItens').textContent = qtd;
-}
-
-// =============================================
-// PAINEL 2: BOLETOS
-// =============================================
-let boletos = [];
-const CHAVE_BOLETOS = 'lista_boletos';
-
-function carregarBoletos() {
-    const salvo = localStorage.getItem(CHAVE_BOLETOS);
-    if(salvo) boletos = JSON.parse(salvo);
-    renderizarBoletos();
-}
-
-function salvarBoleto() {
-    const nome = document.getElementById('bol-nome').value.trim();
-    const codigo = document.getElementById('bol-codigo').value.trim();
-    const valor = parseFloat(document.getElementById('bol-valor').value) || 0;
-    const data = document.getElementById('bol-data').value;
-    
-    if(!nome || !valor || !data) return alert('Preencha nome, valor e vencimento!');
-    
-    boletos.unshift({ id: Date.now(), nome, codigo, valor, data, pago: false });
-    
-    document.getElementById('bol-nome').value = '';
-    document.getElementById('bol-codigo').value = '';
-    document.getElementById('bol-valor').value = '';
-    document.getElementById('bol-data').value = '';
-    
-    localStorage.setItem(CHAVE_BOLETOS, JSON.stringify(boletos));
-    avisoSalvo();
-    renderizarBoletos();
-}
-
-window.marcarBoleto = function(i) { boletos[i].pago = !boletos[i].pago; localStorage.setItem(CHAVE_BOLETOS, JSON.stringify(boletos)); avisoSalvo(); renderizarBoletos(); };
-window.excluirBoleto = function(i) { if(confirm('Excluir esse boleto?')){ boletos.splice(i,1); localStorage.setItem(CHAVE_BOLETOS, JSON.stringify(boletos)); avisoSalvo(); renderizarBoletos(); } };
-
-function renderizarBoletos() {
-    const lista = document.getElementById('listaBoletos');
-    const busca = (document.getElementById('buscaBoleto').value || '').toLowerCase();
-    const filtro = document.getElementById('filtroBoleto').value;
-    lista.innerHTML = '';
-    let v=0, a=0, p=0, v3=0;
-    
-    boletos.forEach((b,i) => {
-        const d = diasRestantes(b.data);
-        let classe='', status='', stClass='', mostrar=true;
-        
-        // Filtros
-        if(busca && !b.nome.toLowerCase().includes(busca)) mostrar = false;
-        if(filtro==='avencer' && (b.pago || d<0)) mostrar = false;
-        if(filtro==='3d' && (b.pago || d<0 || d>3)) mostrar = false;
-        if(filtro==='atrasado' && (b.pago || d>=0)) mostrar = false;
-        if(filtro==='pago' && !b.pago) mostrar = false;
-        
-        if(b.pago) {
-            classe='pago'; status='✅ Pago'; stClass='status-pago'; p++;
-        } else if(d<0) {
-            classe='atrasado'; status=`🔴 ATRASADO há ${Math.abs(d)} dia(s)`; stClass='status-atrasado'; a++;
-        } else if(d<=3) {
-            classe='avisa-vencer'; status=`⚠️ Vence em ${d} dia(s)!`; stClass='status-avisa'; v3++; v++;
-        } else if(d===0) {
-            status='⚠️ VENCE HOJE'; stClass='status-pendente'; v++;
-        } else {
-            status=`⏳ ${d} dia(s) restante(s)`; stClass='status-pendente'; v++;
-        }
-        
-        if(mostrar) {
-            lista.innerHTML += `
-                <div class="card ${classe}">
-                    <div class="flex justify-between items-start mb-2">
-                        <div>
-                            <h3 class="font-bold text-lg">${b.nome}</h3>
-                            <p class="text-sm text-gray-600">Vencimento: ${fmtData(b.data)}</p>
-                        </div>
-                        <span class="status-tag ${stClass}">${status}</span>
-                    </div>
-                    <p class="text-lg font-semibold">${fmtDinheiro(b.valor)}</p>
-                    ${b.codigo ? `<div class="codigo-barras mt-2">📎 ${b.codigo}</div>` : ''}
-                    <div class="flex gap-2 mt-3">
-                        <button class="${b.pago?'btn-cinza':'btn-verde'}" onclick="marcarBoleto(${i})">${b.pago?'↩️ Desmarcar':'✓ Marcar Pago'}</button>
-                        <button class="btn-vermelho" onclick="excluirBoleto(${i})">🗑️ Excluir</button>
-                    </div>
-                </div>
-            `;
-        }
-    });
-    
-    document.getElementById('b-v').textContent = v;
-    document.getElementById('b-3d').textContent = v3;
-    document.getElementById('b-a').textContent = a;
-    document.getElementById('b-p').textContent = p;
-    
-    // Alerta de vencimento
-    const alerta = document.getElementById('alertaVencimento');
-    if(v3 > 0) {
-        alerta.classList.add('mostrar');
-        document.getElementById('qtdVencer').textContent = v3;
-    } else {
-        alerta.classList.remove('mostrar');
-    }
-    
-    if(boletos.length===0) lista.innerHTML = '<p class="text-center text-gray-500 py-8">Nenhum boleto cadastrado.</p>';
-    else if(lista.innerHTML==='') lista.innerHTML = '<p class="text-center text-gray-500 py-8">Nenhum boleto encontrado.</p>';
-}
-
-// Eventos busca e filtro boletos
-document.getElementById('buscaBoleto').addEventListener('input', renderizarBoletos);
-document.getElementById('filtroBoleto').addEventListener('change', renderizarBoletos);
-
-// =============================================
-// PAINEL 3: CHEQUES
-// =============================================
-let cheques = [];
-const CHAVE_CHEQUES = 'lista_cheques';
-
-function carregarCheques() {
-    const salvo = localStorage.getItem(CHAVE_CHEQUES);
-    if(salvo) cheques = JSON.parse(salvo);
-    renderizarCheques();
-}
-
-function salvarCheque() {
-    const nome = document.getElementById('che-nome').value.trim();
-    const numero = document.getElementById('che-numero').value.trim();
-    const valor = parseFloat(document.getElementById('che-valor').value) || 0;
-    const data = document.getElementById('che-data').value;
-    
-    if(!nome || !numero || !valor || !data) return alert('Preencha todos os campos!');
-    
-    cheques.unshift({ id: Date.now(), nome, numero, valor, data, status: 'aberto' });
-    
-    document.getElementById('che-nome').value = '';
-    document.getElementById('che-numero').value = '';
-    document.getElementById('che-valor').value = '';
-    document.getElementById('che-data').value = '';
-    
-    localStorage.setItem(CHAVE_CHEQUES, JSON.stringify(cheques));
-    avisoSalvo();
-    renderizarCheques();
-}
-
-window.mudarStatusCheque = function(i) {
-    if(cheques[i].status==='aberto') cheques[i].status='pago';
-    else if(cheques[i].status==='pago') cheques[i].status='dev';
-    else cheques[i].status='aberto';
-    localStorage.setItem(CHAVE_CHEQUES, JSON.stringify(cheques));
-    avisoSalvo();
-    renderizarCheques();
-};
-window.excluirCheque = function(i) { if(confirm('Excluir esse cheque?')){ cheques.splice(i,1); localStorage.setItem(CHAVE_CHEQUES, JSON.stringify(cheques)); avisoSalvo(); renderizarCheques(); } };
-
-function renderizarCheques() {
-    const lista = document.getElementById('listaCheques');
-    const busca = (document.getElementById('buscaCheque').value || '').toLowerCase();
-    const filtro = document.getElementById('filtroCheque').value;
-    lista.innerHTML = '';
-    let a=0, p=0, d=0;
-    
-    cheques.forEach((c,i) => {
-        let mostrar = true;
-        if(busca && !c.nome.toLowerCase().includes(busca) && !c.numero.includes(busca)) mostrar = false;
-        if(filtro==='aberto' && c.status!=='aberto') mostrar = false;
-        if(filtro==='pago' && c.status!=='pago') mostrar = false;
-        if(filtro==='dev' && c.status!=='dev') mostrar = false;
-        
-        let classe='', status='', stClass='';
-        if(c.status==='pago') { classe='pago'; status='✅ Compensado'; stClass='status-pago'; p++; }
-        else if(c.status==='dev') { classe='atrasado'; status='🔴 Devolvido'; stClass='status-dev'; d++; }
-        else { status='⏳ Em Aberto'; stClass='status-aberto'; a++; }
-        
-        if(mostrar) {
-            lista.innerHTML += `
-                <div class="card ${classe}">
-                    <div class="flex justify-between items-start mb-2">
-                        <div>
-                            <h3 class="font-bold text-lg">${c.nome}</h3>
-                            <p class="text-sm text-gray-600">Nº ${c.numero} — Emissão: ${fmtData(c.data)}</p>
-                        </div>
-                        <span class="status-tag ${stClass}">${status}</span>
-                    </div>
-                    <p class="text-lg font-semibold">${fmtDinheiro(c.valor)}</p>
-                    <div class="flex gap-2 mt-3">
-                        <button class="btn-azul" onclick="mudarStatusCheque(${i})">↻ Mudar Status</button>
-                        <button class="btn-vermelho" onclick="excluirCheque(${i})">🗑️ Excluir</button>
-                    </div>
-                </div>
-            `;
-        }
-    });
-    
-    document.getElementById('c-a').textContent = a;
-    document.getElementById('c-p').textContent = p;
-    document.getElementById('c-d').textContent = d;
-    
-    if(cheques.length===0) lista.innerHTML = '<p class="text-center text-gray-500 py-8">Nenhum cheque cadastrado.</p>';
-    else if(lista.innerHTML==='') lista.innerHTML = '<p class="text-center text-gray-500 py-8">Nenhum cheque encontrado.</p>';
-}
-
-// Eventos busca e filtro cheques
-document.getElementById('buscaCheque').addEventListener('input', renderizarCheques);
-document.getElementById('filtroCheque').addEventListener('change', renderizarCheques);
-
-// =============================================
-// INICIAR TUDO
-// =============================================
-carregarDespesas();
-carregarBoletos();
-carregarCheques();
+// Inicializar Aplicação
+carregarDados();
 </script>
-
 </body>
 </html>
