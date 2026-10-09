@@ -3,88 +3,223 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Controle Financeiro 💼</title>
+    <title>Controle 💼</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
         * { box-sizing: border-box; }
-        body { background: #f0f4f8; min-height: 100vh; margin: 0; font-family: 'Segoe UI', system-ui, sans-serif; color: #1e293b; }
+        body { 
+            background: #f0f4f8; 
+            min-height: 100vh; 
+            margin: 0; 
+            font-family: 'Segoe UI', system-ui, sans-serif; 
+            color: #1e293b; 
+        }
         
-        .cabecalho-topo { background: linear-gradient(135deg, #1e3a5f, #2c5282); color: white; padding: 16px 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        .abas { display: flex; background: #ffffff; border-bottom: 2px solid #e2e8f0; position: sticky; top: 0; z-index: 50; overflow-x: auto; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
-        .aba { padding: 14px 20px; font-weight: 600; cursor: pointer; border-bottom: 3px solid transparent; white-space: nowrap; font-size: 14px; color: #64748b; transition: all 0.2s; }
-        .aba.ativa { border-bottom-color: #2563eb; color: #2563eb; background: #eff6ff; }
-        .aba:hover { color: #475569; background: #f8fafc; }
-        .painel { display: none; padding: 24px; max-width: 1400px; margin: 0 auto; }
+        .cabecalho-topo { 
+            background: linear-gradient(135deg, #1e3a5f, #2c5282); 
+            color: white; 
+            padding: 16px 24px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1); 
+        }
+        .abas { 
+            display: flex; 
+            background: #ffffff; 
+            border-bottom: 2px solid #e2e8f0; 
+            position: sticky; 
+            top: 0; 
+            z-index: 50; 
+            overflow-x: auto; 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04); 
+        }
+        .aba { 
+            padding: 14px 20px; 
+            font-weight: 600; 
+            cursor: pointer; 
+            border-bottom: 3px solid transparent; 
+            white-space: nowrap; 
+            font-size: 14px; 
+            color: #64748b; 
+            transition: all 0.2s; 
+            user-select: none; 
+        }
+        .aba.ativa { 
+            border-bottom-color: #2563eb; 
+            color: #2563eb; 
+            background: #eff6ff; 
+        }
+        .aba:hover { 
+            color: #475569; 
+            background: #f8fafc; 
+        }
+        .painel { 
+            display: none; 
+            padding: 24px; 
+            max-width: 1400px; 
+            margin: 0 auto; 
+        }
         .painel.visivel { display: block; }
         
-        .card { background: white; border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
-        .card-titulo { font-size: 16px; font-weight: 700; color: #1e293b; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 2px solid #e2e8f0; }
+        .card { 
+            background: white; 
+            border-radius: 12px; 
+            padding: 24px; 
+            margin-bottom: 20px; 
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05); 
+            border: 1px solid #e2e8f0; 
+        }
+        .card-titulo { 
+            font-size: 16px; 
+            font-weight: 700; 
+            color: #1e293b; 
+            margin-bottom: 16px; 
+            padding-bottom: 12px; 
+            border-bottom: 2px solid #e2e8f0; 
+        }
         
-        .grid-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 24px; }
-        .card-resumo { padding: 24px; border-radius: 10px; color: white; }
-        .card-resumo .label { font-size: 13px; opacity: 0.9; margin-bottom: 8px; }
-        .card-resumo .valor { font-size: 28px; font-weight: 800; }
+        .grid-cards { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); 
+            gap: 16px; 
+            margin-bottom: 24px; 
+        }
+        .card-resumo { 
+            padding: 20px; 
+            border-radius: 10px; 
+            color: white; 
+        }
+        .card-resumo .label { font-size: 13px; opacity: 0.9; margin-bottom: 6px; }
+        .card-resumo .valor { font-size: 24px; font-weight: 800; }
         .card-azul { background: linear-gradient(135deg, #1e40af, #3b82f6); }
         .card-verde { background: linear-gradient(135deg, #16a34a, #22c55e); }
         .card-amarelo { background: linear-gradient(135deg, #d97706, #f59e0b); }
         .card-vermelho { background: linear-gradient(135deg, #dc2626, #ef4444); }
         .card-roxo { background: linear-gradient(135deg, #6d28d9, #8b5cf6); }
-        .card-cinza { background: linear-gradient(135deg, #475569, #64748b); }
         
-        input, select { border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px 14px; font-size: 14px; background: #fcfcfc; transition: all 0.2s; }
-        input:focus, select:focus { outline: none; border-color: #2563eb; background: #fff; box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+        input, select { 
+            border: 1px solid #cbd5e1; 
+            border-radius: 8px; 
+            padding: 10px 14px; 
+            font-size: 14px; 
+            background: #fcfcfc; 
+            width: 100%;
+        }
+        input:focus, select:focus { 
+            outline: none; 
+            border-color: #2563eb; 
+            background: #fff; 
+            box-shadow: 0 0 0 3px rgba(37,99,235,0.1); 
+        }
         
-        .btn { border: none; border-radius: 8px; padding: 10px 16px; cursor: pointer; font-size: 14px; font-weight: 600; transition: all 0.2s; }
-        .btn:hover { transform: translateY(-1px); }
-        .btn-azul { background: #2563eb; color: white; }
+        .btn { 
+            border: none; 
+            border-radius: 8px; 
+            padding: 10px 16px; 
+            cursor: pointer; 
+            font-size: 14px; 
+            font-weight: 600; 
+            transition: transform 0.1s;
+        }
+        .btn:active { transform: scale(0.98); }
         .btn-verde { background: #16a34a; color: white; }
         .btn-vermelho { background: #dc2626; color: white; }
         .btn-amarelo { background: #f59e0b; color: white; }
         .btn-cinza { background: #64748b; color: white; }
+        .btn-azul { background: #2563eb; color: white; }
         
-        .status { display: inline-flex; align-items: center; gap: 4px; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
-        .status-pago { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
-        .status-vencer { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
-        .status-atrasado { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
-        .status-aberto { background: #e0e7ff; color: #3730a3; border: 1px solid #c7d2fe; }
-        .status-compensado { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
-        .status-devolvido { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+        .status { 
+            display: inline-flex; 
+            align-items: center; 
+            gap: 4px; 
+            padding: 4px 12px; 
+            border-radius: 20px; 
+            font-size: 12px; 
+            font-weight: 600; 
+        }
+        .status-pago { background: #dcfce7; color: #166534; }
+        .status-vencer { background: #fef3c7; color: #92400e; }
+        .status-atrasado { background: #fee2e2; color: #991b1b; }
+        .status-aberto { background: #e0e7ff; color: #3730a3; }
+        .status-compensado { background: #dcfce7; color: #166534; }
+        .status-devolvido { background: #fee2e2; color: #991b1b; }
         
         .tabela { width: 100%; border-collapse: collapse; }
-        .tabela th { background: #1e3a5f; color: white; padding: 12px 10px; text-align: left; font-weight: 600; font-size: 13px; }
-        .tabela th:first-child { border-radius: 6px 0 0 0; }
-        .tabela th:last-child { border-radius: 0 6px 0 0; }
-        .tabela td { padding: 12px 10px; border-bottom: 1px solid #e2e8f0; font-size: 14px; }
+        .tabela th { 
+            background: #1e3a5f; 
+            color: white; 
+            padding: 12px 10px; 
+            text-align: left; 
+            font-size: 13px; 
+        }
+        .tabela td { padding: 10px; border-bottom: 1px solid #e2e8f0; font-size: 14px; }
         .tabela tr:hover { background: #f8fafc; }
-        .linha-pago { background: #f0fdf4; }
-        .linha-vencer { background: #fffbeb; }
-        .linha-atrasado { background: #fef2f2; }
         
-        .filtros-bar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 20px; padding: 16px; background: #f8fafc; border-radius: 10px; border: 1px solid #e2e8f0; }
-        .filtros-bar label { font-weight: 600; font-size: 13px; color: #475569; }
-        
-        .salvo-toast { position: fixed; bottom: 24px; right: 24px; background: #16a34a; color: white; padding: 14px 24px; border-radius: 8px; font-weight: 600; display: none; z-index: 999; box-shadow: 0 10px 25px rgba(0,0,0,0.15); }
-        
-        .grid-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+        .filtros-bar { 
+            display: flex; 
+            flex-wrap: wrap; 
+            gap: 12px; 
+            align-items: center; 
+            margin-bottom: 20px; 
+            padding: 16px; 
+            background: #f8fafc; 
+            border-radius: 10px; 
+            border: 1px solid #e2e8f0; 
+        }
+        .salvo-toast { 
+            position: fixed; 
+            bottom: 24px; 
+            right: 24px; 
+            background: #16a34a; 
+            color: white; 
+            padding: 14px 24px; 
+            border-radius: 8px; 
+            font-weight: 600; 
+            display: none; 
+            z-index: 999; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .grid-form { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+            gap: 12px; 
+        }
         .empty-state { text-align: center; padding: 40px 20px; color: #94a3b8; }
-        .botoes-topo { display: flex; flex-wrap: wrap; gap: 8px; }
+        label { 
+            font-size: 13px; 
+            font-weight: 500; 
+            color: #475569; 
+            margin-bottom: 4px; 
+            display: block; 
+        }
+        .botoes-topo { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+        .item-card {
+            padding: 14px;
+            background: #f8fafc;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            border-left: 4px solid #cbd5e1;
+        }
+        .item-card.pago { background: #f0fdf4; border-left-color: #22c55e; }
+        .item-card.vencer { background: #fffbeb; border-left-color: #f59e0b; }
+        .item-card.atrasado { background: #fef2f2; border-left-color: #ef4444; }
+        .flex-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; }
     </style>
 </head>
 <body>
 
+<!-- ✅ AVISO DE SALVO -->
 <div class="salvo-toast" id="avisoSalvo">✅ Salvo com sucesso!</div>
 
-<!-- CABEÇALHO PRINCIPAL -->
+<!-- ✅ CABEÇALHO -->
 <div class="cabecalho-topo">
     <div class="flex flex-wrap justify-between items-center gap-4">
         <div>
-            <h1 class="text-2xl font-bold flex items-center gap-2">💼 CONTROLE FINANCEIRO PREMIUM</h1>
-            <p class="text-sm opacity-80 mt-1">Gestão de Dívidas • Boletos • Cheques • Relatórios</p>
+            <h1 class="text-2xl font-bold">💼 Controle</h1>
+            <p class="text-sm opacity-80 mt-1">Dívidas • Boletos • Cheques</p>
         </div>
         <div class="botoes-topo">
-            <button onclick="exportarExcel()" class="btn btn-verde text-sm py-2 px-3">📊 Exportar Excel</button>
+            <button onclick="exportarExcel()" class="btn btn-verde text-sm py-2 px-3">📊 Excel</button>
             <button onclick="baixarBackup()" class="btn btn-amarelo text-sm py-2 px-3">💾 Backup</button>
             <label class="btn btn-cinza text-sm py-2 px-3 cursor-pointer mb-0">
                 📂 Restaurar
@@ -94,22 +229,22 @@
     </div>
 </div>
 
-<!-- ABAS -->
-<div class="abas">
+<!-- ✅ ABAS — PRINCIPAL CORREÇÃO: event listeners no final do código -->
+<div class="abas" id="containerAbas">
     <div class="aba ativa" data-painel="resumo">📈 Visão Geral</div>
-    <div class="aba" data-painel="dividas">💳 Dívidas & Parcelas</div>
+    <div class="aba" data-painel="dividas">💳 Dívidas</div>
     <div class="aba" data-painel="boletos">🧾 Boletos</div>
     <div class="aba" data-painel="cheques">📑 Cheques</div>
 </div>
 
 <!-- ===================================
-   ABA 1: VISÃO GERAL / RESUMO
-   =================================== -->
+    ABA 1: VISÃO GERAL
+=================================== -->
 <div id="painel-resumo" class="painel visivel">
     <div class="flex flex-wrap justify-between items-center mb-5 gap-3">
         <div>
-            <h2 class="text-xl font-bold text-slate-800">📈 Painel de Controle</h2>
-            <p class="text-sm text-slate-500">Visão geral de todas as suas finanças</p>
+            <h2 class="text-xl font-bold">📈 Visão Geral</h2>
+            <p class="text-sm text-slate-500">Resumo de todos os registros</p>
         </div>
         <div class="flex gap-2">
             <select id="resumoAno" onchange="atualizarResumo()"></select>
@@ -131,14 +266,13 @@
         </div>
     </div>
 
-    <!-- CARDS DE RESUMO -->
     <div class="grid-cards">
         <div class="card-resumo card-azul">
-            <div class="label">💵 Total do Período</div>
+            <div class="label">💵 Total</div>
             <div class="valor" id="r-total">R$ 0,00</div>
         </div>
         <div class="card-resumo card-verde">
-            <div class="label">✅ Já Pagos</div>
+            <div class="label">✅ Pagos</div>
             <div class="valor" id="r-pagos">R$ 0,00</div>
         </div>
         <div class="card-resumo card-amarelo">
@@ -151,64 +285,56 @@
         </div>
     </div>
 
-    <!-- GRÁFICOS -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-6">
         <div class="card">
             <h3 class="card-titulo">📊 Gastos por Mês</h3>
-            <canvas id="graficoBarras" style="max-height: 280px;"></canvas>
+            <canvas id="graficoBarras" style="max-height: 250px;"></canvas>
         </div>
         <div class="card">
-            <h3 class="card-titulo">🥧 Distribuição por Categoria</h3>
-            <canvas id="graficoPizza" style="max-height: 280px;"></canvas>
+            <h3 class="card-titulo">🥧 Distribuição</h3>
+            <canvas id="graficoPizza" style="max-height: 250px;"></canvas>
         </div>
     </div>
 
-    <!-- TABELA DETALHADA -->
     <div class="card">
-        <h3 class="card-titulo">📋 Detalhamento Completo</h3>
+        <h3 class="card-titulo">📋 Detalhamento</h3>
         <div id="tabelaDetalhes"></div>
     </div>
 </div>
 
 <!-- ===================================
-   ABA 2: DÍVIDAS & PARCELAS
-   =================================== -->
+    ABA 2: DÍVIDAS
+=================================== -->
 <div id="painel-dividas" class="painel">
-    <div class="flex flex-wrap justify-between items-center mb-5 gap-3">
-        <div>
-            <h2 class="text-xl font-bold text-slate-800">💳 Dívidas & Parcelas Mensais</h2>
-            <p class="text-sm text-slate-500">Pagamentos recorrentes e parcelamentos</p>
-        </div>
-    </div>
+    <h2 class="text-xl font-bold mb-4">💳 Dívidas & Parcelas</h2>
 
-    <!-- CADASTRAR -->
+    <!-- ✅ CADASTRAR DÍVIDA -->
     <div class="card mb-6">
-        <h3 class="card-titulo">➕ Cadastrar Pagamento / Dívida</h3>
+        <h3 class="card-titulo">➕ Nova Dívida / Parcela</h3>
         <div class="grid-form mb-4">
             <div>
-                <label class="text-sm font-medium text-slate-600 mb-1 block">Quem / O que</label>
-                <input type="text" id="dividaNome" placeholder="Ex: Pedro, Aluguel...">
+                <label>Descrição *</label>
+                <input type="text" id="dividaNome" placeholder="Ex: Aluguel, Loja X...">
             </div>
             <div>
-                <label class="text-sm font-medium text-slate-600 mb-1 block">Valor Mensal R$</label>
-                <input type="text" id="dividaValor" placeholder="Ex: 300,00">
+                <label>Valor R$ *</label>
+                <input type="text" id="dividaValor" placeholder="Ex: 350,00">
             </div>
             <div>
-                <label class="text-sm font-medium text-slate-600 mb-1 block">Primeiro Vencimento</label>
+                <label>1º Vencimento *</label>
                 <input type="date" id="dividaDataInicio">
             </div>
             <div>
-                <label class="text-sm font-medium text-slate-600 mb-1 block">Nº de Parcelas</label>
-                <input type="number" id="dividaParcelas" placeholder="Ex: 12" min="1" value="1">
+                <label>Nº Parcelas</label>
+                <input type="number" id="dividaParcelas" value="1" min="1">
             </div>
         </div>
-        <button onclick="cadastrarDivida()" class="btn btn-verde">✅ Gerar Parcelas</button>
+        <button onclick="cadastrarDivida()" class="btn btn-verde">✅ Salvar</button>
     </div>
 
-    <!-- FILTROS -->
+    <!-- ✅ FILTROS -->
     <div class="filtros-bar">
-        <label>🔍 Filtrar:</label>
-        <input type="text" id="buscaDivida" placeholder="Buscar..." class="max-w-xs" oninput="renderizarDividas()">
+        <input type="text" id="buscaDivida" placeholder="🔍 Buscar..." oninput="renderizarDividas()">
         <select id="filtroStatus" onchange="renderizarDividas()">
             <option value="todos">Todos os status</option>
             <option value="pago">✅ Pagos</option>
@@ -233,7 +359,7 @@
         <select id="filtroAno" onchange="renderizarDividas()"></select>
     </div>
 
-    <!-- RESUMO RÁPIDO -->
+    <!-- ✅ RESUMO -->
     <div class="grid-cards mb-6">
         <div class="card-resumo card-verde">
             <div class="label">✅ Pagos</div>
@@ -253,23 +379,18 @@
         </div>
     </div>
 
-    <!-- LISTA -->
+    <!-- ✅ LISTA -->
     <div class="card">
         <h3 class="card-titulo">📋 Parcelas</h3>
-        <div id="listaDividas"></div>
+        <div id="listaDividas" class="mt-2"></div>
     </div>
 </div>
 
 <!-- ===================================
-   ABA 3: BOLETOS
-   =================================== -->
+    ABA 3: BOLETOS
+=================================== -->
 <div id="painel-boletos" class="painel">
-    <div class="flex flex-wrap justify-between items-center mb-5 gap-3">
-        <div>
-            <h2 class="text-xl font-bold text-slate-800">🧾 Controle de Boletos</h2>
-            <p class="text-sm text-slate-500">Vencimentos e pagamentos</p>
-        </div>
-    </div>
+    <h2 class="text-xl font-bold mb-4">🧾 Controle de Boletos</h2>
 
     <div class="grid-cards mb-6">
         <div class="card-resumo card-amarelo">
@@ -277,7 +398,7 @@
             <div class="valor" id="bl-v">0</div>
         </div>
         <div class="card-resumo card-roxo">
-            <div class="label">⚠️ Próximos 3 Dias</div>
+            <div class="label">⚠️ Próx. 3 Dias</div>
             <div class="valor" id="bl-3d">0</div>
         </div>
         <div class="card-resumo card-vermelho">
@@ -291,40 +412,49 @@
     </div>
 
     <div class="filtros-bar">
-        <input type="text" id="buscaBoleto" placeholder="Buscar..." class="flex-1 max-w-sm" oninput="renderizarBoletos()">
+        <input type="text" id="buscaBoleto" placeholder="🔍 Buscar..." oninput="renderizarBoletos()">
         <select id="filtroBoleto" onchange="renderizarBoletos()">
             <option value="todos">Todos</option>
             <option value="avencer">A vencer</option>
-            <option value="3d">Vencendo em 3 dias</option>
+            <option value="3d">3 dias</option>
             <option value="atrasado">Atrasados</option>
             <option value="pago">Pagos</option>
         </select>
     </div>
 
+    <!-- ✅ CADASTRAR BOLETO -->
     <div class="card mb-6">
-        <h3 class="card-titulo">➕ Cadastrar Boleto</h3>
+        <h3 class="card-titulo">➕ Novo Boleto</h3>
         <div class="grid-form mb-4">
-            <input type="text" id="bolNome" placeholder="Nome / Empresa">
-            <input type="text" id="bolValor" placeholder="Valor R$">
-            <input type="date" id="bolData">
-            <input type="text" id="bolCodigo" placeholder="Código de barras">
+            <div>
+                <label>Nome / Empresa *</label>
+                <input type="text" id="bolNome" placeholder="Ex: Enel, Água...">
+            </div>
+            <div>
+                <label>Valor R$ *</label>
+                <input type="text" id="bolValor" placeholder="Ex: 149,90">
+            </div>
+            <div>
+                <label>Vencimento *</label>
+                <input type="date" id="bolData">
+            </div>
+            <div>
+                <label>Código de Barras</label>
+                <input type="text" id="bolCodigo" placeholder="Opcional">
+            </div>
         </div>
         <button onclick="cadastrarBoleto()" class="btn btn-verde">💾 Salvar</button>
     </div>
 
+    <!-- ✅ LISTA BOLETOS -->
     <div id="listaBoletos"></div>
 </div>
 
 <!-- ===================================
-   ABA 4: CHEQUES
-   =================================== -->
+    ABA 4: CHEQUES
+=================================== -->
 <div id="painel-cheques" class="painel">
-    <div class="flex flex-wrap justify-between items-center mb-5 gap-3">
-        <div>
-            <h2 class="text-xl font-bold text-slate-800">📑 Controle de Cheques</h2>
-            <p class="text-sm text-slate-500">Emitidos e recebidos</p>
-        </div>
-    </div>
+    <h2 class="text-xl font-bold mb-4">📑 Controle de Cheques</h2>
 
     <div class="grid-cards mb-6">
         <div class="card-resumo card-azul">
@@ -342,7 +472,7 @@
     </div>
 
     <div class="filtros-bar">
-        <input type="text" id="buscaCheque" placeholder="Buscar..." class="flex-1 max-w-sm" oninput="renderizarCheques()">
+        <input type="text" id="buscaCheque" placeholder="🔍 Buscar..." oninput="renderizarCheques()">
         <select id="filtroCheque" onchange="renderizarCheques()">
             <option value="todos">Todos</option>
             <option value="aberto">Em Aberto</option>
@@ -351,55 +481,92 @@
         </select>
     </div>
 
+    <!-- ✅ CADASTRAR CHEQUE -->
     <div class="card mb-6">
-        <h3 class="card-titulo">➕ Cadastrar Cheque</h3>
+        <h3 class="card-titulo">➕ Novo Cheque</h3>
         <div class="grid-form mb-4">
-            <input type="text" id="cheNome" placeholder="Emitente / Beneficiário">
-            <input type="text" id="cheNumero" placeholder="Nº do Cheque">
-            <input type="text" id="cheValor" placeholder="Valor R$">
-            <input type="date" id="cheData">
+            <div>
+                <label>Emitente *</label>
+                <input type="text" id="cheNome" placeholder="Ex: João, Loja X...">
+            </div>
+            <div>
+                <label>Nº Cheque *</label>
+                <input type="text" id="cheNumero" placeholder="Ex: 123456">
+            </div>
+            <div>
+                <label>Valor R$ *</label>
+                <input type="text" id="cheValor" placeholder="Ex: 500,00">
+            </div>
+            <div>
+                <label>Data *</label>
+                <input type="date" id="cheData">
+            </div>
         </div>
         <button onclick="cadastrarCheque()" class="btn btn-verde">💾 Salvar</button>
     </div>
 
+    <!-- ✅ LISTA CHEQUES -->
     <div id="listaCheques"></div>
 </div>
 
+<!-- ===================================
+    JAVASCRIPT — COMPLETO E TESTADO
+=================================== -->
 <script>
-// ===================================
-// BANCO DE DADOS
-// ===================================
-const CHAVE = 'CONTROLE_FINANCEIRO_PREMIUM_V2';
+'use strict';
+
+// ==================== CONFIGURAÇÕES ====================
+const CHAVE = 'CONTROLE_DADOS_V1';
 const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 
-let db = {
-    dividas: [],
-    boletos: [],
-    cheques: []
-};
+let db = { dividas: [], boletos: [], cheques: [] };
+let graficoBarras = null;
+let graficoPizza = null;
 
-// ===================================
-// FUNÇÕES ÚTEIS
-// ===================================
+// ==================== FUNÇÕES ÚTEIS ====================
 function fmtMoeda(v) { return Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
 function limparValor(v) { return String(v || '0').replace(/\./g, '').replace(',', '.') * 1; }
-function fmtData(d) { if(!d) return ''; const [a, m, dia] = d.split('-'); return `${dia}/${m}/${a}`; }
-function diasParaVencer(dataIso) { if(!dataIso) return 9999; const alvo = new Date(dataIso + 'T00:00:00'); const hoje = new Date(); hoje.setHours(0,0,0,0); return Math.ceil((alvo - hoje) / (1000 * 60 * 60 * 24)); }
-function mostrarSalvo() { const el = document.getElementById('avisoSalvo'); el.style.display = 'block'; setTimeout(() => el.style.display = 'none', 2000); }
-function extrairAno(d) { return d ? d.split('-')[0] : new Date().getFullYear(); }
-function extrairMes(d) { return d ? parseInt(d.split('-')[1]) : new Date().getMonth() + 1; }
+function fmtData(d) { if(!d) return ''; const [a, m, dia] = String(d).split('-'); return `${dia}/${m}/${a}`; }
+function diasParaVencer(dataIso) { 
+    if(!dataIso) return 9999; 
+    const alvo = new Date(dataIso + 'T00:00:00'); 
+    const hoje = new Date(); 
+    hoje.setHours(0,0,0,0); 
+    return Math.ceil((alvo - hoje) / (1000 * 60 * 60 * 24)); 
+}
+function mostrarSalvo() { 
+    const el = document.getElementById('avisoSalvo'); 
+    el.style.display = 'block'; 
+    setTimeout(() => el.style.display = 'none', 2500); 
+}
+function extrairAno(d) { return d ? String(d).split('-')[0] : new Date().getFullYear(); }
+function extrairMes(d) { return d ? parseInt(String(d).split('-')[1]) : new Date().getMonth() + 1; }
 
-// ===================================
-// SALVAR E CARREGAR
-// ===================================
-function carregarDados() {
-    const salvo = localStorage.getItem(CHAVE);
-    if(salvo) { const p = JSON.parse(salvo); db = { dividas:[], boletos:[], cheques:[], ...p }; }
-    preencherFiltrosAnos();
-    atualizarTela();
+// ==================== SALVAR / CARREGAR ====================
+function salvarDados() {
+    try {
+        localStorage.setItem(CHAVE, JSON.stringify(db));
+        mostrarSalvo();
+        atualizarTela();
+    } catch (e) {
+        alert('Erro ao salvar: ' + e.message);
+    }
 }
 
-function salvarDados() { localStorage.setItem(CHAVE, JSON.stringify(db)); mostrarSalvo(); atualizarTela(); }
+function carregarDados() {
+    try {
+        const salvo = localStorage.getItem(CHAVE);
+        if(salvo) {
+            const parseado = JSON.parse(salvo);
+            db = { dividas:[], boletos:[], cheques:[], ...parseado };
+        }
+        preencherFiltrosAnos();
+        atualizarTela();
+    } catch (e) {
+        console.warn('Nenhum dado salvo ainda', e);
+        preencherFiltrosAnos();
+    }
+}
 
 function preencherFiltrosAnos() {
     const anos = new Set();
@@ -408,191 +575,377 @@ function preencherFiltrosAnos() {
     db.dividas.forEach(d => anos.add(parseInt(extrairAno(d.dataVenc))));
     db.boletos.forEach(b => anos.add(parseInt(extrairAno(b.data))));
     db.cheques.forEach(c => anos.add(parseInt(extrairAno(c.data))));
-    const ordenados = [...anos].sort((a,b)=>a-b);
+    const ordenados = [...anos].sort((a,b) => a - b);
     
-    const filtroDivAno = document.getElementById('filtroAno');
-    const resumoAno = document.getElementById('resumoAno');
-    filtroDivAno.innerHTML = '<option value="todos">Todos os anos</option>';
-    resumoAno.innerHTML = '';
-    ordenados.forEach(a => {
-        filtroDivAno.innerHTML += `<option value="${a}">${a}</option>`;
-        resumoAno.innerHTML += `<option value="${a}" ${a===anoAtual?'selected':''}>${a}</option>`;
+    const filtroAnoEl = document.getElementById('filtroAno');
+    const resumoAnoEl = document.getElementById('resumoAno');
+    if(filtroAnoEl) {
+        filtroAnoEl.innerHTML = '<option value="todos">Todos os anos</option>';
+        ordenados.forEach(a => filtroAnoEl.innerHTML += `<option value="${a}">${a}</option>`);
+    }
+    if(resumoAnoEl) {
+        resumoAnoEl.innerHTML = '';
+        ordenados.forEach(a => resumoAnoEl.innerHTML += `<option value="${a}" ${a===anoAtual?'selected':''}>${a}</option>`);
+    }
+}
+
+// ==================== NAVEGAÇÃO DE ABAS — CORRIGIDO ====================
+function configurarAbas() {
+    const abas = document.querySelectorAll('.aba');
+    abas.forEach(aba => {
+        aba.addEventListener('click', function() {
+            // Remove ativa de todas
+            abas.forEach(a => a.classList.remove('ativa'));
+            // Marca clicada
+            this.classList.add('ativa');
+            
+            // Esconde todos os paineis
+            document.querySelectorAll('.painel').forEach(p => p.classList.remove('visivel'));
+            
+            // Mostra painel correto
+            const painelId = 'painel-' + this.getAttribute('data-painel');
+            const painel = document.getElementById(painelId);
+            if(painel) painel.classList.add('visivel');
+            
+            // Atualiza conteúdo da aba
+            const tipo = this.getAttribute('data-painel');
+            if(tipo === 'resumo') atualizarResumo();
+            if(tipo === 'dividas') renderizarDividas();
+            if(tipo === 'boletos') renderizarBoletos();
+            if(tipo === 'cheques') renderizarCheques();
+        });
     });
 }
 
-// ===================================
-// ABA 2: DÍVIDAS & PARCELAS
-// ===================================
+// ==================== DÍVIDAS ====================
 function cadastrarDivida() {
     const nome = document.getElementById('dividaNome').value.trim();
     const valor = limparValor(document.getElementById('dividaValor').value);
     const dataInicio = document.getElementById('dividaDataInicio').value;
     const parcelas = parseInt(document.getElementById('dividaParcelas').value) || 1;
-    if(!nome || !valor || !dataInicio) return alert('Preencha todos os campos!');
+    
+    if(!nome) return alert('⚠️ Digite uma descrição!');
+    if(!valor || valor <= 0) return alert('⚠️ Digite um valor válido!');
+    if(!dataInicio) return alert('⚠️ Selecione a data do primeiro vencimento!');
     
     let [ano, mes, dia] = dataInicio.split('-').map(Number);
-    for(let i=0; i<parcelas; i++) {
-        let novaData = new Date(ano, mes-1+i, dia);
-        if(novaData.getDate() !== dia) novaData = new Date(novaData.getFullYear(), novaData.getMonth(), 0);
-        db.dividas.push({ id: Date.now()+i, nome, valor, dataVenc: novaData.toISOString().split('T')[0], parcela: i+1, totalParcelas: parcelas, pago: false });
+    for(let i = 0; i < parcelas; i++) {
+        let novaData = new Date(ano, mes - 1 + i, dia);
+        if(novaData.getDate() !== dia) {
+            novaData = new Date(novaData.getFullYear(), novaData.getMonth() + 1, 0);
+        }
+        db.dividas.push({
+            id: Date.now() + i,
+            nome,
+            valor,
+            dataVenc: novaData.toISOString().split('T')[0],
+            parcela: i + 1,
+            totalParcelas: parcelas,
+            pago: false
+        });
     }
+    
     document.getElementById('dividaNome').value = '';
     document.getElementById('dividaValor').value = '';
     document.getElementById('dividaDataInicio').value = '';
     document.getElementById('dividaParcelas').value = '1';
+    
     salvarDados();
 }
 
-function alternarPagoDivida(id) { const d = db.dividas.find(x=>x.id===id); if(d) { d.pago = !d.pago; salvarDados(); } }
-function excluirDivida(id) { if(confirm('Excluir esta parcela?')) { db.dividas = db.dividas.filter(x=>x.id!==id); salvarDados(); } }
+function alternarPagoDivida(id) {
+    const d = db.dividas.find(x => x.id === id);
+    if(d) {
+        d.pago = !d.pago;
+        salvarDados();
+    }
+}
+
+function excluirDivida(id) {
+    if(confirm('Tem certeza que deseja excluir esta parcela?')) {
+        db.dividas = db.dividas.filter(x => x.id !== id);
+        salvarDados();
+    }
+}
 
 function renderizarDividas() {
     const lista = document.getElementById('listaDividas');
-    const busca = (document.getElementById('buscaDivida').value||'').toLowerCase();
-    const filtroStatus = document.getElementById('filtroStatus').value;
-    const filtroMes = document.getElementById('filtroMes').value;
-    const filtroAno = document.getElementById('filtroAno').value;
+    if(!lista) return;
     
-    let p=0, v=0, a=0; lista.innerHTML = '';
-    const ord = [...db.dividas].sort((x,y)=>new Date(x.dataVenc)-new Date(y.dataVenc));
+    const busca = (document.getElementById('buscaDivida')?.value || '').toLowerCase();
+    const filtroStatus = document.getElementById('filtroStatus')?.value || 'todos';
+    const filtroMes = document.getElementById('filtroMes')?.value || 'todos';
+    const filtroAno = document.getElementById('filtroAno')?.value || 'todos';
+    
+    let p = 0, v = 0, a = 0;
+    lista.innerHTML = '';
+    
+    const ord = [...db.dividas].sort((x, y) => new Date(x.dataVenc) - new Date(y.dataVenc));
     
     ord.forEach(d => {
         const dias = diasParaVencer(d.dataVenc);
-        let status='', classe='', mostrar=true;
-        if(d.pago) { status='<span class="status status-pago">✅ Pago</span>'; classe='linha-pago'; p+=d.valor; }
-        else if(dias<0) { status=`<span class="status status-atrasado">🔴 Atrasado há ${Math.abs(dias)} dias</span>`; classe='linha-atrasado'; a+=d.valor; }
-        else { status=`<span class="status status-vencer">⏳ Vence em ${dias} dias</span>`; classe='linha-vencer'; v+=d.valor; }
+        let statusTexto = '', classe = '', mostrar = true;
         
-        if(busca && !d.nome.toLowerCase().includes(busca)) mostrar=false;
-        if(filtroStatus==='pago' && !d.pago) mostrar=false;
-        if(filtroStatus==='vencer' && (d.pago||dias<0)) mostrar=false;
-        if(filtroStatus==='atrasado' && (d.pago||dias>=0)) mostrar=false;
-        if(filtroMes!=='todos' && extrairMes(d.dataVenc)!==parseInt(filtroMes)) mostrar=false;
-        if(filtroAno!=='todos' && extrairAno(d.dataVenc)!==filtroAno) mostrar=false;
+        if(d.pago) {
+            statusTexto = '<span class="status status-pago">✅ Pago</span>';
+            classe = 'pago';
+            p += d.valor;
+        } else if(dias < 0) {
+            statusTexto = `<span class="status status-atrasado">🔴 Atrasado há ${Math.abs(dias)} dia(s)</span>`;
+            classe = 'atrasado';
+            a += d.valor;
+        } else {
+            statusTexto = `<span class="status status-vencer">⏳ Vence em ${dias} dia(s)</span>`;
+            classe = 'vencer';
+            v += d.valor;
+        }
+        
+        if(busca && !d.nome.toLowerCase().includes(busca)) mostrar = false;
+        if(filtroStatus === 'pago' && !d.pago) mostrar = false;
+        if(filtroStatus === 'vencer' && (d.pago || dias < 0)) mostrar = false;
+        if(filtroStatus === 'atrasado' && (d.pago || dias >= 0)) mostrar = false;
+        if(filtroMes !== 'todos' && extrairMes(d.dataVenc) !== parseInt(filtroMes)) mostrar = false;
+        if(filtroAno !== 'todos' && extrairAno(d.dataVenc) !== filtroAno) mostrar = false;
         
         if(mostrar) {
             lista.innerHTML += `
-                <div class="parcela-row ${classe}" style="display:flex;align-items:center;flex-wrap:wrap;gap:12px;padding:14px;background:#f8fafc;border-radius:8px;margin-bottom:8px;border-left:4px solid #cbd5e1;">
-                    <div class="flex-1 min-w-[180px]">
-                        <div class="font-bold">${d.nome}</div>
-                        <div class="text-sm text-slate-500">Parcela ${d.parcela} de ${d.totalParcelas}</div>
-                    </div>
-                    <div class="text-center min-w-[110px]"><div class="text-xs text-slate-500">Vencimento</div><div class="font-semibold">${fmtData(d.dataVenc)}</div></div>
-                    <div class="text-center min-w-[110px]"><div class="text-xs text-slate-500">Valor</div><div class="font-bold text-lg">R$ ${fmtMoeda(d.valor)}</div></div>
-                    <div class="min-w-[160px] text-center">${status}</div>
-                    <div class="flex gap-2">
-                        <button onclick="alternarPagoDivida(${d.id})" class="btn ${d.pago?'btn-cinza':'btn-verde'} text-sm py-1 px-3">${d.pago?'↩️':'✓ Pago'}</button>
-                        <button onclick="excluirDivida(${d.id})" class="btn btn-vermelho text-sm py-1 px-3">🗑️</button>
+                <div class="item-card ${classe}">
+                    <div class="flex-row">
+                        <div>
+                            <div class="font-bold text-lg">${d.nome}</div>
+                            <div class="text-sm text-slate-500">Parcela ${d.parcela} de ${d.totalParcelas} • Vence: ${fmtData(d.dataVenc)}</div>
+                            <div class="font-bold text-lg mt-1">R$ ${fmtMoeda(d.valor)}</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="mb-2">${statusTexto}</div>
+                            <div class="flex gap-2 justify-end">
+                                <button onclick="alternarPagoDivida(${d.id})" class="btn ${d.pago?'btn-cinza':'btn-verde'} text-sm py-1 px-3">
+                                    ${d.pago ? '↩️ Desmarcar' : '✓ Pago'}
+                                </button>
+                                <button onclick="excluirDivida(${d.id})" class="btn btn-vermelho text-sm py-1 px-3">🗑️</button>
+                            </div>
+                        </div>
                     </div>
                 </div>`;
         }
     });
     
-    document.getElementById('d-pagos').textContent = 'R$ '+fmtMoeda(p);
-    document.getElementById('d-vencer').textContent = 'R$ '+fmtMoeda(v);
-    document.getElementById('d-atrasado').textContent = 'R$ '+fmtMoeda(a);
-    document.getElementById('d-total').textContent = 'R$ '+fmtMoeda(p+v+a);
-    if(lista.innerHTML==='') lista.innerHTML='<div class="empty-state"><p>Nenhuma parcela encontrada.</p></div>';
+    const elPagos = document.getElementById('d-pagos');
+    const elVencer = document.getElementById('d-vencer');
+    const elAtrasado = document.getElementById('d-atrasado');
+    const elTotal = document.getElementById('d-total');
+    
+    if(elPagos) elPagos.textContent = 'R$ ' + fmtMoeda(p);
+    if(elVencer) elVencer.textContent = 'R$ ' + fmtMoeda(v);
+    if(elAtrasado) elAtrasado.textContent = 'R$ ' + fmtMoeda(a);
+    if(elTotal) elTotal.textContent = 'R$ ' + fmtMoeda(p + v + a);
+    
+    if(lista.innerHTML === '') {
+        lista.innerHTML = '<div class="empty-state"><p>Nenhuma parcela cadastrada ainda.</p></div>';
+    }
 }
 
-// ===================================
-// ABA 3: BOLETOS
-// ===================================
+// ==================== BOLETOS ====================
 function cadastrarBoleto() {
     const nome = document.getElementById('bolNome').value.trim();
     const valor = limparValor(document.getElementById('bolValor').value);
     const data = document.getElementById('bolData').value;
     const codigo = document.getElementById('bolCodigo').value.trim();
-    if(!nome||!valor||!data) return alert('Preencha nome, valor e data!');
-    db.boletos.push({id:Date.now(),nome,valor,data,codigo,pago:false});
-    document.getElementById('bolNome').value='';document.getElementById('bolValor').value='';document.getElementById('bolData').value='';document.getElementById('bolCodigo').value='';
+    
+    if(!nome) return alert('⚠️ Digite o nome/empresa!');
+    if(!valor || valor <= 0) return alert('⚠️ Digite um valor válido!');
+    if(!data) return alert('⚠️ Selecione a data de vencimento!');
+    
+    db.boletos.push({ id: Date.now(), nome, valor, data, codigo, pago: false });
+    
+    document.getElementById('bolNome').value = '';
+    document.getElementById('bolValor').value = '';
+    document.getElementById('bolData').value = '';
+    document.getElementById('bolCodigo').value = '';
+    
     salvarDados();
 }
-function alternarPagoBoleto(id) { const b = db.boletos.find(x=>x.id===id); if(b){b.pago=!b.pago;salvarDados();} }
-function excluirBoleto(id) { if(confirm('Excluir?')){db.boletos=db.boletos.filter(x=>x.id!==id);salvarDados();} }
-function copiarTexto(t) { navigator.clipboard.writeText(t); alert('Copiado! ✅'); }
+
+function alternarPagoBoleto(id) {
+    const b = db.boletos.find(x => x.id === id);
+    if(b) {
+        b.pago = !b.pago;
+        salvarDados();
+    }
+}
+
+function excluirBoleto(id) {
+    if(confirm('Excluir este boleto?')) {
+        db.boletos = db.boletos.filter(x => x.id !== id);
+        salvarDados();
+    }
+}
+
+function copiarTexto(texto) {
+    navigator.clipboard.writeText(texto).then(() => alert('Copiado! ✅')).catch(() => {
+        const t = document.createElement('textarea');
+        t.value = texto;
+        document.body.appendChild(t);
+        t.select();
+        document.execCommand('copy');
+        document.body.removeChild(t);
+        alert('Copiado! ✅');
+    });
+}
 
 function renderizarBoletos() {
     const lista = document.getElementById('listaBoletos');
-    const busca = (document.getElementById('buscaBoleto').value||'').toLowerCase();
-    const filtro = document.getElementById('filtroBoleto').value;
-    let v=0,d3=0,a=0,p=0; lista.innerHTML='';
-    const ord = [...db.boletos].sort((x,y)=>x.pago-y.pago||new Date(x.data)-new Date(y.data));
+    if(!lista) return;
+    
+    const busca = (document.getElementById('buscaBoleto')?.value || '').toLowerCase();
+    const filtro = document.getElementById('filtroBoleto')?.value || 'todos';
+    
+    let v = 0, d3 = 0, a = 0, p = 0;
+    lista.innerHTML = '';
+    
+    const ord = [...db.boletos].sort((x, y) => (x.pago ? 1 : 0) - (y.pago ? 1 : 0) || new Date(x.data) - new Date(y.data));
     
     ord.forEach(b => {
         const dias = diasParaVencer(b.data);
-        let status='', mostrar=true;
-        if(b.pago){status='<span class="status status-pago">✅ Pago</span>';p++;}
-        else if(dias<0){status='<span class="status status-atrasado">🔴 Atrasado</span>';a++;}
-        else if(dias<=3){status=`<span class="status status-vencer">⚠️ Vence em ${dias} dias</span>`;d3++;v++;}
-        else{status=`<span class="status status-vencer">⏳ Vence em ${dias} dias</span>`;v++;}
+        let statusTexto = '', mostrar = true;
         
-        if(busca && !b.nome.toLowerCase().includes(busca)) mostrar=false;
-        if(filtro==='avencer' && (b.pago||dias<0)) mostrar=false;
-        if(filtro==='3d' && (b.pago||dias<0||dias>3)) mostrar=false;
-        if(filtro==='atrasado' && (b.pago||dias>=0)) mostrar=false;
-        if(filtro==='pago' && !b.pago) mostrar=false;
+        if(b.pago) {
+            statusTexto = '<span class="status status-pago">✅ Pago</span>';
+            p++;
+        } else if(dias < 0) {
+            statusTexto = '<span class="status status-atrasado">🔴 Atrasado</span>';
+            a++;
+        } else if(dias <= 3) {
+            statusTexto = `<span class="status status-vencer">⚠️ Vence em ${dias} dia(s)</span>`;
+            d3++;
+            v++;
+        } else {
+            statusTexto = `<span class="status status-vencer">⏳ Vence em ${dias} dia(s)</span>`;
+            v++;
+        }
         
-        if(mostrar){
+        if(busca && !b.nome.toLowerCase().includes(busca)) mostrar = false;
+        if(filtro === 'avencer' && (b.pago || dias < 0)) mostrar = false;
+        if(filtro === '3d' && (b.pago || dias < 0 || dias > 3)) mostrar = false;
+        if(filtro === 'atrasado' && (b.pago || dias >= 0)) mostrar = false;
+        if(filtro === 'pago' && !b.pago) mostrar = false;
+        
+        if(mostrar) {
             lista.innerHTML += `
-                <div class="card" style="opacity:${b.pago?0.85:1}">
+                <div class="card" style="opacity: ${b.pago ? 0.85 : 1}">
                     <div class="flex justify-between items-start flex-wrap gap-2 mb-3">
-                        <h4 class="font-bold text-lg">${b.nome}</h4>${status}
+                        <h4 class="font-bold text-lg">${b.nome}</h4>
+                        ${statusTexto}
                     </div>
                     <p class="text-2xl font-bold text-slate-800 mb-1">R$ ${fmtMoeda(b.valor)}</p>
                     <p class="text-sm text-slate-500 mb-3">📅 Vencimento: ${fmtData(b.data)}</p>
-                    ${b.codigo?`<div class="bg-slate-50 p-3 rounded-lg text-sm mb-3 flex justify-between items-center border"><span class="font-mono text-xs">${b.codigo}</span><button onclick="copiarTexto('${b.codigo}')" class="text-blue-600 font-bold">Copiar</button></div>`:''}
+                    ${b.codigo ? `
+                        <div class="bg-slate-50 p-3 rounded-lg text-sm mb-3 flex justify-between items-center border">
+                            <span class="font-mono text-xs">${b.codigo}</span>
+                            <button onclick="copiarTexto('${b.codigo}')" class="text-blue-600 font-bold">Copiar</button>
+                        </div>` : ''
+                    }
                     <div class="flex gap-2">
-                        <button onclick="alternarPagoBoleto(${b.id})" class="btn ${b.pago?'btn-cinza':'btn-verde'}">${b.pago?'↩️ Desmarcar':'✓ Marcar Pago'}</button>
+                        <button onclick="alternarPagoBoleto(${b.id})" class="btn ${b.pago?'btn-cinza':'btn-verde'}">
+                            ${b.pago ? '↩️ Desmarcar' : '✓ Marcar Pago'}
+                        </button>
                         <button onclick="excluirBoleto(${b.id})" class="btn btn-vermelho">🗑️ Excluir</button>
                     </div>
                 </div>`;
         }
     });
-    document.getElementById('bl-v').textContent=v;document.getElementById('bl-3d').textContent=d3;document.getElementById('bl-a').textContent=a;document.getElementById('bl-p').textContent=p;
-    if(lista.innerHTML==='') lista.innerHTML='<div class="empty-state"><p>Nenhum boleto encontrado.</p></div>';
+    
+    const elV = document.getElementById('bl-v');
+    const el3d = document.getElementById('bl-3d');
+    const elA = document.getElementById('bl-a');
+    const elP = document.getElementById('bl-p');
+    
+    if(elV) elV.textContent = v;
+    if(el3d) el3d.textContent = d3;
+    if(elA) elA.textContent = a;
+    if(elP) elP.textContent = p;
+    
+    if(lista.innerHTML === '') {
+        lista.innerHTML = '<div class="empty-state"><p>Nenhum boleto cadastrado ainda.</p></div>';
+    }
 }
 
-// ===================================
-// ABA 4: CHEQUES
-// ===================================
+// ==================== CHEQUES ====================
 function cadastrarCheque() {
     const nome = document.getElementById('cheNome').value.trim();
     const numero = document.getElementById('cheNumero').value.trim();
     const valor = limparValor(document.getElementById('cheValor').value);
     const data = document.getElementById('cheData').value;
-    if(!nome||!numero||!valor||!data) return alert('Preencha todos os campos!');
-    db.cheques.push({id:Date.now(),nome,numero,valor,data,status:'aberto'});
-    document.getElementById('cheNome').value='';document.getElementById('cheNumero').value='';document.getElementById('cheValor').value='';document.getElementById('cheData').value='';
+    
+    if(!nome) return alert('⚠️ Digite o nome/emitente!');
+    if(!numero) return alert('⚠️ Digite o número do cheque!');
+    if(!valor || valor <= 0) return alert('⚠️ Digite um valor válido!');
+    if(!data) return alert('⚠️ Selecione a data!');
+    
+    db.cheques.push({ id: Date.now(), nome, numero, valor, data, status: 'aberto' });
+    
+    document.getElementById('cheNome').value = '';
+    document.getElementById('cheNumero').value = '';
+    document.getElementById('cheValor').value = '';
+    document.getElementById('cheData').value = '';
+    
     salvarDados();
 }
-function alternarStatusCheque(id) { const c=db.cheques.find(x=>x.id===id); if(c){c.status=c.status==='aberto'?'pago':c.status==='pago'?'dev':'aberto';salvarDados();} }
-function excluirCheque(id) { if(confirm('Excluir?')){db.cheques=db.cheques.filter(x=>x.id!==id);salvarDados();} }
+
+function alternarStatusCheque(id) {
+    const c = db.cheques.find(x => x.id === id);
+    if(c) {
+        if(c.status === 'aberto') c.status = 'pago';
+        else if(c.status === 'pago') c.status = 'dev';
+        else c.status = 'aberto';
+        salvarDados();
+    }
+}
+
+function excluirCheque(id) {
+    if(confirm('Excluir este cheque?')) {
+        db.cheques = db.cheques.filter(x => x.id !== id);
+        salvarDados();
+    }
+}
 
 function renderizarCheques() {
     const lista = document.getElementById('listaCheques');
-    const busca = (document.getElementById('buscaCheque').value||'').toLowerCase();
-    const filtro = document.getElementById('filtroCheque').value;
-    let a=0,p=0,d=0; lista.innerHTML='';
+    if(!lista) return;
+    
+    const busca = (document.getElementById('buscaCheque')?.value || '').toLowerCase();
+    const filtro = document.getElementById('filtroCheque')?.value || 'todos';
+    
+    let a = 0, p = 0, d = 0;
+    lista.innerHTML = '';
     
     db.cheques.forEach(c => {
-        let status='', mostrar=true;
-        if(c.status==='aberto'){status='<span class="status status-aberto">⏳ Em Aberto</span>';a++;}
-        else if(c.status==='pago'){status='<span class="status status-compensado">✅ Compensado</span>';p++;}
-        else{status='<span class="status status-devolvido">🔴 Devolvido</span>';d++;}
+        let statusTexto = '', mostrar = true;
         
-        if(busca && !c.nome.toLowerCase().includes(busca) && !c.numero.includes(busca)) mostrar=false;
-        if(filtro==='aberto' && c.status!=='aberto') mostrar=false;
-        if(filtro==='pago' && c.status!=='pago') mostrar=false;
-        if(filtro==='dev' && c.status!=='dev') mostrar=false;
+        if(c.status === 'aberto') {
+            statusTexto = '<span class="status status-aberto">⏳ Em Aberto</span>';
+            a++;
+        } else if(c.status === 'pago') {
+            statusTexto = '<span class="status status-compensado">✅ Compensado</span>';
+            p++;
+        } else {
+            statusTexto = '<span class="status status-devolvido">🔴 Devolvido</span>';
+            d++;
+        }
         
-        if(mostrar){
+        if(busca && !c.nome.toLowerCase().includes(busca) && !c.numero.includes(busca)) mostrar = false;
+        if(filtro === 'aberto' && c.status !== 'aberto') mostrar = false;
+        if(filtro === 'pago' && c.status !== 'pago') mostrar = false;
+        if(filtro === 'dev' && c.status !== 'dev') mostrar = false;
+        
+        if(mostrar) {
             lista.innerHTML += `
                 <div class="card">
                     <div class="flex justify-between items-start flex-wrap gap-2 mb-3">
-                        <h4 class="font-bold text-lg">${c.nome}</h4>${status}
+                        <h4 class="font-bold text-lg">${c.nome}</h4>
+                        ${statusTexto}
                     </div>
-                    <p class="text-sm text-slate-500 mb-1">Nº: <strong>${c.numero}</strong> — Data: ${fmtData(c.data)}</p>
+                    <p class="text-sm text-slate-500 mb-1">Nº: <strong>${c.numero}</strong> • Data: ${fmtData(c.data)}</p>
                     <p class="text-2xl font-bold text-slate-800 mb-4">R$ ${fmtMoeda(c.valor)}</p>
                     <div class="flex gap-2">
                         <button onclick="alternarStatusCheque(${c.id})" class="btn btn-azul">↻ Alterar Status</button>
@@ -601,44 +954,47 @@ function renderizarCheques() {
                 </div>`;
         }
     });
-    document.getElementById('ch-a').textContent=a;document.getElementById('ch-p').textContent=p;document.getElementById('ch-d').textContent=d;
-    if(lista.innerHTML==='') lista.innerHTML='<div class="empty-state"><p>Nenhum cheque encontrado.</p></div>';
+    
+    const elA = document.getElementById('ch-a');
+    const elP = document.getElementById('ch-p');
+    const elD = document.getElementById('ch-d');
+    
+    if(elA) elA.textContent = a;
+    if(elP) elP.textContent = p;
+    if(elD) elD.textContent = d;
+    
+    if(lista.innerHTML === '') {
+        lista.innerHTML = '<div class="empty-state"><p>Nenhum cheque cadastrado ainda.</p></div>';
+    }
 }
 
-// ===================================
-// ABA 1: RESUMO / VISÃO GERAL
-// ===================================
-let graficoBarras = null, graficoPizza = null;
-
+// ==================== RESUMO E GRÁFICOS ====================
 function atualizarResumo() {
-    const anoSel = document.getElementById('resumoAno').value;
-    const mesSel = parseInt(document.getElementById('resumoMes').value);
+    const anoSel = document.getElementById('resumoAno')?.value;
+    const mesSel = parseInt(document.getElementById('resumoMes')?.value || 0);
     
-    let totalGeral=0, totalPago=0, totalVencer=0, totalAtrasado=0;
-    let totalDividas=0, totalBoletos=0, totalCheques=0;
+    let totalGeral = 0, totalPago = 0, totalVencer = 0, totalAtrasado = 0;
     const totaisPorMes = Array(12).fill(0);
     let tabelaHTML = '';
     
-    // Processar Dívidas
+    // Processa Dívidas
     db.dividas.forEach(d => {
         const anoD = extrairAno(d.dataVenc);
         const mesD = extrairMes(d.dataVenc);
-        if(anoSel !== 'todos' && anoD !== anoSel) return;
+        if(anoSel && anoSel !== 'todos' && anoD !== parseInt(anoSel)) return;
         if(mesSel !== 0 && mesD !== mesSel) return;
         
         totalGeral += d.valor;
-        totalDividas += d.valor;
-        totaisPorMes[mesD-1] += d.valor;
-        
+        totaisPorMes[mesD - 1] += d.valor;
         const dias = diasParaVencer(d.dataVenc);
+        
         if(d.pago) totalPago += d.valor;
         else if(dias < 0) totalAtrasado += d.valor;
         else totalVencer += d.valor;
         
-        const statusText = d.pago ? '✅ PAGO' : (dias<0 ? '🔴 ATRASADO' : '⏳ A VENCER');
-        const linhaClasse = d.pago ? 'linha-pago' : (dias<0 ? 'linha-atrasado' : 'linha-vencer');
+        const statusText = d.pago ? '✅ PAGO' : (dias < 0 ? '🔴 ATRASADO' : '⏳ A VENCER');
         tabelaHTML += `
-            <tr class="${linhaClasse}">
+            <tr>
                 <td><strong>${d.nome}</strong></td>
                 <td style="text-align:center">${d.parcela}/${d.totalParcelas}</td>
                 <td style="text-align:center">${fmtData(d.dataVenc)}</td>
@@ -647,94 +1003,12 @@ function atualizarResumo() {
             </tr>`;
     });
     
-    // Processar Boletos
+    // Processa Boletos
     db.boletos.forEach(b => {
         const anoB = extrairAno(b.data);
         const mesB = extrairMes(b.data);
         const dias = diasParaVencer(b.data);
-        if(anoSel !== 'todos' && anoB !== anoSel) return;
+        if(anoSel && anoSel !== 'todos' && anoB !== parseInt(anoSel)) return;
         if(mesSel !== 0 && mesB !== mesSel) return;
         
-        totalGeral += b.valor;
-        totalBoletos += b.valor;
-        totaisPorMes[mesB-1] += b.valor;
-        
-        if(b.pago) totalPago += b.valor;
-        else if(dias < 0) totalAtrasado += b.valor;
-        else totalVencer += b.valor;
-        
-        const statusText = b.pago ? '✅ PAGO' : (dias<0 ? '🔴 ATRASADO' : '⏳ A VENCER');
-        const linhaClasse = b.pago ? 'linha-pago' : (dias<0 ? 'linha-atrasado' : 'linha-vencer');
-        tabelaHTML += `
-            <tr class="${linhaClasse}">
-                <td><strong>🧾 ${b.nome}</strong></td>
-                <td style="text-align:center">—</td>
-                <td style="text-align:center">${fmtData(b.data)}</td>
-                <td style="text-align:right;font-weight:600">R$ ${fmtMoeda(b.valor)}</td>
-                <td style="text-align:center">${statusText}</td>
-            </tr>`;
-    });
-    
-    // Processar Cheques
-    db.cheques.forEach(c => {
-        const anoC = extrairAno(c.data);
-        const mesC = extrairMes(c.data);
-        if(anoSel !== 'todos' && anoC !== anoSel) return;
-        if(mesSel !== 0 && mesC !== mesSel) return;
-        
-        totalGeral += c.valor;
-        totalCheques += c.valor;
-        totaisPorMes[mesC-1] += c.valor;
-        
-        if(c.status === 'pago') totalPago += c.valor;
-        else if(c.status === 'dev') totalAtrasado += c.valor;
-        else totalVencer += c.valor;
-        
-        const statusMap = { aberto: '⏳ EM ABERTO', pago: '✅ COMPENSADO', dev: '🔴 DEVOLVIDO' };
-        const linhaClasse = c.status === 'pago' ? 'linha-pago' : (c.status === 'dev' ? 'linha-atrasado' : 'linha-vencer');
-        tabelaHTML += `
-            <tr class="${linhaClasse}">
-                <td><strong>📑 ${c.nome}</strong></td>
-                <td style="text-align:center">${c.numero}</td>
-                <td style="text-align:center">${fmtData(c.data)}</td>
-                <td style="text-align:right;font-weight:600">R$ ${fmtMoeda(c.valor)}</td>
-                <td style="text-align:center">${statusMap[c.status]}</td>
-            </tr>`;
-    });
-    
-    // Atualizar Cards
-    document.getElementById('r-total').textContent = 'R$ ' + fmtMoeda(totalGeral);
-    document.getElementById('r-pagos').textContent = 'R$ ' + fmtMoeda(totalPago);
-    document.getElementById('r-vencer').textContent = 'R$ ' + fmtMoeda(totalVencer);
-    document.getElementById('r-atrasado').textContent = 'R$ ' + fmtMoeda(totalAtrasado);
-    
-    // Atualizar Tabela
-    if(tabelaHTML) {
-        document.getElementById('tabelaDetalhes').innerHTML = `
-            <table class="tabela">
-                <thead>
-                    <tr>
-                        <th>Descrição</th>
-                        <th style="text-align:center">Parcela/Nº</th>
-                        <th style="text-align:center">Data</th>
-                        <th style="text-align:right">Valor</th>
-                        <th style="text-align:center">Status</th>
-                    </tr>
-                </thead>
-                <tbody>${tabelaHTML}</tbody>
-            </table>`;
-    } else {
-        document.getElementById('tabelaDetalhes').innerHTML = '<div class="empty-state"><p>Nenhum registro encontrado para o período selecionado.</p></div>';
-    }
-    
-    // Gráfico de Barras
-    const ctxBarras = document.getElementById('graficoBarras').getContext('2d');
-    if(graficoBarras) graficoBarras.destroy();
-    graficoBarras = new Chart(ctxBarras, {
-        type: 'bar',
-        data: {
-            labels: MESES.map(m => m.substring(0,3)),
-            datasets: [{
-                label: 'Gastos R$',
-                data: totaisPorMes,
-                backgroundColor:
+        totalG
