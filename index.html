@@ -3,124 +3,194 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Controle Financeiro Completo 💼</title>
+    <title>Controle Financeiro 💼</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
         * { box-sizing: border-box; }
-        body { background: #f1f5f9; min-height: 100vh; margin: 0; font-family: 'Segoe UI', system-ui, sans-serif; color: #1e293b; }
+        body { background: #f0f4f8; min-height: 100vh; margin: 0; font-family: 'Segoe UI', system-ui, sans-serif; color: #1e293b; }
         
+        .cabecalho-topo { background: linear-gradient(135deg, #1e3a5f, #2c5282); color: white; padding: 16px 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
         .abas { display: flex; background: #ffffff; border-bottom: 2px solid #e2e8f0; position: sticky; top: 0; z-index: 50; overflow-x: auto; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
-        .aba { padding: 14px 18px; font-weight: 600; cursor: pointer; border-bottom: 3px solid transparent; white-space: nowrap; font-size: 14px; color: #64748b; transition: all 0.2s; }
+        .aba { padding: 14px 20px; font-weight: 600; cursor: pointer; border-bottom: 3px solid transparent; white-space: nowrap; font-size: 14px; color: #64748b; transition: all 0.2s; }
         .aba.ativa { border-bottom-color: #2563eb; color: #2563eb; background: #eff6ff; }
         .aba:hover { color: #475569; background: #f8fafc; }
-        .painel { display: none; padding: 24px; max-width: 1280px; margin: 0 auto; }
+        .painel { display: none; padding: 24px; max-width: 1400px; margin: 0 auto; }
         .painel.visivel { display: block; }
         
-        .card { background: white; border-radius: 16px; padding: 24px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; transition: all 0.2s; }
-        .card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
-        .card-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; }
-        .card-title { font-size: 18px; font-weight: 700; color: #1e293b; }
+        .card { background: white; border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
+        .card-titulo { font-size: 16px; font-weight: 700; color: #1e293b; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 2px solid #e2e8f0; }
         
-        input, select, button { border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px 14px; font-size: 14px; background: #fcfcfc; transition: all 0.2s; }
+        .grid-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .card-resumo { padding: 24px; border-radius: 10px; color: white; }
+        .card-resumo .label { font-size: 13px; opacity: 0.9; margin-bottom: 8px; }
+        .card-resumo .valor { font-size: 28px; font-weight: 800; }
+        .card-azul { background: linear-gradient(135deg, #1e40af, #3b82f6); }
+        .card-verde { background: linear-gradient(135deg, #16a34a, #22c55e); }
+        .card-amarelo { background: linear-gradient(135deg, #d97706, #f59e0b); }
+        .card-vermelho { background: linear-gradient(135deg, #dc2626, #ef4444); }
+        .card-roxo { background: linear-gradient(135deg, #6d28d9, #8b5cf6); }
+        .card-cinza { background: linear-gradient(135deg, #475569, #64748b); }
+        
+        input, select { border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px 14px; font-size: 14px; background: #fcfcfc; transition: all 0.2s; }
         input:focus, select:focus { outline: none; border-color: #2563eb; background: #fff; box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
         
         .btn { border: none; border-radius: 8px; padding: 10px 16px; cursor: pointer; font-size: 14px; font-weight: 600; transition: all 0.2s; }
         .btn:hover { transform: translateY(-1px); }
         .btn-azul { background: #2563eb; color: white; }
-        .btn-azul:hover { background: #1d4ed8; }
         .btn-verde { background: #16a34a; color: white; }
-        .btn-verde:hover { background: #15803d; }
         .btn-vermelho { background: #dc2626; color: white; }
-        .btn-vermelho:hover { background: #b91c1c; }
         .btn-amarelo { background: #f59e0b; color: white; }
-        .btn-amarelo:hover { background: #d97706; }
         .btn-cinza { background: #64748b; color: white; }
-        .btn-cinza:hover { background: #475569; }
-        .btn-outline { background: white; border: 1px solid #cbd5e1; color: #475569; }
-        .btn-outline:hover { background: #f8fafc; border-color: #94a3b8; }
         
-        .status { display: inline-flex; align-items: center; gap: 4px; padding: 4px 12px; border-radius: 9999px; font-size: 12px; font-weight: 600; }
-        .status-pago { background: #dcfce7; color: #166534; }
-        .status-vencer { background: #fef3c7; color: #92400e; }
-        .status-atrasado { background: #fee2e2; color: #991b1b; }
-        .status-aberto { background: #e0e7ff; color: #3730a3; }
-        .status-compensado { background: #dcfce7; color: #166534; }
-        .status-devolvido { background: #fee2e2; color: #991b1b; }
+        .status { display: inline-flex; align-items: center; gap: 4px; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+        .status-pago { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+        .status-vencer { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+        .status-atrasado { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+        .status-aberto { background: #e0e7ff; color: #3730a3; border: 1px solid #c7d2fe; }
+        .status-compensado { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+        .status-devolvido { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
         
-        .parcela-row { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; padding: 14px; background: #f8fafc; border-radius: 10px; margin-bottom: 8px; border-left: 4px solid #cbd5e1; transition: all 0.2s; }
-        .parcela-row.pago { background: #f0fdf4; border-left-color: #16a34a; }
-        .parcela-row.atrasado { background: #fef2f2; border-left-color: #dc2626; }
-        .parcela-row.vencer { background: #fffbeb; border-left-color: #f59e0b; }
+        .tabela { width: 100%; border-collapse: collapse; }
+        .tabela th { background: #1e3a5f; color: white; padding: 12px 10px; text-align: left; font-weight: 600; font-size: 13px; }
+        .tabela th:first-child { border-radius: 6px 0 0 0; }
+        .tabela th:last-child { border-radius: 0 6px 0 0; }
+        .tabela td { padding: 12px 10px; border-bottom: 1px solid #e2e8f0; font-size: 14px; }
+        .tabela tr:hover { background: #f8fafc; }
+        .linha-pago { background: #f0fdf4; }
+        .linha-vencer { background: #fffbeb; }
+        .linha-atrasado { background: #fef2f2; }
         
-        .resumo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 24px; }
-        .resumo-card { padding: 20px; border-radius: 12px; color: white; }
-        .resumo-card h3 { font-size: 13px; opacity: 0.85; margin-bottom: 8px; font-weight: 500; }
-        .resumo-card p { font-size: 28px; font-weight: 800; margin: 0; }
-        .card-blue { background: linear-gradient(135deg, #2563eb, #3b82f6); }
-        .card-green { background: linear-gradient(135deg, #16a34a, #22c55e); }
-        .card-amber { background: linear-gradient(135deg, #f59e0b, #f97316); }
-        .card-red { background: linear-gradient(135deg, #dc2626, #ef4444); }
-        .card-purple { background: linear-gradient(135deg, #7c3aed, #8b5cf6); }
+        .filtros-bar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 20px; padding: 16px; background: #f8fafc; border-radius: 10px; border: 1px solid #e2e8f0; }
+        .filtros-bar label { font-weight: 600; font-size: 13px; color: #475569; }
         
         .salvo-toast { position: fixed; bottom: 24px; right: 24px; background: #16a34a; color: white; padding: 14px 24px; border-radius: 8px; font-weight: 600; display: none; z-index: 999; box-shadow: 0 10px 25px rgba(0,0,0,0.15); }
         
-        .filtros-bar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 20px; padding: 16px; background: #f8fafc; border-radius: 12px; }
-        .filtros-bar label { font-weight: 600; font-size: 13px; color: #475569; }
-        
-        .empty-state { text-align: center; padding: 40px 20px; color: #94a3b8; }
-        .empty-state svg { width: 64px; height: 64px; margin-bottom: 16px; opacity: 0.5; }
-        
         .grid-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+        .empty-state { text-align: center; padding: 40px 20px; color: #94a3b8; }
+        .botoes-topo { display: flex; flex-wrap: wrap; gap: 8px; }
     </style>
 </head>
 <body>
 
 <div class="salvo-toast" id="avisoSalvo">✅ Salvo com sucesso!</div>
 
-<!-- BARRA SUPERIOR -->
-<div class="bg-slate-900 text-white px-4 py-3 flex flex-wrap justify-between items-center gap-3">
-    <h1 class="text-xl font-bold flex items-center gap-2">💼 <span>Controle Financeiro Completo</span></h1>
-    <div class="flex flex-wrap gap-2">
-        <button onclick="exportarExcel()" class="btn btn-verde text-sm py-2 px-3">📊 Excel</button>
-        <button onclick="baixarBackup()" class="btn btn-amarelo text-sm py-2 px-3">💾 Backup</button>
-        <label class="btn btn-cinza text-sm py-2 px-3 cursor-pointer mb-0">
-            📂 Restaurar
-            <input type="file" id="importarArquivo" accept=".json" class="hidden" onchange="restaurarBackup(event)">
-        </label>
+<!-- CABEÇALHO PRINCIPAL -->
+<div class="cabecalho-topo">
+    <div class="flex flex-wrap justify-between items-center gap-4">
+        <div>
+            <h1 class="text-2xl font-bold flex items-center gap-2">💼 CONTROLE FINANCEIRO PREMIUM</h1>
+            <p class="text-sm opacity-80 mt-1">Gestão de Dívidas • Boletos • Cheques • Relatórios</p>
+        </div>
+        <div class="botoes-topo">
+            <button onclick="exportarExcel()" class="btn btn-verde text-sm py-2 px-3">📊 Exportar Excel</button>
+            <button onclick="baixarBackup()" class="btn btn-amarelo text-sm py-2 px-3">💾 Backup</button>
+            <label class="btn btn-cinza text-sm py-2 px-3 cursor-pointer mb-0">
+                📂 Restaurar
+                <input type="file" id="importarArquivo" accept=".json" class="hidden" onchange="restaurarBackup(event)">
+            </label>
+        </div>
     </div>
 </div>
 
 <!-- ABAS -->
 <div class="abas">
-    <div class="aba ativa" data-painel="dividas">💳 Dívidas & Parcelas</div>
+    <div class="aba ativa" data-painel="resumo">📈 Visão Geral</div>
+    <div class="aba" data-painel="dividas">💳 Dívidas & Parcelas</div>
     <div class="aba" data-painel="boletos">🧾 Boletos</div>
     <div class="aba" data-painel="cheques">📑 Cheques</div>
-    <div class="aba" data-painel="resumo">📈 Resumo</div>
 </div>
 
 <!-- ===================================
-   ABA 1: DÍVIDAS & PARCELAS
+   ABA 1: VISÃO GERAL / RESUMO
    =================================== -->
-<div id="painel-dividas" class="painel visivel">
+<div id="painel-resumo" class="painel visivel">
     <div class="flex flex-wrap justify-between items-center mb-5 gap-3">
         <div>
-            <h2 class="text-xl font-bold text-slate-800">💳 Dívidas & Parcelas Mensais</h2>
-            <p class="text-sm text-slate-500">Ex: "Pago Pedro R$300,00 por mês durante 12 meses"</p>
+            <h2 class="text-xl font-bold text-slate-800">📈 Painel de Controle</h2>
+            <p class="text-sm text-slate-500">Visão geral de todas as suas finanças</p>
+        </div>
+        <div class="flex gap-2">
+            <select id="resumoAno" onchange="atualizarResumo()"></select>
+            <select id="resumoMes" onchange="atualizarResumo()">
+                <option value="0">Todo o Ano</option>
+                <option value="1">Janeiro</option>
+                <option value="2">Fevereiro</option>
+                <option value="3">Março</option>
+                <option value="4">Abril</option>
+                <option value="5">Maio</option>
+                <option value="6">Junho</option>
+                <option value="7">Julho</option>
+                <option value="8">Agosto</option>
+                <option value="9">Setembro</option>
+                <option value="10">Outubro</option>
+                <option value="11">Novembro</option>
+                <option value="12">Dezembro</option>
+            </select>
         </div>
     </div>
 
-    <!-- CADASTRAR DÍVIDA/PARCELAS -->
+    <!-- CARDS DE RESUMO -->
+    <div class="grid-cards">
+        <div class="card-resumo card-azul">
+            <div class="label">💵 Total do Período</div>
+            <div class="valor" id="r-total">R$ 0,00</div>
+        </div>
+        <div class="card-resumo card-verde">
+            <div class="label">✅ Já Pagos</div>
+            <div class="valor" id="r-pagos">R$ 0,00</div>
+        </div>
+        <div class="card-resumo card-amarelo">
+            <div class="label">⏳ A Vencer</div>
+            <div class="valor" id="r-vencer">R$ 0,00</div>
+        </div>
+        <div class="card-resumo card-vermelho">
+            <div class="label">🔴 Atrasados</div>
+            <div class="valor" id="r-atrasado">R$ 0,00</div>
+        </div>
+    </div>
+
+    <!-- GRÁFICOS -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-6">
+        <div class="card">
+            <h3 class="card-titulo">📊 Gastos por Mês</h3>
+            <canvas id="graficoBarras" style="max-height: 280px;"></canvas>
+        </div>
+        <div class="card">
+            <h3 class="card-titulo">🥧 Distribuição por Categoria</h3>
+            <canvas id="graficoPizza" style="max-height: 280px;"></canvas>
+        </div>
+    </div>
+
+    <!-- TABELA DETALHADA -->
+    <div class="card">
+        <h3 class="card-titulo">📋 Detalhamento Completo</h3>
+        <div id="tabelaDetalhes"></div>
+    </div>
+</div>
+
+<!-- ===================================
+   ABA 2: DÍVIDAS & PARCELAS
+   =================================== -->
+<div id="painel-dividas" class="painel">
+    <div class="flex flex-wrap justify-between items-center mb-5 gap-3">
+        <div>
+            <h2 class="text-xl font-bold text-slate-800">💳 Dívidas & Parcelas Mensais</h2>
+            <p class="text-sm text-slate-500">Pagamentos recorrentes e parcelamentos</p>
+        </div>
+    </div>
+
+    <!-- CADASTRAR -->
     <div class="card mb-6">
-        <h3 class="font-bold mb-4 flex items-center gap-2">➕ Cadastrar Dívida ou Pagamento Recorrente</h3>
+        <h3 class="card-titulo">➕ Cadastrar Pagamento / Dívida</h3>
         <div class="grid-form mb-4">
             <div>
                 <label class="text-sm font-medium text-slate-600 mb-1 block">Quem / O que</label>
-                <input type="text" id="dividaNome" placeholder="Ex: Pedro, Aluguel, Empréstimo...">
+                <input type="text" id="dividaNome" placeholder="Ex: Pedro, Aluguel...">
             </div>
             <div>
-                <label class="text-sm font-medium text-slate-600 mb-1 block">Valor por Mês R$</label>
+                <label class="text-sm font-medium text-slate-600 mb-1 block">Valor Mensal R$</label>
                 <input type="text" id="dividaValor" placeholder="Ex: 300,00">
             </div>
             <div>
@@ -138,7 +208,7 @@
     <!-- FILTROS -->
     <div class="filtros-bar">
         <label>🔍 Filtrar:</label>
-        <input type="text" id="buscaDivida" placeholder="Nome..." class="max-w-xs" oninput="renderizarDividas()">
+        <input type="text" id="buscaDivida" placeholder="Buscar..." class="max-w-xs" oninput="renderizarDividas()">
         <select id="filtroStatus" onchange="renderizarDividas()">
             <option value="todos">Todos os status</option>
             <option value="pago">✅ Pagos</option>
@@ -160,40 +230,38 @@
             <option value="11">Novembro</option>
             <option value="12">Dezembro</option>
         </select>
-        <select id="filtroAno" onchange="renderizarDividas()">
-            <!-- Preenchido via JS -->
-        </select>
+        <select id="filtroAno" onchange="renderizarDividas()"></select>
     </div>
 
     <!-- RESUMO RÁPIDO -->
-    <div class="resumo-grid mb-6">
-        <div class="resumo-card card-green">
-            <h3>✅ Pagos</h3>
-            <p id="div-pagos">R$ 0,00</p>
+    <div class="grid-cards mb-6">
+        <div class="card-resumo card-verde">
+            <div class="label">✅ Pagos</div>
+            <div class="valor" id="d-pagos">R$ 0,00</div>
         </div>
-        <div class="resumo-card card-amber">
-            <h3>⏳ A Vencer</h3>
-            <p id="div-vencer">R$ 0,00</p>
+        <div class="card-resumo card-amarelo">
+            <div class="label">⏳ A Vencer</div>
+            <div class="valor" id="d-vencer">R$ 0,00</div>
         </div>
-        <div class="resumo-card card-red">
-            <h3>🔴 Atrasados</h3>
-            <p id="div-atrasado">R$ 0,00</p>
+        <div class="card-resumo card-vermelho">
+            <div class="label">🔴 Atrasados</div>
+            <div class="valor" id="d-atrasado">R$ 0,00</div>
         </div>
-        <div class="resumo-card card-blue">
-            <h3>📊 Total</h3>
-            <p id="div-total">R$ 0,00</p>
+        <div class="card-resumo card-azul">
+            <div class="label">📊 Total</div>
+            <div class="valor" id="d-total">R$ 0,00</div>
         </div>
     </div>
 
-    <!-- LISTA DE PARCELAS -->
+    <!-- LISTA -->
     <div class="card">
-        <h3 class="font-bold mb-4">📋 Parcelas</h3>
+        <h3 class="card-titulo">📋 Parcelas</h3>
         <div id="listaDividas"></div>
     </div>
 </div>
 
 <!-- ===================================
-   ABA 2: BOLETOS
+   ABA 3: BOLETOS
    =================================== -->
 <div id="painel-boletos" class="painel">
     <div class="flex flex-wrap justify-between items-center mb-5 gap-3">
@@ -203,22 +271,22 @@
         </div>
     </div>
 
-    <div class="resumo-grid mb-6">
-        <div class="resumo-card card-amber">
-            <h3>A Vencer</h3>
-            <p id="b-v">0</p>
+    <div class="grid-cards mb-6">
+        <div class="card-resumo card-amarelo">
+            <div class="label">⏳ A Vencer</div>
+            <div class="valor" id="bl-v">0</div>
         </div>
-        <div class="resumo-card card-purple">
-            <h3>Próximos 3 Dias</h3>
-            <p id="b-3d">0</p>
+        <div class="card-resumo card-roxo">
+            <div class="label">⚠️ Próximos 3 Dias</div>
+            <div class="valor" id="bl-3d">0</div>
         </div>
-        <div class="resumo-card card-red">
-            <h3>Atrasados</h3>
-            <p id="b-a">0</p>
+        <div class="card-resumo card-vermelho">
+            <div class="label">🔴 Atrasados</div>
+            <div class="valor" id="bl-a">0</div>
         </div>
-        <div class="resumo-card card-green">
-            <h3>Pagos</h3>
-            <p id="b-p">0</p>
+        <div class="card-resumo card-verde">
+            <div class="label">✅ Pagos</div>
+            <div class="valor" id="bl-p">0</div>
         </div>
     </div>
 
@@ -234,7 +302,7 @@
     </div>
 
     <div class="card mb-6">
-        <h3 class="font-bold mb-4">➕ Cadastrar Boleto</h3>
+        <h3 class="card-titulo">➕ Cadastrar Boleto</h3>
         <div class="grid-form mb-4">
             <input type="text" id="bolNome" placeholder="Nome / Empresa">
             <input type="text" id="bolValor" placeholder="Valor R$">
@@ -248,7 +316,7 @@
 </div>
 
 <!-- ===================================
-   ABA 3: CHEQUES
+   ABA 4: CHEQUES
    =================================== -->
 <div id="painel-cheques" class="painel">
     <div class="flex flex-wrap justify-between items-center mb-5 gap-3">
@@ -258,18 +326,18 @@
         </div>
     </div>
 
-    <div class="resumo-grid mb-6">
-        <div class="resumo-card card-blue">
-            <h3>Em Aberto</h3>
-            <p id="c-a">0</p>
+    <div class="grid-cards mb-6">
+        <div class="card-resumo card-azul">
+            <div class="label">⏳ Em Aberto</div>
+            <div class="valor" id="ch-a">0</div>
         </div>
-        <div class="resumo-card card-green">
-            <h3>Compensados</h3>
-            <p id="c-p">0</p>
+        <div class="card-resumo card-verde">
+            <div class="label">✅ Compensados</div>
+            <div class="valor" id="ch-p">0</div>
         </div>
-        <div class="resumo-card card-red">
-            <h3>Devolvidos</h3>
-            <p id="c-d">0</p>
+        <div class="card-resumo card-vermelho">
+            <div class="label">🔴 Devolvidos</div>
+            <div class="valor" id="ch-d">0</div>
         </div>
     </div>
 
@@ -284,7 +352,7 @@
     </div>
 
     <div class="card mb-6">
-        <h3 class="font-bold mb-4">➕ Cadastrar Cheque</h3>
+        <h3 class="card-titulo">➕ Cadastrar Cheque</h3>
         <div class="grid-form mb-4">
             <input type="text" id="cheNome" placeholder="Emitente / Beneficiário">
             <input type="text" id="cheNumero" placeholder="Nº do Cheque">
@@ -297,144 +365,41 @@
     <div id="listaCheques"></div>
 </div>
 
-<!-- ===================================
-   ABA 4: RESUMO PROFISSIONAL
-   =================================== -->
-<div id="painel-resumo" class="painel">
-    <div class="flex flex-wrap justify-between items-center mb-5 gap-3">
-        <div>
-            <h2 class="text-xl font-bold text-slate-800">📈 Relatório & Resumo Financeiro</h2>
-            <p class="text-sm text-slate-500">Visão geral de todos os seus gastos</p>
-        </div>
-    </div>
-
-    <!-- FILTROS DO RELATÓRIO -->
-    <div class="filtros-bar mb-6">
-        <label>📅 Período:</label>
-        <select id="resumoAno" onchange="atualizarResumo()">
-            <!-- Preenchido via JS -->
-        </select>
-        <select id="resumoMes" onchange="atualizarResumo()">
-            <option value="0">Todo o Ano</option>
-            <option value="1">Janeiro</option>
-            <option value="2">Fevereiro</option>
-            <option value="3">Março</option>
-            <option value="4">Abril</option>
-            <option value="5">Maio</option>
-            <option value="6">Junho</option>
-            <option value="7">Julho</option>
-            <option value="8">Agosto</option>
-            <option value="9">Setembro</option>
-            <option value="10">Outubro</option>
-            <option value="11">Novembro</option>
-            <option value="12">Dezembro</option>
-        </select>
-        <button onclick="exportarExcel()" class="btn btn-verde text-sm py-2 px-3">📄 Exportar Excel</button>
-    </div>
-
-    <!-- CARDS DE RESUMO -->
-    <div class="resumo-grid mb-6">
-        <div class="resumo-card card-blue">
-            <h3>💵 Total do Período</h3>
-            <p id="r-total">R$ 0,00</p>
-        </div>
-        <div class="resumo-card card-green">
-            <h3>✅ Já Pagos</h3>
-            <p id="r-pagos">R$ 0,00</p>
-        </div>
-        <div class="resumo-card card-amber">
-            <h3>⏳ A Vencer</h3>
-            <p id="r-vencer">R$ 0,00</p>
-        </div>
-        <div class="resumo-card card-red">
-            <h3>🔴 Atrasados</h3>
-            <p id="r-atrasado">R$ 0,00</p>
-        </div>
-    </div>
-
-    <!-- GRÁFICO -->
-    <div class="card mb-6">
-        <h3 class="font-bold mb-4">📊 Gastos por Mês</h3>
-        <canvas id="graficoResumo" style="max-height: 320px;"></canvas>
-    </div>
-
-    <!-- TABELA DETALHADA -->
-    <div class="card">
-        <h3 class="font-bold mb-4">📋 Detalhamento</h3>
-        <div id="tabelaResumo"></div>
-    </div>
-</div>
-
 <script>
 // ===================================
 // BANCO DE DADOS
 // ===================================
-const CHAVE = 'CONTROLE_FINANCEIRO_COMPLETO_V4';
+const CHAVE = 'CONTROLE_FINANCEIRO_PREMIUM_V2';
 const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 
 let db = {
-    dividas: [],    // { id, nome, valor, dataVenc, parcela, totalParcelas, pago }
-    boletos: [],    // { id, nome, valor, data, codigo, pago }
-    cheques: []     // { id, nome, numero, valor, data, status: aberto/pago/dev }
+    dividas: [],
+    boletos: [],
+    cheques: []
 };
 
 // ===================================
 // FUNÇÕES ÚTEIS
 // ===================================
-function fmtMoeda(v) {
-    return Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
-
-function limparValor(v) {
-    return String(v || '0').replace(/\./g, '').replace(',', '.') * 1;
-}
-
-function fmtData(d) {
-    if(!d) return '';
-    const [a, m, dia] = d.split('-');
-    return `${dia}/${m}/${a}`;
-}
-
-function diasParaVencer(dataIso) {
-    if(!dataIso) return 9999;
-    const alvo = new Date(dataIso + 'T00:00:00');
-    const hoje = new Date();
-    hoje.setHours(0,0,0,0);
-    return Math.ceil((alvo - hoje) / (1000 * 60 * 60 * 24));
-}
-
-function mostrarSalvo() {
-    const el = document.getElementById('avisoSalvo');
-    el.style.display = 'block';
-    setTimeout(() => el.style.display = 'none', 2000);
-}
-
-function extrairAno(dataIso) {
-    return dataIso ? dataIso.split('-')[0] : new Date().getFullYear();
-}
-
-function extrairMes(dataIso) {
-    return dataIso ? parseInt(dataIso.split('-')[1]) : new Date().getMonth() + 1;
-}
+function fmtMoeda(v) { return Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+function limparValor(v) { return String(v || '0').replace(/\./g, '').replace(',', '.') * 1; }
+function fmtData(d) { if(!d) return ''; const [a, m, dia] = d.split('-'); return `${dia}/${m}/${a}`; }
+function diasParaVencer(dataIso) { if(!dataIso) return 9999; const alvo = new Date(dataIso + 'T00:00:00'); const hoje = new Date(); hoje.setHours(0,0,0,0); return Math.ceil((alvo - hoje) / (1000 * 60 * 60 * 24)); }
+function mostrarSalvo() { const el = document.getElementById('avisoSalvo'); el.style.display = 'block'; setTimeout(() => el.style.display = 'none', 2000); }
+function extrairAno(d) { return d ? d.split('-')[0] : new Date().getFullYear(); }
+function extrairMes(d) { return d ? parseInt(d.split('-')[1]) : new Date().getMonth() + 1; }
 
 // ===================================
 // SALVAR E CARREGAR
 // ===================================
 function carregarDados() {
     const salvo = localStorage.getItem(CHAVE);
-    if(salvo) {
-        const parseado = JSON.parse(salvo);
-        db = { ...db, ...parseado };
-    }
+    if(salvo) { const p = JSON.parse(salvo); db = { dividas:[], boletos:[], cheques:[], ...p }; }
     preencherFiltrosAnos();
     atualizarTela();
 }
 
-function salvarDados() {
-    localStorage.setItem(CHAVE, JSON.stringify(db));
-    mostrarSalvo();
-    atualizarTela();
-}
+function salvarDados() { localStorage.setItem(CHAVE, JSON.stringify(db)); mostrarSalvo(); atualizarTela(); }
 
 function preencherFiltrosAnos() {
     const anos = new Set();
@@ -443,319 +408,189 @@ function preencherFiltrosAnos() {
     db.dividas.forEach(d => anos.add(parseInt(extrairAno(d.dataVenc))));
     db.boletos.forEach(b => anos.add(parseInt(extrairAno(b.data))));
     db.cheques.forEach(c => anos.add(parseInt(extrairAno(c.data))));
-    
-    const ordenados = [...anos].sort((a, b) => a - b);
+    const ordenados = [...anos].sort((a,b)=>a-b);
     
     const filtroDivAno = document.getElementById('filtroAno');
     const resumoAno = document.getElementById('resumoAno');
-    
     filtroDivAno.innerHTML = '<option value="todos">Todos os anos</option>';
     resumoAno.innerHTML = '';
-    
     ordenados.forEach(a => {
         filtroDivAno.innerHTML += `<option value="${a}">${a}</option>`;
-        resumoAno.innerHTML += `<option value="${a}" ${a === anoAtual ? 'selected' : ''}>${a}</option>`;
+        resumoAno.innerHTML += `<option value="${a}" ${a===anoAtual?'selected':''}>${a}</option>`;
     });
 }
 
 // ===================================
-// ABA 1: DÍVIDAS & PARCELAS
+// ABA 2: DÍVIDAS & PARCELAS
 // ===================================
 function cadastrarDivida() {
     const nome = document.getElementById('dividaNome').value.trim();
     const valor = limparValor(document.getElementById('dividaValor').value);
     const dataInicio = document.getElementById('dividaDataInicio').value;
     const parcelas = parseInt(document.getElementById('dividaParcelas').value) || 1;
-    
-    if(!nome || !valor || !dataInicio) return alert('Preencha nome, valor e data de início!');
+    if(!nome || !valor || !dataInicio) return alert('Preencha todos os campos!');
     
     let [ano, mes, dia] = dataInicio.split('-').map(Number);
-    
-    for(let i = 0; i < parcelas; i++) {
-        let novaData = new Date(ano, mes - 1 + i, dia);
+    for(let i=0; i<parcelas; i++) {
+        let novaData = new Date(ano, mes-1+i, dia);
         if(novaData.getDate() !== dia) novaData = new Date(novaData.getFullYear(), novaData.getMonth(), 0);
-        
-        db.dividas.push({
-            id: Date.now() + i,
-            nome,
-            valor,
-            dataVenc: novaData.toISOString().split('T')[0],
-            parcela: i + 1,
-            totalParcelas: parcelas,
-            pago: false
-        });
+        db.dividas.push({ id: Date.now()+i, nome, valor, dataVenc: novaData.toISOString().split('T')[0], parcela: i+1, totalParcelas: parcelas, pago: false });
     }
-    
     document.getElementById('dividaNome').value = '';
     document.getElementById('dividaValor').value = '';
     document.getElementById('dividaDataInicio').value = '';
     document.getElementById('dividaParcelas').value = '1';
-    
     salvarDados();
 }
 
-function alternarPagoDivida(id) {
-    const d = db.dividas.find(x => x.id === id);
-    if(d) {
-        d.pago = !d.pago;
-        salvarDados();
-    }
-}
-
-function excluirDivida(id) {
-    if(confirm('Excluir esta parcela?')) {
-        db.dividas = db.dividas.filter(x => x.id !== id);
-        salvarDados();
-    }
-}
+function alternarPagoDivida(id) { const d = db.dividas.find(x=>x.id===id); if(d) { d.pago = !d.pago; salvarDados(); } }
+function excluirDivida(id) { if(confirm('Excluir esta parcela?')) { db.dividas = db.dividas.filter(x=>x.id!==id); salvarDados(); } }
 
 function renderizarDividas() {
     const lista = document.getElementById('listaDividas');
-    const busca = (document.getElementById('buscaDivida').value || '').toLowerCase();
+    const busca = (document.getElementById('buscaDivida').value||'').toLowerCase();
     const filtroStatus = document.getElementById('filtroStatus').value;
     const filtroMes = document.getElementById('filtroMes').value;
     const filtroAno = document.getElementById('filtroAno').value;
     
-    let totalPago = 0, totalVencer = 0, totalAtrasado = 0;
+    let p=0, v=0, a=0; lista.innerHTML = '';
+    const ord = [...db.dividas].sort((x,y)=>new Date(x.dataVenc)-new Date(y.dataVenc));
     
-    lista.innerHTML = '';
-    
-    const ordenadas = [...db.dividas].sort((a, b) => new Date(a.dataVenc) - new Date(b.dataVenc));
-    
-    ordenadas.forEach(d => {
+    ord.forEach(d => {
         const dias = diasParaVencer(d.dataVenc);
-        let status = '', classe = '', mostrar = true;
+        let status='', classe='', mostrar=true;
+        if(d.pago) { status='<span class="status status-pago">✅ Pago</span>'; classe='linha-pago'; p+=d.valor; }
+        else if(dias<0) { status=`<span class="status status-atrasado">🔴 Atrasado há ${Math.abs(dias)} dias</span>`; classe='linha-atrasado'; a+=d.valor; }
+        else { status=`<span class="status status-vencer">⏳ Vence em ${dias} dias</span>`; classe='linha-vencer'; v+=d.valor; }
         
-        if(d.pago) {
-            status = '<span class="status status-pago">✅ Pago</span>';
-            classe = 'pago';
-            totalPago += d.valor;
-        } else if(dias < 0) {
-            status = `<span class="status status-atrasado">🔴 Atrasado há ${Math.abs(dias)} dias</span>`;
-            classe = 'atrasado';
-            totalAtrasado += d.valor;
-        } else {
-            status = `<span class="status status-vencer">⏳ Vence em ${dias} dias</span>`;
-            classe = 'vencer';
-            totalVencer += d.valor;
-        }
-        
-        // Aplicar filtros
-        if(busca && !d.nome.toLowerCase().includes(busca)) mostrar = false;
-        if(filtroStatus === 'pago' && !d.pago) mostrar = false;
-        if(filtroStatus === 'vencer' && (d.pago || dias < 0)) mostrar = false;
-        if(filtroStatus === 'atrasado' && (d.pago || dias >= 0)) mostrar = false;
-        if(filtroMes !== 'todos' && extrairMes(d.dataVenc) !== parseInt(filtroMes)) mostrar = false;
-        if(filtroAno !== 'todos' && extrairAno(d.dataVenc) !== filtroAno) mostrar = false;
+        if(busca && !d.nome.toLowerCase().includes(busca)) mostrar=false;
+        if(filtroStatus==='pago' && !d.pago) mostrar=false;
+        if(filtroStatus==='vencer' && (d.pago||dias<0)) mostrar=false;
+        if(filtroStatus==='atrasado' && (d.pago||dias>=0)) mostrar=false;
+        if(filtroMes!=='todos' && extrairMes(d.dataVenc)!==parseInt(filtroMes)) mostrar=false;
+        if(filtroAno!=='todos' && extrairAno(d.dataVenc)!==filtroAno) mostrar=false;
         
         if(mostrar) {
             lista.innerHTML += `
-                <div class="parcela-row ${classe}">
+                <div class="parcela-row ${classe}" style="display:flex;align-items:center;flex-wrap:wrap;gap:12px;padding:14px;background:#f8fafc;border-radius:8px;margin-bottom:8px;border-left:4px solid #cbd5e1;">
                     <div class="flex-1 min-w-[180px]">
-                        <div class="font-bold text-slate-800">${d.nome}</div>
+                        <div class="font-bold">${d.nome}</div>
                         <div class="text-sm text-slate-500">Parcela ${d.parcela} de ${d.totalParcelas}</div>
                     </div>
-                    <div class="text-center min-w-[120px]">
-                        <div class="text-xs text-slate-500">Vencimento</div>
-                        <div class="font-semibold">${fmtData(d.dataVenc)}</div>
-                    </div>
-                    <div class="text-center min-w-[120px]">
-                        <div class="text-xs text-slate-500">Valor</div>
-                        <div class="font-bold text-lg">R$ ${fmtMoeda(d.valor)}</div>
-                    </div>
+                    <div class="text-center min-w-[110px]"><div class="text-xs text-slate-500">Vencimento</div><div class="font-semibold">${fmtData(d.dataVenc)}</div></div>
+                    <div class="text-center min-w-[110px]"><div class="text-xs text-slate-500">Valor</div><div class="font-bold text-lg">R$ ${fmtMoeda(d.valor)}</div></div>
                     <div class="min-w-[160px] text-center">${status}</div>
-                    <div class="flex gap-2 flex-shrink-0">
-                        <button onclick="alternarPagoDivida(${d.id})" class="btn ${d.pago ? 'btn-cinza' : 'btn-verde'} text-sm py-1 px-3">
-                            ${d.pago ? '↩️ Desmarcar' : '✓ Pago'}
-                        </button>
+                    <div class="flex gap-2">
+                        <button onclick="alternarPagoDivida(${d.id})" class="btn ${d.pago?'btn-cinza':'btn-verde'} text-sm py-1 px-3">${d.pago?'↩️':'✓ Pago'}</button>
                         <button onclick="excluirDivida(${d.id})" class="btn btn-vermelho text-sm py-1 px-3">🗑️</button>
                     </div>
-                </div>
-            `;
+                </div>`;
         }
     });
     
-    const totalGeral = totalPago + totalVencer + totalAtrasado;
-    document.getElementById('div-pagos').textContent = 'R$ ' + fmtMoeda(totalPago);
-    document.getElementById('div-vencer').textContent = 'R$ ' + fmtMoeda(totalVencer);
-    document.getElementById('div-atrasado').textContent = 'R$ ' + fmtMoeda(totalAtrasado);
-    document.getElementById('div-total').textContent = 'R$ ' + fmtMoeda(totalGeral);
-    
-    if(lista.innerHTML === '') {
-        lista.innerHTML = '<div class="empty-state"><p>Nenhuma parcela encontrada.</p></div>';
-    }
+    document.getElementById('d-pagos').textContent = 'R$ '+fmtMoeda(p);
+    document.getElementById('d-vencer').textContent = 'R$ '+fmtMoeda(v);
+    document.getElementById('d-atrasado').textContent = 'R$ '+fmtMoeda(a);
+    document.getElementById('d-total').textContent = 'R$ '+fmtMoeda(p+v+a);
+    if(lista.innerHTML==='') lista.innerHTML='<div class="empty-state"><p>Nenhuma parcela encontrada.</p></div>';
 }
 
 // ===================================
-// ABA 2: BOLETOS
+// ABA 3: BOLETOS
 // ===================================
 function cadastrarBoleto() {
     const nome = document.getElementById('bolNome').value.trim();
     const valor = limparValor(document.getElementById('bolValor').value);
     const data = document.getElementById('bolData').value;
     const codigo = document.getElementById('bolCodigo').value.trim();
-    
-    if(!nome || !valor || !data) return alert('Preencha nome, valor e data!');
-    
-    db.boletos.push({ id: Date.now(), nome, valor, data, codigo, pago: false });
-    
-    document.getElementById('bolNome').value = '';
-    document.getElementById('bolValor').value = '';
-    document.getElementById('bolData').value = '';
-    document.getElementById('bolCodigo').value = '';
-    
+    if(!nome||!valor||!data) return alert('Preencha nome, valor e data!');
+    db.boletos.push({id:Date.now(),nome,valor,data,codigo,pago:false});
+    document.getElementById('bolNome').value='';document.getElementById('bolValor').value='';document.getElementById('bolData').value='';document.getElementById('bolCodigo').value='';
     salvarDados();
 }
-
-function alternarPagoBoleto(id) {
-    const b = db.boletos.find(x => x.id === id);
-    if(b) { b.pago = !b.pago; salvarDados(); }
-}
-
-function excluirBoleto(id) {
-    if(confirm('Excluir este boleto?')) {
-        db.boletos = db.boletos.filter(x => x.id !== id);
-        salvarDados();
-    }
-}
-
-function copiarTexto(texto) {
-    navigator.clipboard.writeText(texto);
-    alert('Copiado! ✅');
-}
+function alternarPagoBoleto(id) { const b = db.boletos.find(x=>x.id===id); if(b){b.pago=!b.pago;salvarDados();} }
+function excluirBoleto(id) { if(confirm('Excluir?')){db.boletos=db.boletos.filter(x=>x.id!==id);salvarDados();} }
+function copiarTexto(t) { navigator.clipboard.writeText(t); alert('Copiado! ✅'); }
 
 function renderizarBoletos() {
     const lista = document.getElementById('listaBoletos');
-    const busca = (document.getElementById('buscaBoleto').value || '').toLowerCase();
+    const busca = (document.getElementById('buscaBoleto').value||'').toLowerCase();
     const filtro = document.getElementById('filtroBoleto').value;
+    let v=0,d3=0,a=0,p=0; lista.innerHTML='';
+    const ord = [...db.boletos].sort((x,y)=>x.pago-y.pago||new Date(x.data)-new Date(y.data));
     
-    let v = 0, d3 = 0, atr = 0, pg = 0;
-    lista.innerHTML = '';
-    
-    const ordenados = [...db.boletos].sort((a, b) => a.pago - b.pago || new Date(a.data) - new Date(b.data));
-    
-    ordenados.forEach(b => {
+    ord.forEach(b => {
         const dias = diasParaVencer(b.data);
-        let status = '', mostrar = true;
+        let status='', mostrar=true;
+        if(b.pago){status='<span class="status status-pago">✅ Pago</span>';p++;}
+        else if(dias<0){status='<span class="status status-atrasado">🔴 Atrasado</span>';a++;}
+        else if(dias<=3){status=`<span class="status status-vencer">⚠️ Vence em ${dias} dias</span>`;d3++;v++;}
+        else{status=`<span class="status status-vencer">⏳ Vence em ${dias} dias</span>`;v++;}
         
-        if(b.pago) {
-            status = '<span class="status status-pago">✅ Pago</span>';
-            pg++;
-        } else if(dias < 0) {
-            status = `<span class="status status-atrasado">🔴 Atrasado</span>`;
-            atr++;
-        } else if(dias <= 3) {
-            status = `<span class="status status-vencer">⚠️ Vence em ${dias} dias</span>`;
-            d3++; v++;
-        } else {
-            status = `<span class="status status-vencer">⏳ Vence em ${dias} dias</span>`;
-            v++;
-        }
+        if(busca && !b.nome.toLowerCase().includes(busca)) mostrar=false;
+        if(filtro==='avencer' && (b.pago||dias<0)) mostrar=false;
+        if(filtro==='3d' && (b.pago||dias<0||dias>3)) mostrar=false;
+        if(filtro==='atrasado' && (b.pago||dias>=0)) mostrar=false;
+        if(filtro==='pago' && !b.pago) mostrar=false;
         
-        if(busca && !b.nome.toLowerCase().includes(busca)) mostrar = false;
-        if(filtro === 'avencer' && (b.pago || dias < 0)) mostrar = false;
-        if(filtro === '3d' && (b.pago || dias < 0 || dias > 3)) mostrar = false;
-        if(filtro === 'atrasado' && (b.pago || dias >= 0)) mostrar = false;
-        if(filtro === 'pago' && !b.pago) mostrar = false;
-        
-        if(mostrar) {
+        if(mostrar){
             lista.innerHTML += `
-                <div class="card" style="opacity: ${b.pago ? 0.8 : 1};">
+                <div class="card" style="opacity:${b.pago?0.85:1}">
                     <div class="flex justify-between items-start flex-wrap gap-2 mb-3">
-                        <h4 class="font-bold text-lg">${b.nome}</h4>
-                        ${status}
+                        <h4 class="font-bold text-lg">${b.nome}</h4>${status}
                     </div>
                     <p class="text-2xl font-bold text-slate-800 mb-1">R$ ${fmtMoeda(b.valor)}</p>
                     <p class="text-sm text-slate-500 mb-3">📅 Vencimento: ${fmtData(b.data)}</p>
-                    ${b.codigo ? `
-                        <div class="bg-slate-50 p-3 rounded-lg text-sm mb-3 flex justify-between items-center border">
-                            <span class="font-mono text-xs">${b.codigo}</span>
-                            <button onclick="copiarTexto('${b.codigo}')" class="text-blue-600 font-bold text-sm">Copiar</button>
-                        </div>
-                    ` : ''}
+                    ${b.codigo?`<div class="bg-slate-50 p-3 rounded-lg text-sm mb-3 flex justify-between items-center border"><span class="font-mono text-xs">${b.codigo}</span><button onclick="copiarTexto('${b.codigo}')" class="text-blue-600 font-bold">Copiar</button></div>`:''}
                     <div class="flex gap-2">
-                        <button onclick="alternarPagoBoleto(${b.id})" class="btn ${b.pago ? 'btn-cinza' : 'btn-verde'}">
-                            ${b.pago ? '↩️ Desmarcar' : '✓ Marcar Pago'}
-                        </button>
+                        <button onclick="alternarPagoBoleto(${b.id})" class="btn ${b.pago?'btn-cinza':'btn-verde'}">${b.pago?'↩️ Desmarcar':'✓ Marcar Pago'}</button>
                         <button onclick="excluirBoleto(${b.id})" class="btn btn-vermelho">🗑️ Excluir</button>
                     </div>
-                </div>
-            `;
+                </div>`;
         }
     });
-    
-    document.getElementById('b-v').textContent = v;
-    document.getElementById('b-3d').textContent = d3;
-    document.getElementById('b-a').textContent = atr;
-    document.getElementById('b-p').textContent = pg;
-    
-    if(lista.innerHTML === '') lista.innerHTML = '<div class="empty-state"><p>Nenhum boleto encontrado.</p></div>';
+    document.getElementById('bl-v').textContent=v;document.getElementById('bl-3d').textContent=d3;document.getElementById('bl-a').textContent=a;document.getElementById('bl-p').textContent=p;
+    if(lista.innerHTML==='') lista.innerHTML='<div class="empty-state"><p>Nenhum boleto encontrado.</p></div>';
 }
 
 // ===================================
-// ABA 3: CHEQUES
+// ABA 4: CHEQUES
 // ===================================
 function cadastrarCheque() {
     const nome = document.getElementById('cheNome').value.trim();
     const numero = document.getElementById('cheNumero').value.trim();
     const valor = limparValor(document.getElementById('cheValor').value);
     const data = document.getElementById('cheData').value;
-    
-    if(!nome || !numero || !valor || !data) return alert('Preencha todos os campos!');
-    
-    db.cheques.push({ id: Date.now(), nome, numero, valor, data, status: 'aberto' });
-    
-    document.getElementById('cheNome').value = '';
-    document.getElementById('cheNumero').value = '';
-    document.getElementById('cheValor').value = '';
-    document.getElementById('cheData').value = '';
-    
+    if(!nome||!numero||!valor||!data) return alert('Preencha todos os campos!');
+    db.cheques.push({id:Date.now(),nome,numero,valor,data,status:'aberto'});
+    document.getElementById('cheNome').value='';document.getElementById('cheNumero').value='';document.getElementById('cheValor').value='';document.getElementById('cheData').value='';
     salvarDados();
 }
-
-function alternarStatusCheque(id) {
-    const c = db.cheques.find(x => x.id === id);
-    if(c) {
-        if(c.status === 'aberto') c.status = 'pago';
-        else if(c.status === 'pago') c.status = 'dev';
-        else c.status = 'aberto';
-        salvarDados();
-    }
-}
-
-function excluirCheque(id) {
-    if(confirm('Excluir este cheque?')) {
-        db.cheques = db.cheques.filter(x => x.id !== id);
-        salvarDados();
-    }
-}
+function alternarStatusCheque(id) { const c=db.cheques.find(x=>x.id===id); if(c){c.status=c.status==='aberto'?'pago':c.status==='pago'?'dev':'aberto';salvarDados();} }
+function excluirCheque(id) { if(confirm('Excluir?')){db.cheques=db.cheques.filter(x=>x.id!==id);salvarDados();} }
 
 function renderizarCheques() {
     const lista = document.getElementById('listaCheques');
-    const busca = (document.getElementById('buscaCheque').value || '').toLowerCase();
+    const busca = (document.getElementById('buscaCheque').value||'').toLowerCase();
     const filtro = document.getElementById('filtroCheque').value;
-    
-    let ab = 0, pg = 0, dv = 0;
-    lista.innerHTML = '';
+    let a=0,p=0,d=0; lista.innerHTML='';
     
     db.cheques.forEach(c => {
-        let status = '', mostrar = true;
+        let status='', mostrar=true;
+        if(c.status==='aberto'){status='<span class="status status-aberto">⏳ Em Aberto</span>';a++;}
+        else if(c.status==='pago'){status='<span class="status status-compensado">✅ Compensado</span>';p++;}
+        else{status='<span class="status status-devolvido">🔴 Devolvido</span>';d++;}
         
-        if(c.status === 'aberto') { status = '<span class="status status-aberto">⏳ Em Aberto</span>'; ab++; }
-        else if(c.status === 'pago') { status = '<span class="status status-compensado">✅ Compensado</span>'; pg++; }
-        else { status = '<span class="status status-devolvido">🔴 Devolvido</span>'; dv++; }
+        if(busca && !c.nome.toLowerCase().includes(busca) && !c.numero.includes(busca)) mostrar=false;
+        if(filtro==='aberto' && c.status!=='aberto') mostrar=false;
+        if(filtro==='pago' && c.status!=='pago') mostrar=false;
+        if(filtro==='dev' && c.status!=='dev') mostrar=false;
         
-        if(busca && !c.nome.toLowerCase().includes(busca) && !c.numero.includes(busca)) mostrar = false;
-        if(filtro === 'aberto' && c.status !== 'aberto') mostrar = false;
-        if(filtro === 'pago' && c.status !== 'pago') mostrar = false;
-        if(filtro === 'dev' && c.status !== 'dev') mostrar = false;
-        
-        if(mostrar) {
+        if(mostrar){
             lista.innerHTML += `
                 <div class="card">
                     <div class="flex justify-between items-start flex-wrap gap-2 mb-3">
-                        <h4 class="font-bold text-lg">${c.nome}</h4>
-                        ${status}
+                        <h4 class="font-bold text-lg">${c.nome}</h4>${status}
                     </div>
                     <p class="text-sm text-slate-500 mb-1">Nº: <strong>${c.numero}</strong> — Data: ${fmtData(c.data)}</p>
                     <p class="text-2xl font-bold text-slate-800 mb-4">R$ ${fmtMoeda(c.valor)}</p>
@@ -763,103 +598,143 @@ function renderizarCheques() {
                         <button onclick="alternarStatusCheque(${c.id})" class="btn btn-azul">↻ Alterar Status</button>
                         <button onclick="excluirCheque(${c.id})" class="btn btn-vermelho">🗑️ Excluir</button>
                     </div>
-                </div>
-            `;
+                </div>`;
         }
     });
-    
-    document.getElementById('c-a').textContent = ab;
-    document.getElementById('c-p').textContent = pg;
-    document.getElementById('c-d').textContent = dv;
-    
-    if(lista.innerHTML === '') lista.innerHTML = '<div class="empty-state"><p>Nenhum cheque encontrado.</p></div>';
+    document.getElementById('ch-a').textContent=a;document.getElementById('ch-p').textContent=p;document.getElementById('ch-d').textContent=d;
+    if(lista.innerHTML==='') lista.innerHTML='<div class="empty-state"><p>Nenhum cheque encontrado.</p></div>';
 }
 
 // ===================================
-// ABA 4: RESUMO PROFISSIONAL
+// ABA 1: RESUMO / VISÃO GERAL
 // ===================================
-let graficoResumo = null;
+let graficoBarras = null, graficoPizza = null;
 
 function atualizarResumo() {
     const anoSel = document.getElementById('resumoAno').value;
     const mesSel = parseInt(document.getElementById('resumoMes').value);
     
-    let totalGeral = 0, totalPago = 0, totalVencer = 0, totalAtrasado = 0;
+    let totalGeral=0, totalPago=0, totalVencer=0, totalAtrasado=0;
+    let totalDividas=0, totalBoletos=0, totalCheques=0;
     const totaisPorMes = Array(12).fill(0);
     let tabelaHTML = '';
     
-    // Processar dívidas
+    // Processar Dívidas
     db.dividas.forEach(d => {
         const anoD = extrairAno(d.dataVenc);
         const mesD = extrairMes(d.dataVenc);
-        
         if(anoSel !== 'todos' && anoD !== anoSel) return;
         if(mesSel !== 0 && mesD !== mesSel) return;
         
         totalGeral += d.valor;
-        totaisPorMes[mesD - 1] += d.valor;
+        totalDividas += d.valor;
+        totaisPorMes[mesD-1] += d.valor;
         
+        const dias = diasParaVencer(d.dataVenc);
         if(d.pago) totalPago += d.valor;
-        else {
-            const dias = diasParaVencer(d.dataVenc);
-            if(dias < 0) totalAtrasado += d.valor;
-            else totalVencer += d.valor;
-        }
+        else if(dias < 0) totalAtrasado += d.valor;
+        else totalVencer += d.valor;
         
-        const statusText = d.pago ? '✅ Pago' : (diasParaVencer(d.dataVenc) < 0 ? '🔴 Atrasado' : '⏳ A vencer');
+        const statusText = d.pago ? '✅ PAGO' : (dias<0 ? '🔴 ATRASADO' : '⏳ A VENCER');
+        const linhaClasse = d.pago ? 'linha-pago' : (dias<0 ? 'linha-atrasado' : 'linha-vencer');
         tabelaHTML += `
-            <tr style="border-bottom: 1px solid #e2e8f0;">
-                <td style="padding: 10px; font-weight: 500;">${d.nome}</td>
-                <td style="padding: 10px; text-align: center;">${d.parcela}/${d.totalParcelas}</td>
-                <td style="padding: 10px; text-align: center;">${fmtData(d.dataVenc)}</td>
-                <td style="padding: 10px; text-align: right; font-weight: 600;">R$ ${fmtMoeda(d.valor)}</td>
-                <td style="padding: 10px; text-align: center;">${statusText}</td>
-            </tr>
-        `;
+            <tr class="${linhaClasse}">
+                <td><strong>${d.nome}</strong></td>
+                <td style="text-align:center">${d.parcela}/${d.totalParcelas}</td>
+                <td style="text-align:center">${fmtData(d.dataVenc)}</td>
+                <td style="text-align:right;font-weight:600">R$ ${fmtMoeda(d.valor)}</td>
+                <td style="text-align:center">${statusText}</td>
+            </tr>`;
     });
     
-    // Processar boletos
+    // Processar Boletos
     db.boletos.forEach(b => {
         const anoB = extrairAno(b.data);
         const mesB = extrairMes(b.data);
         const dias = diasParaVencer(b.data);
-        
         if(anoSel !== 'todos' && anoB !== anoSel) return;
         if(mesSel !== 0 && mesB !== mesSel) return;
         
         totalGeral += b.valor;
-        totaisPorMes[mesB - 1] += b.valor;
+        totalBoletos += b.valor;
+        totaisPorMes[mesB-1] += b.valor;
         
         if(b.pago) totalPago += b.valor;
         else if(dias < 0) totalAtrasado += b.valor;
         else totalVencer += b.valor;
         
-        const statusText = b.pago ? '✅ Pago' : (dias < 0 ? '🔴 Atrasado' : '⏳ A vencer');
+        const statusText = b.pago ? '✅ PAGO' : (dias<0 ? '🔴 ATRASADO' : '⏳ A VENCER');
+        const linhaClasse = b.pago ? 'linha-pago' : (dias<0 ? 'linha-atrasado' : 'linha-vencer');
         tabelaHTML += `
-            <tr style="border-bottom: 1px solid #e2e8f0;">
-                <td style="padding: 10px; font-weight: 500;">🧾 ${b.nome}</td>
-                <td style="padding: 10px; text-align: center;">—</td>
-                <td style="padding: 10px; text-align: center;">${fmtData(b.data)}</td>
-                <td style="padding: 10px; text-align: right; font-weight: 600;">R$ ${fmtMoeda(b.valor)}</td>
-                <td style="padding: 10px; text-align: center;">${statusText}</td>
-            </tr>
-        `;
+            <tr class="${linhaClasse}">
+                <td><strong>🧾 ${b.nome}</strong></td>
+                <td style="text-align:center">—</td>
+                <td style="text-align:center">${fmtData(b.data)}</td>
+                <td style="text-align:right;font-weight:600">R$ ${fmtMoeda(b.valor)}</td>
+                <td style="text-align:center">${statusText}</td>
+            </tr>`;
     });
     
-    // Atualizar cards
+    // Processar Cheques
+    db.cheques.forEach(c => {
+        const anoC = extrairAno(c.data);
+        const mesC = extrairMes(c.data);
+        if(anoSel !== 'todos' && anoC !== anoSel) return;
+        if(mesSel !== 0 && mesC !== mesSel) return;
+        
+        totalGeral += c.valor;
+        totalCheques += c.valor;
+        totaisPorMes[mesC-1] += c.valor;
+        
+        if(c.status === 'pago') totalPago += c.valor;
+        else if(c.status === 'dev') totalAtrasado += c.valor;
+        else totalVencer += c.valor;
+        
+        const statusMap = { aberto: '⏳ EM ABERTO', pago: '✅ COMPENSADO', dev: '🔴 DEVOLVIDO' };
+        const linhaClasse = c.status === 'pago' ? 'linha-pago' : (c.status === 'dev' ? 'linha-atrasado' : 'linha-vencer');
+        tabelaHTML += `
+            <tr class="${linhaClasse}">
+                <td><strong>📑 ${c.nome}</strong></td>
+                <td style="text-align:center">${c.numero}</td>
+                <td style="text-align:center">${fmtData(c.data)}</td>
+                <td style="text-align:right;font-weight:600">R$ ${fmtMoeda(c.valor)}</td>
+                <td style="text-align:center">${statusMap[c.status]}</td>
+            </tr>`;
+    });
+    
+    // Atualizar Cards
     document.getElementById('r-total').textContent = 'R$ ' + fmtMoeda(totalGeral);
     document.getElementById('r-pagos').textContent = 'R$ ' + fmtMoeda(totalPago);
     document.getElementById('r-vencer').textContent = 'R$ ' + fmtMoeda(totalVencer);
     document.getElementById('r-atrasado').textContent = 'R$ ' + fmtMoeda(totalAtrasado);
     
-    // Atualizar gráfico
-    const ctx = document.getElementById('graficoResumo').getContext('2d');
-    if(graficoResumo) graficoResumo.destroy();
-    graficoResumo = new Chart(ctx, {
+    // Atualizar Tabela
+    if(tabelaHTML) {
+        document.getElementById('tabelaDetalhes').innerHTML = `
+            <table class="tabela">
+                <thead>
+                    <tr>
+                        <th>Descrição</th>
+                        <th style="text-align:center">Parcela/Nº</th>
+                        <th style="text-align:center">Data</th>
+                        <th style="text-align:right">Valor</th>
+                        <th style="text-align:center">Status</th>
+                    </tr>
+                </thead>
+                <tbody>${tabelaHTML}</tbody>
+            </table>`;
+    } else {
+        document.getElementById('tabelaDetalhes').innerHTML = '<div class="empty-state"><p>Nenhum registro encontrado para o período selecionado.</p></div>';
+    }
+    
+    // Gráfico de Barras
+    const ctxBarras = document.getElementById('graficoBarras').getContext('2d');
+    if(graficoBarras) graficoBarras.destroy();
+    graficoBarras = new Chart(ctxBarras, {
         type: 'bar',
         data: {
-            labels: MESES.map(m => m.substring(0, 3)),
+            labels: MESES.map(m => m.substring(0,3)),
             datasets: [{
-                label: 'Gastos Mensais R$',
+                label: 'Gastos R$',
                 data: totaisPorMes,
-                backgroundColor: ['#2563eb','#3b82f6','#1d4ed8','#4f46e5','#7c3aed','#8b5cf6','#a855f7','#d946ef','#ec4899','#f43f5e','#f97316','#eab308
+                backgroundColor:
