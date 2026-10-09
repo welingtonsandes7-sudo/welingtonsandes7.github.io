@@ -30,6 +30,7 @@
         .card-resumo { padding: 20px; border-radius: 10px; color: white; }
         .card-resumo .label { font-size: 13px; opacity: 0.9; margin-bottom: 6px; }
         .card-resumo .valor { font-size: 24px; font-weight: 800; }
+        
         .azul { background: linear-gradient(135deg, #1e40af, #3b82f6); }
         .verde { background: linear-gradient(135deg, #16a34a, #22c55e); }
         .amarelo { background: linear-gradient(135deg, #d97706, #f59e0b); }
@@ -42,7 +43,7 @@
         input:focus, select:focus { outline: none; border-color: #2563eb; background: white; box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
         label { font-size: 13px; font-weight: 500; color: #475569; margin-bottom: 4px; display: block; }
         
-        .btn { padding: 10px 16px; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: transform 0.1s; }
+        .btn { padding: 10px 16px; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: transform 0.1s; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
         .btn:active { transform: scale(0.98); }
         .btn-verde { background: #16a34a; color: white; }
         .btn-azul { background: #2563eb; color: white; }
@@ -50,7 +51,6 @@
         .btn-cinza { background: #64748b; color: white; }
         .btn-vermelho { background: #dc2626; color: white; }
         .btn-roxo { background: #8b5cf6; color: white; }
-        .btn-laranja { background: #f97316; color: white; }
         .btn-pequeno { padding: 6px 12px; font-size: 13px; }
         
         .grid-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 16px; }
@@ -79,7 +79,8 @@
         .aviso { position: fixed; bottom: 20px; right: 20px; background: #16a34a; color: white; padding: 12px 24px; border-radius: 8px; font-weight: 600; display: none; z-index: 9999; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
         .vazio { text-align: center; padding: 40px; color: #94a3b8; }
         .linha { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; }
-        .esconder { display: none; }
+        .esconder { display: none !important; }
+        .flex-gap { display: flex; gap: 8px; flex-wrap: wrap; }
     </style>
 </head>
 <body>
@@ -89,7 +90,7 @@
 <!-- CABEÇALHO -->
 <div class="topo">
     <h1>💼 Meu Controle de Finanças</h1>
-    <p style="font-size:13px;opacity:0.8;">Suas contas, recebíveis, rendas e patrimônio — tudo em um só lugar</p>
+    <p style="font-size:13px;opacity:0.8;">Suas contas, recebíveis, rendas, empréstimos e patrimônio — tudo em um só lugar</p>
     <div class="botoes-topo">
         <button class="btn btn-verde btn-pequeno" onclick="exportarExcel()">📊 Exportar Excel</button>
         <button class="btn btn-amarelo btn-pequeno" onclick="baixarBackup()">💾 Baixar Backup</button>
@@ -106,6 +107,7 @@
     <div class="aba" data-painel="dividas">💳 Contas a Pagar</div>
     <div class="aba" data-painel="receber">💰 Contas a Receber</div>
     <div class="aba" data-painel="rendas">💵 Minhas Rendas</div>
+    <div class="aba" data-painel="emprestimos">🤝 Empréstimos / Juros</div>
     <div class="aba" data-painel="patrimonio">🏆 Meu Patrimônio</div>
     <div class="aba" data-painel="boletos">🧾 Boletos</div>
     <div class="aba" data-painel="cheques">📑 Cheques</div>
@@ -142,8 +144,24 @@
         </div>
     </div>
 
+    <!-- GRÁFICOS VISUAIS -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <div class="card">
+            <h3>📊 Entradas vs Saídas</h3>
+            <div style="position: relative; height: 260px; width: 100%;">
+                <canvas id="chartBalanco"></canvas>
+            </div>
+        </div>
+        <div class="card">
+            <h3>🏆 Distribuição do Patrimônio</h3>
+            <div style="position: relative; height: 260px; width: 100%;">
+                <canvas id="chartPatrimonio"></canvas>
+            </div>
+        </div>
+    </div>
+
     <div class="card">
-        <h3>📊 Resumo de Todas as Contas</h3>
+        <h3>📊 Resumo de Saldo Projetado</h3>
         <div id="lista-resumo" class="mt-2"></div>
     </div>
 </div>
@@ -284,13 +302,14 @@
     </div>
 </div>
 
-<!-- ABA 4: MINHAS RENDAS -->
+<!-- ABA 4: MINHAS RENDAS (COM EDIÇÃO) -->
 <div id="painel-rendas" class="painel">
     <h2 style="font-size:20px;margin-bottom:20px;">💵 Minhas Rendas</h2>
     <p style="color:#64748b;margin-bottom:20px;">Seu salário, aluguel recebido, comissões — sua fonte de renda</p>
 
     <div class="card">
-        <h3>➕ Adicionar Fonte de Renda</h3>
+        <h3 id="renda-form-titulo">➕ Adicionar Fonte de Renda</h3>
+        <input type="hidden" id="renda-id-edicao" value="">
         <div class="grid-form">
             <div>
                 <label>Origem (Ex: Salário, Aluguel, Comissão...)</label>
@@ -312,7 +331,10 @@
                 <input type="text" id="renda-obs" placeholder="Ex: Todo dia 5">
             </div>
         </div>
-        <button class="btn btn-verde" onclick="adicionarRenda()">💾 Salvar Renda</button>
+        <div class="flex-gap">
+            <button class="btn btn-verde" id="btn-salvar-renda" onclick="adicionarOuAtualizarRenda()">💾 Salvar Renda</button>
+            <button class="btn btn-cinza esconder" id="btn-cancelar-renda" onclick="cancelarEdicaoRenda()">❌ Cancelar Edição</button>
+        </div>
     </div>
 
     <div class="grid-cards">
@@ -340,7 +362,82 @@
     </div>
 </div>
 
-<!-- ABA 5: MEU PATRIMÔNIO -->
+<!-- ABA 5: EMPRÉSTIMOS E JUROS (NOVA ABA) -->
+<div id="painel-emprestimos" class="painel">
+    <h2 style="font-size:20px;margin-bottom:20px;">🤝 Empréstimos e Juros</h2>
+    <p style="color:#64748b;margin-bottom:20px;">Controle dinheiro emprestado a terceiros ou empréstimos pegos com taxa de juros</p>
+
+    <div class="grid-cards">
+        <div class="card-resumo azul">
+            <div class="label">💰 Emprestei (A Receber + Juros)</div>
+            <div class="valor" id="emp-t-concedido">R$ 0,00</div>
+        </div>
+        <div class="card-resumo vermelho">
+            <div class="label">💵 Peguei Emprestado (A Pagar)</div>
+            <div class="valor" id="emp-t-tomado">R$ 0,00</div>
+        </div>
+        <div class="card-resumo verde">
+            <div class="label">📈 Total em Juros Previstos</div>
+            <div class="valor" id="emp-t-juros">R$ 0,00</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3 id="emp-form-titulo">➕ Cadastrar Empréstimo / Financiamento</h3>
+        <input type="hidden" id="emp-id-edicao" value="">
+        <div class="grid-form">
+            <div>
+                <label>Tipo de Operação</label>
+                <select id="emp-tipo">
+                    <option value="concedido">📤 Emprestei para alguém (A Receber)</option>
+                    <option value="tomado">📥 Peguei Emprestado (A Pagar)</option>
+                </select>
+            </div>
+            <div>
+                <label>Nome da Pessoa / Empresa</label>
+                <input type="text" id="emp-nome" placeholder="Ex: João Silva ou Banco X">
+            </div>
+            <div>
+                <label>Valor Principal R$</label>
+                <input type="text" id="emp-valor" placeholder="Ex: 5.000,00">
+            </div>
+            <div>
+                <label>Taxa de Juros Mensal (%)</label>
+                <input type="number" step="0.1" id="emp-juros" placeholder="Ex: 2.5">
+            </div>
+            <div>
+                <label>Prazo (Meses)</label>
+                <input type="number" id="emp-meses" value="1" min="1">
+            </div>
+            <div>
+                <label>Data do Empréstimo</label>
+                <input type="date" id="emp-data">
+            </div>
+        </div>
+        <div class="flex-gap">
+            <button class="btn btn-verde" id="btn-salvar-emp" onclick="adicionarOuAtualizarEmprestimo()">💾 Salvar Empréstimo</button>
+            <button class="btn btn-cinza esconder" id="btn-cancelar-emp" onclick="cancelarEdicaoEmprestimo()">❌ Cancelar Edição</button>
+        </div>
+    </div>
+
+    <div class="filtros">
+        <input type="text" id="emp-busca" placeholder="🔍 Buscar por pessoa..." style="max-width:250px;" oninput="atualizarListaEmprestimos()">
+        <select id="emp-filtro" onchange="atualizarListaEmprestimos()">
+            <option value="todos">Todos os empréstimos</option>
+            <option value="concedido">📤 Emprestei (A receber)</option>
+            <option value="tomado">📥 Peguei emprestado (A pagar)</option>
+            <option value="ativo">⏳ Em Aberto</option>
+            <option value="quitado">✅ Quitados</option>
+        </select>
+    </div>
+
+    <div class="card">
+        <h3>📋 Lista de Empréstimos</h3>
+        <div id="emp-lista"></div>
+    </div>
+</div>
+
+<!-- ABA 6: MEU PATRIMÔNIO -->
 <div id="painel-patrimonio" class="painel">
     <h2 style="font-size:20px;margin-bottom:20px;">🏆 Meu Patrimônio</h2>
     <p style="color:#64748b;margin-bottom:20px;">Seus bens — carros, imóveis, terrenos, investimentos</p>
@@ -398,7 +495,7 @@
     </div>
 </div>
 
-<!-- ABA 6: BOLETOS -->
+<!-- ABA 7: BOLETOS -->
 <div id="painel-boletos" class="painel">
     <h2 style="font-size:20px;margin-bottom:20px;">🧾 Controle de Boletos</h2>
 
@@ -457,7 +554,7 @@
     <div id="b-lista"></div>
 </div>
 
-<!-- ABA 7: CHEQUES -->
+<!-- ABA 8: CHEQUES -->
 <div id="painel-cheques" class="painel">
     <h2 style="font-size:20px;margin-bottom:20px;">📑 Controle de Cheques</h2>
 
@@ -512,7 +609,7 @@
     <div id="ch-lista"></div>
 </div>
 
-<!-- JAVASCRIPT -->
+<!-- JAVASCRIPT COMPLETO E ATUALIZADO -->
 <script>
 'use strict';
 const CHAVE_SALVAMENTO = 'CONTROLE_DADOS_02';
@@ -522,21 +619,36 @@ let dados = {
     cheques: [],
     receber: [],
     rendas: [],
-    patrimonio: []
+    patrimonio: [],
+    emprestimos: []
 };
 
-// ===== FUNÇÕES BÁSICAS =====
+let chartBalancoInstancia = null;
+let chartPatrimonioInstancia = null;
+
+// ===== FUNÇÕES AUXILIARES =====
 function formatarDinheiro(valor) {
     return Number(valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
+
 function limparValor(valorTexto) {
-    return String(valorTexto || '0').replace(/\./g, '').replace(',', '.') * 1;
+    if (typeof valorTexto === 'number') return valorTexto;
+    if (!valorTexto) return 0;
+    let str = String(valorTexto).trim().replace('R$', '').trim();
+    if (str.includes(',') && str.includes('.')) {
+        str = str.replace(/\./g, '').replace(',', '.');
+    } else if (str.includes(',')) {
+        str = str.replace(',', '.');
+    }
+    return parseFloat(str) || 0;
 }
+
 function formatarData(data) {
     if (!data) return '';
     const [ano, mes, dia] = String(data).split('-');
     return `${dia}/${mes}/${ano}`;
 }
+
 function diasAteVencimento(dataIso) {
     if (!dataIso) return 9999;
     const alvo = new Date(dataIso + 'T00:00:00');
@@ -544,32 +656,38 @@ function diasAteVencimento(dataIso) {
     hoje.setHours(0, 0, 0, 0);
     return Math.ceil((alvo - hoje) / (1000 * 60 * 60 * 24));
 }
-function mostrarAviso() {
+
+function mostrarAviso(msg = '✅ Salvo com sucesso!') {
     const aviso = document.getElementById('aviso');
+    aviso.textContent = msg;
     aviso.style.display = 'block';
     setTimeout(() => aviso.style.display = 'none', 2500);
 }
+
 function salvarDados() {
     localStorage.setItem(CHAVE_SALVAMENTO, JSON.stringify(dados));
     mostrarAviso();
     atualizarTudo();
 }
+
 function carregarDados() {
     try {
         const salvo = localStorage.getItem(CHAVE_SALVAMENTO);
         if (salvo) dados = JSON.parse(salvo);
+        if (!dados.dividas) dados.dividas = [];
         if (!dados.receber) dados.receber = [];
         if (!dados.rendas) dados.rendas = [];
         if (!dados.patrimonio) dados.patrimonio = [];
         if (!dados.boletos) dados.boletos = [];
         if (!dados.cheques) dados.cheques = [];
+        if (!dados.emprestimos) dados.emprestimos = [];
     } catch (e) {
-        console.log('Nenhum dado salvo ainda');
+        console.error('Erro ao carregar dados salvos:', e);
     }
     atualizarTudo();
 }
 
-// ===== SISTEMA DE ABAS =====
+// ===== TROCA DE ABAS =====
 function configurarAbas() {
     const abas = document.querySelectorAll('.aba');
     abas.forEach(aba => {
@@ -577,12 +695,16 @@ function configurarAbas() {
             abas.forEach(a => a.classList.remove('ativa'));
             this.classList.add('ativa');
             document.querySelectorAll('.painel').forEach(p => p.classList.remove('visivel'));
+            
             const idPainel = 'painel-' + this.getAttribute('data-painel');
-            document.getElementById(idPainel).classList.add('visivel');
+            const painelAlvo = document.getElementById(idPainel);
+            if (painelAlvo) painelAlvo.classList.add('visivel');
+
             if (idPainel === 'painel-resumo') atualizarResumo();
             if (idPainel === 'painel-dividas') atualizarListaDividas();
             if (idPainel === 'painel-receber') atualizarListaReceber();
             if (idPainel === 'painel-rendas') atualizarListaRendas();
+            if (idPainel === 'painel-emprestimos') atualizarListaEmprestimos();
             if (idPainel === 'painel-patrimonio') atualizarListaPatrimonio();
             if (idPainel === 'painel-boletos') atualizarListaBoletos();
             if (idPainel === 'painel-cheques') atualizarListaCheques();
@@ -639,6 +761,8 @@ function excluirDivida(id) {
 
 function atualizarListaDividas() {
     const lista = document.getElementById('d-lista');
+    if (!lista) return;
+
     const busca = (document.getElementById('d-busca')?.value || '').toLowerCase();
     const filtro = document.getElementById('d-filtro')?.value || 'todos';
     
@@ -748,6 +872,8 @@ function excluirReceber(id) {
 
 function atualizarListaReceber() {
     const lista = document.getElementById('rec-lista');
+    if (!lista) return;
+
     const busca = (document.getElementById('rec-busca')?.value || '').toLowerCase();
     const filtro = document.getElementById('rec-filtro')?.value || 'todos';
     
@@ -802,8 +928,9 @@ function atualizarListaReceber() {
     if (lista.innerHTML === '') lista.innerHTML = '<div class="vazio"><p>Nenhum valor a receber cadastrado.</p></div>';
 }
 
-// ===== RENDAS =====
-function adicionarRenda() {
+// ===== MINHAS RENDAS (COM SUPORTE A EDIÇÃO) =====
+function adicionarOuAtualizarRenda() {
+    const idEdicao = document.getElementById('renda-id-edicao').value;
     const nome = document.getElementById('renda-nome').value.trim();
     const valor = limparValor(document.getElementById('renda-valor').value);
     const tipo = document.getElementById('renda-tipo').value;
@@ -812,24 +939,61 @@ function adicionarRenda() {
     if (!nome) return alert('⚠️ Digite a origem da renda!');
     if (!valor || valor <= 0) return alert('⚠️ Digite um valor válido!');
 
-    dados.rendas.push({ id: Date.now(), nome, valor, tipo, obs });
+    if (idEdicao) {
+        const item = dados.rendas.find(r => r.id === parseInt(idEdicao));
+        if (item) {
+            item.nome = nome;
+            item.valor = valor;
+            item.tipo = tipo;
+            item.obs = obs;
+        }
+    } else {
+        dados.rendas.push({ id: Date.now(), nome, valor, tipo, obs });
+    }
 
+    cancelarEdicaoRenda();
+    salvarDados();
+}
+
+function editarRenda(id) {
+    const item = dados.rendas.find(r => r.id === id);
+    if (!item) return;
+
+    document.getElementById('renda-id-edicao').value = item.id;
+    document.getElementById('renda-nome').value = item.nome;
+    document.getElementById('renda-valor').value = formatarDinheiro(item.valor);
+    document.getElementById('renda-tipo').value = item.tipo;
+    document.getElementById('renda-obs').value = item.obs || '';
+
+    document.getElementById('renda-form-titulo').textContent = '✏️ Editar Renda';
+    document.getElementById('btn-salvar-renda').textContent = '🔄 Atualizar Renda';
+    document.getElementById('btn-cancelar-renda').classList.remove('esconder');
+}
+
+function cancelarEdicaoRenda() {
+    document.getElementById('renda-id-edicao').value = '';
     document.getElementById('renda-nome').value = '';
     document.getElementById('renda-valor').value = '';
     document.getElementById('renda-tipo').value = 'mensal';
     document.getElementById('renda-obs').value = '';
-    salvarDados();
+
+    document.getElementById('renda-form-titulo').textContent = '➕ Adicionar Fonte de Renda';
+    document.getElementById('btn-salvar-renda').textContent = '💾 Salvar Renda';
+    document.getElementById('btn-cancelar-renda').classList.add('esconder');
 }
 
 function excluirRenda(id) {
     if (confirm('Excluir esta renda?')) {
         dados.rendas = dados.rendas.filter(r => r.id !== id);
+        cancelarEdicaoRenda();
         salvarDados();
     }
 }
 
 function atualizarListaRendas() {
     const lista = document.getElementById('r-lista');
+    if (!lista) return;
+
     let mensal = 0, ocasional = 0;
     lista.innerHTML = '';
 
@@ -850,7 +1014,10 @@ function atualizarListaRendas() {
                     </div>
                     <div style="text-align:right;">
                         <div class="mb-2">${status}</div>
-                        <button class="btn btn-pequeno btn-vermelho" onclick="excluirRenda(${item.id})">🗑️ Excluir</button>
+                        <div class="linha">
+                            <button class="btn btn-pequeno btn-azul" onclick="editarRenda(${item.id})">✏️ Editar</button>
+                            <button class="btn btn-pequeno btn-vermelho" onclick="excluirRenda(${item.id})">🗑️ Excluir</button>
+                        </div>
                     </div>
                 </div>
             </div>`;
@@ -861,6 +1028,172 @@ function atualizarListaRendas() {
     document.getElementById('r-t-anual').textContent = 'R$ ' + formatarDinheiro((mensal * 12) + ocasional);
     document.getElementById('r-t-total').textContent = 'R$ ' + formatarDinheiro(mensal + ocasional);
     if (lista.innerHTML === '') lista.innerHTML = '<div class="vazio"><p>Nenhuma renda cadastrada.</p></div>';
+}
+
+// ===== EMPRÉSTIMOS E JUROS (NOVA ABA) =====
+function calcularMontanteEmprestimo(principal, taxaMensalPct, meses) {
+    const jurosTotal = principal * (taxaMensalPct / 100) * meses;
+    const montanteTotal = principal + jurosTotal;
+    const parcelaMensal = montanteTotal / (meses || 1);
+    return { jurosTotal, montanteTotal, parcelaMensal };
+}
+
+function adicionarOuAtualizarEmprestimo() {
+    const idEdicao = document.getElementById('emp-id-edicao').value;
+    const tipo = document.getElementById('emp-tipo').value;
+    const nome = document.getElementById('emp-nome').value.trim();
+    const valor = limparValor(document.getElementById('emp-valor').value);
+    const juros = parseFloat(document.getElementById('emp-juros').value) || 0;
+    const meses = parseInt(document.getElementById('emp-meses').value) || 1;
+    const data = document.getElementById('emp-data').value;
+
+    if (!nome) return alert('⚠️ Digite o nome da pessoa/empresa!');
+    if (!valor || valor <= 0) return alert('⚠️ Digite um valor válido!');
+    if (!data) return alert('⚠️ Digite a data do empréstimo!');
+
+    if (idEdicao) {
+        const item = dados.emprestimos.find(e => e.id === parseInt(idEdicao));
+        if (item) {
+            item.tipo = tipo;
+            item.nome = nome;
+            item.valor = valor;
+            item.juros = juros;
+            item.meses = meses;
+            item.data = data;
+        }
+    } else {
+        dados.emprestimos.push({
+            id: Date.now(),
+            tipo,
+            nome,
+            valor,
+            juros,
+            meses,
+            data,
+            quitado: false
+        });
+    }
+
+    cancelarEdicaoEmprestimo();
+    salvarDados();
+}
+
+function editarEmprestimo(id) {
+    const item = dados.emprestimos.find(e => e.id === id);
+    if (!item) return;
+
+    document.getElementById('emp-id-edicao').value = item.id;
+    document.getElementById('emp-tipo').value = item.tipo;
+    document.getElementById('emp-nome').value = item.nome;
+    document.getElementById('emp-valor').value = formatarDinheiro(item.valor);
+    document.getElementById('emp-juros').value = item.juros;
+    document.getElementById('emp-meses').value = item.meses;
+    document.getElementById('emp-data').value = item.data;
+
+    document.getElementById('emp-form-titulo').textContent = '✏️ Editar Empréstimo';
+    document.getElementById('btn-salvar-emp').textContent = '🔄 Atualizar Empréstimo';
+    document.getElementById('btn-cancelar-emp').classList.remove('esconder');
+}
+
+function cancelarEdicaoEmprestimo() {
+    document.getElementById('emp-id-edicao').value = '';
+    document.getElementById('emp-tipo').value = 'concedido';
+    document.getElementById('emp-nome').value = '';
+    document.getElementById('emp-valor').value = '';
+    document.getElementById('emp-juros').value = '';
+    document.getElementById('emp-meses').value = '1';
+    document.getElementById('emp-data').value = '';
+
+    document.getElementById('emp-form-titulo').textContent = '➕ Cadastrar Empréstimo / Financiamento';
+    document.getElementById('btn-salvar-emp').textContent = '💾 Salvar Empréstimo';
+    document.getElementById('btn-cancelar-emp').classList.add('esconder');
+}
+
+function alternarQuitacaoEmprestimo(id) {
+    const item = dados.emprestimos.find(e => e.id === id);
+    if (item) {
+        item.quitado = !item.quitado;
+        salvarDados();
+    }
+}
+
+function excluirEmprestimo(id) {
+    if (confirm('Excluir este empréstimo?')) {
+        dados.emprestimos = dados.emprestimos.filter(e => e.id !== id);
+        cancelarEdicaoEmprestimo();
+        salvarDados();
+    }
+}
+
+function atualizarListaEmprestimos() {
+    const lista = document.getElementById('emp-lista');
+    if (!lista) return;
+
+    const busca = (document.getElementById('emp-busca')?.value || '').toLowerCase();
+    const filtro = document.getElementById('emp-filtro')?.value || 'todos';
+
+    let totalConcedido = 0, totalTomado = 0, totalJurosGeral = 0;
+    lista.innerHTML = '';
+
+    const ordenado = [...dados.emprestimos].sort((a, b) => new Date(a.data) - new Date(b.data));
+
+    ordenado.forEach(item => {
+        const { jurosTotal, montanteTotal, parcelaMensal } = calcularMontanteEmprestimo(item.valor, item.juros, item.meses);
+
+        if (!item.quitado) {
+            if (item.tipo === 'concedido') totalConcedido += montanteTotal;
+            else totalTomado += montanteTotal;
+            totalJurosGeral += jurosTotal;
+        }
+
+        let mostrar = true;
+        if (busca && !item.nome.toLowerCase().includes(busca)) mostrar = false;
+        if (filtro === 'concedido' && item.tipo !== 'concedido') mostrar = false;
+        if (filtro === 'tomado' && item.tipo !== 'tomado') mostrar = false;
+        if (filtro === 'ativo' && item.quitado) mostrar = false;
+        if (filtro === 'quitado' && !item.quitado) mostrar = false;
+
+        if (mostrar) {
+            const badgeTipo = item.tipo === 'concedido' 
+                ? '<span class="status st-receber">📤 Emprestei</span>' 
+                : '<span class="status st-atrasado">📥 Peguei Emprestado</span>';
+
+            const badgeStatus = item.quitado 
+                ? '<span class="status st-pago">✅ Quitado</span>' 
+                : '<span class="status st-vencer">⏳ Em Aberto</span>';
+
+            lista.innerHTML += `
+                <div class="item ${item.quitado ? 'pago' : (item.tipo === 'concedido' ? 'receber' : 'atrasado')}">
+                    <div class="linha">
+                        <div>
+                            <div class="font-bold text-lg">${item.nome} ${badgeTipo} ${badgeStatus}</div>
+                            <div style="font-size:13px;color:#64748b;margin-top:4px;">
+                                Início: ${formatarData(item.data)} • ${item.meses}x de R$ ${formatarDinheiro(parcelaMensal)} (${item.juros}% a.m.)
+                            </div>
+                            <div class="font-bold text-lg mt-1" style="color:${item.tipo === 'concedido' ? '#16a34a' : '#dc2626'};">
+                                Principal: R$ ${formatarDinheiro(item.valor)} | Total com Juros: R$ ${formatarDinheiro(montanteTotal)}
+                                <span style="font-size:12px;font-weight:normal;color:#64748b;">(+ R$ ${formatarDinheiro(jurosTotal)} de juros)</span>
+                            </div>
+                        </div>
+                        <div style="text-align:right;">
+                            <div class="linha mt-2">
+                                <button class="btn btn-pequeno ${item.quitado ? 'btn-cinza' : 'btn-verde'}" onclick="alternarQuitacaoEmprestimo(${item.id})">
+                                    ${item.quitado ? '↩️ Reabrir' : '✓ Quitar'}
+                                </button>
+                                <button class="btn btn-pequeno btn-azul" onclick="editarEmprestimo(${item.id})">✏️ Editar</button>
+                                <button class="btn btn-pequeno btn-vermelho" onclick="excluirEmprestimo(${item.id})">🗑️</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+        }
+    });
+
+    document.getElementById('emp-t-concedido').textContent = 'R$ ' + formatarDinheiro(totalConcedido);
+    document.getElementById('emp-t-tomado').textContent = 'R$ ' + formatarDinheiro(totalTomado);
+    document.getElementById('emp-t-juros').textContent = 'R$ ' + formatarDinheiro(totalJurosGeral);
+
+    if (lista.innerHTML === '') lista.innerHTML = '<div class="vazio"><p>Nenhum empréstimo cadastrado.</p></div>';
 }
 
 // ===== MEU PATRIMÔNIO =====
@@ -890,6 +1223,8 @@ function excluirPatrimonio(id) {
 
 function atualizarListaPatrimonio() {
     const lista = document.getElementById('pat-lista');
+    if (!lista) return;
+
     let veiculos = 0, imoveis = 0, investimentos = 0, outros = 0;
     lista.innerHTML = '';
 
@@ -959,6 +1294,8 @@ function excluirBoleto(id) {
 
 function atualizarListaBoletos() {
     const lista = document.getElementById('b-lista');
+    if (!lista) return;
+
     const busca = (document.getElementById('b-busca')?.value || '').toLowerCase();
     const filtro = document.getElementById('b-filtro')?.value || 'todos';
 
@@ -1049,6 +1386,8 @@ function excluirCheque(id) {
 
 function atualizarListaCheques() {
     const lista = document.getElementById('ch-lista');
+    if (!lista) return;
+
     const busca = (document.getElementById('ch-busca')?.value || '').toLowerCase();
     const filtro = document.getElementById('ch-filtro')?.value || 'todos';
 
@@ -1103,7 +1442,7 @@ function atualizarListaCheques() {
     if (lista.innerHTML === '') lista.innerHTML = '<div class="vazio"><p>Nenhum cheque cadastrado.</p></div>';
 }
 
-// ===== PAINEL DE VISÃO GERAL =====
+// ===== PAINEL DE VISÃO GERAL & GRÁFICOS =====
 function atualizarResumo() {
     let totalPagar = 0, jaPago = 0;
     dados.dividas.forEach(d => {
@@ -1117,14 +1456,30 @@ function atualizarResumo() {
         else totalReceber += r.valor;
     });
 
+    // Empréstimos em Aberto entram nos totais
+    if (dados.emprestimos) {
+        dados.emprestimos.forEach(e => {
+            if (!e.quitado) {
+                const { montanteTotal } = calcularMontanteEmprestimo(e.valor, e.juros, e.meses);
+                if (e.tipo === 'concedido') totalReceber += montanteTotal;
+                else totalPagar += montanteTotal;
+            }
+        });
+    }
+
     let totalRendasMensal = 0;
     dados.rendas.forEach(r => {
         if (r.tipo === 'mensal') totalRendasMensal += r.valor;
     });
 
     let totalPatrimonio = 0;
+    let patVeiculos = 0, patImoveis = 0, patInvest = 0, patOutros = 0;
     dados.patrimonio.forEach(p => {
         totalPatrimonio += p.valor;
+        if (p.tipo === 'veiculo') patVeiculos += p.valor;
+        else if (p.tipo === 'imovel') patImoveis += p.valor;
+        else if (p.tipo === 'investimento') patInvest += p.valor;
+        else patOutros += p.valor;
     });
 
     document.getElementById('r-total-pagar').textContent = 'R$ ' + formatarDinheiro(totalPagar);
@@ -1137,18 +1492,72 @@ function atualizarResumo() {
     const lista = document.getElementById('lista-resumo');
     const saldoProjetado = (totalRendasMensal + totalReceber) - totalPagar;
 
-    lista.innerHTML = `
-        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px,1fr));gap:16px;">
-            <div class="item ${saldoProjetado >= 0 ? 'pago' : 'atrasado'}">
-                <div class="label" style="font-size:13px;color:#64748b;">💡 Saldo Projetado (Rendas + Recebíveis - Contas a Pagar)</div>
-                <div class="font-bold text-2xl mt-1" style="color:${saldoProjetado >= 0 ? '#16a34a' : '#dc2626'}">R$ ${formatarDinheiro(saldoProjetado)}</div>
+    if (lista) {
+        lista.innerHTML = `
+            <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px,1fr));gap:16px;">
+                <div class="item ${saldoProjetado >= 0 ? 'pago' : 'atrasado'}">
+                    <div class="label" style="font-size:13px;color:#64748b;">💡 Saldo Projetado (Rendas + Recebíveis/Empréstimos - Contas/Dívidas)</div>
+                    <div class="font-bold text-2xl mt-1" style="color:${saldoProjetado >= 0 ? '#16a34a' : '#dc2626'}">R$ ${formatarDinheiro(saldoProjetado)}</div>
+                </div>
+                <div class="item">
+                    <div class="label" style="font-size:13px;color:#64748b;">📊 Total de Registros Cadastrados</div>
+                    <div class="font-bold text-2xl mt-1">${dados.dividas.length + dados.receber.length + dados.rendas.length + dados.patrimonio.length + dados.boletos.length + dados.cheques.length + (dados.emprestimos ? dados.emprestimos.length : 0)} itens</div>
+                </div>
             </div>
-            <div class="item">
-                <div class="label" style="font-size:13px;color:#64748b;">📊 Total de Lançamentos</div>
-                <div class="font-bold text-2xl mt-1">${dados.dividas.length + dados.receber.length + dados.rendas.length + dados.patrimonio.length + dados.boletos.length + dados.cheques.length} itens</div>
-            </div>
-        </div>
-    `;
+        `;
+    }
+
+    renderizarGraficos(totalRendasMensal + totalReceber, totalPagar, { patVeiculos, patImoveis, patInvest, patOutros });
+}
+
+function renderizarGraficos(entradas, saidas, patCategorias) {
+    if (typeof Chart === 'undefined') return;
+
+    // Gráfico de Entradas vs Saídas
+    const ctxBalanco = document.getElementById('chartBalanco')?.getContext('2d');
+    if (ctxBalanco) {
+        if (chartBalancoInstancia) chartBalancoInstancia.destroy();
+        chartBalancoInstancia = new Chart(ctxBalanco, {
+            type: 'doughnut',
+            data: {
+                labels: ['Entradas (Rendas + Recebíveis)', 'Saídas (Contas a Pagar)'],
+                datasets: [{
+                    data: [entradas, saidas],
+                    backgroundColor: ['#22c55e', '#ef4444']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom' }
+                }
+            }
+        });
+    }
+
+    // Gráfico do Patrimônio
+    const ctxPatrimonio = document.getElementById('chartPatrimonio')?.getContext('2d');
+    if (ctxPatrimonio) {
+        if (chartPatrimonioInstancia) chartPatrimonioInstancia.destroy();
+        chartPatrimonioInstancia = new Chart(ctxPatrimonio, {
+            type: 'pie',
+            data: {
+                labels: ['Veículos', 'Imóveis/Terrenos', 'Investimentos', 'Outros'],
+                datasets: [{
+                    data: [patCategorias.patVeiculos, patCategorias.patImoveis, patCategorias.patInvest, patCategorias.patOutros],
+                    backgroundColor: ['#8b5cf6', '#3b82f6', '#22c55e', '#f59e0b']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom' }
+                }
+            }
+        });
+    }
 }
 
 function atualizarTudo() {
@@ -1156,6 +1565,7 @@ function atualizarTudo() {
     atualizarListaDividas();
     atualizarListaReceber();
     atualizarListaRendas();
+    atualizarListaEmprestimos();
     atualizarListaPatrimonio();
     atualizarListaBoletos();
     atualizarListaCheques();
@@ -1181,7 +1591,7 @@ function restaurarBackup(event) {
         try {
             const parsed = JSON.parse(e.target.result);
             if (parsed && typeof parsed === 'object') {
-                dados = Object.assign({ dividas: [], boletos: [], cheques: [], receber: [], rendas: [], patrimonio: [] }, parsed);
+                dados = Object.assign({ dividas: [], boletos: [], cheques: [], receber: [], rendas: [], patrimonio: [], emprestimos: [] }, parsed);
                 salvarDados();
                 alert('✅ Backup restaurado com sucesso!');
             } else {
@@ -1196,13 +1606,14 @@ function restaurarBackup(event) {
 
 function exportarExcel() {
     if (typeof XLSX === 'undefined') {
-        return alert('⚠️ Biblioteca de Excel ainda carregando. Tente novamente em alguns instantes.');
+        return alert('⚠️ Biblioteca do Excel ainda está carregando. Tente novamente em instantes.');
     }
     const wb = XLSX.utils.book_new();
 
     if (dados.dividas.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(dados.dividas), "Contas a Pagar");
     if (dados.receber.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(dados.receber), "Contas a Receber");
     if (dados.rendas.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(dados.rendas), "Minhas Rendas");
+    if (dados.emprestimos && dados.emprestimos.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(dados.emprestimos), "Empréstimos e Juros");
     if (dados.patrimonio.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(dados.patrimonio), "Patrimônio");
     if (dados.boletos.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(dados.boletos), "Boletos");
     if (dados.cheques.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(dados.cheques), "Cheques");
