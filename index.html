@@ -74,8 +74,6 @@
         .st-recebido { background: #dcfce7; color: #166534; }
         .st-mensal { background: #d1fae5; color: #065f46; }
         .st-ocasional { background: #fef3c7; color: #92400e; }
-        .st-ativo { background: #ede9fe; color: #5b21b6; }
-        .st-inativo { background: #e5e7eb; color: #4b5563; }
         
         .filtros { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 20px; padding: 14px; background: #f8fafc; border-radius: 10px; border: 1px solid #e2e8f0; }
         .aviso { position: fixed; bottom: 20px; right: 20px; background: #16a34a; color: white; padding: 12px 24px; border-radius: 8px; font-weight: 600; display: none; z-index: 9999; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
@@ -113,9 +111,7 @@
     <div class="aba" data-painel="cheques">📑 Cheques</div>
 </div>
 
-<!-- ===================================
-    ABA 1: VISÃO GERAL
-=================================== -->
+<!-- ABA 1: VISÃO GERAL -->
 <div id="painel-resumo" class="painel visivel">
     <h2 style="font-size:20px;margin-bottom:20px;">📈 Resumo Geral</h2>
     
@@ -152,9 +148,7 @@
     </div>
 </div>
 
-<!-- ===================================
-    ABA 2: CONTAS A PAGAR
-=================================== -->
+<!-- ABA 2: CONTAS A PAGAR -->
 <div id="painel-dividas" class="painel">
     <h2 style="font-size:20px;margin-bottom:20px;">💳 Minhas Contas a Pagar</h2>
 
@@ -216,9 +210,7 @@
     </div>
 </div>
 
-<!-- ===================================
-    ABA 3: CONTAS A RECEBER — PESSOAS QUE TE DEVEM
-=================================== -->
+<!-- ABA 3: CONTAS A RECEBER -->
 <div id="painel-receber" class="painel">
     <h2 style="font-size:20px;margin-bottom:20px;">💰 Contas a Receber</h2>
     <p style="color:#64748b;margin-bottom:20px;">Pessoas, aluguel, parcelas de venda — tudo que têm a receber de outros</p>
@@ -292,9 +284,7 @@
     </div>
 </div>
 
-<!-- ===================================
-    ABA 4: MINHAS RENDAS
-=================================== -->
+<!-- ABA 4: MINHAS RENDAS -->
 <div id="painel-rendas" class="painel">
     <h2 style="font-size:20px;margin-bottom:20px;">💵 Minhas Rendas</h2>
     <p style="color:#64748b;margin-bottom:20px;">Seu salário, aluguel recebido, comissões — sua fonte de renda</p>
@@ -350,9 +340,7 @@
     </div>
 </div>
 
-<!-- ===================================
-    ABA 5: MEU PATRIMÔNIO
-=================================== -->
+<!-- ABA 5: MEU PATRIMÔNIO -->
 <div id="painel-patrimonio" class="painel">
     <h2 style="font-size:20px;margin-bottom:20px;">🏆 Meu Patrimônio</h2>
     <p style="color:#64748b;margin-bottom:20px;">Seus bens — carros, imóveis, terrenos, investimentos</p>
@@ -410,9 +398,7 @@
     </div>
 </div>
 
-<!-- ===================================
-    ABA 6: BOLETOS
-=================================== -->
+<!-- ABA 6: BOLETOS -->
 <div id="painel-boletos" class="painel">
     <h2 style="font-size:20px;margin-bottom:20px;">🧾 Controle de Boletos</h2>
 
@@ -471,9 +457,7 @@
     <div id="b-lista"></div>
 </div>
 
-<!-- ===================================
-    ABA 7: CHEQUES
-=================================== -->
+<!-- ABA 7: CHEQUES -->
 <div id="painel-cheques" class="painel">
     <h2 style="font-size:20px;margin-bottom:20px;">📑 Controle de Cheques</h2>
 
@@ -528,9 +512,7 @@
     <div id="ch-lista"></div>
 </div>
 
-<!-- ===================================
-    JAVASCRIPT
-=================================== -->
+<!-- JAVASCRIPT -->
 <script>
 'use strict';
 const CHAVE_SALVAMENTO = 'CONTROLE_DADOS_02';
@@ -579,6 +561,8 @@ function carregarDados() {
         if (!dados.receber) dados.receber = [];
         if (!dados.rendas) dados.rendas = [];
         if (!dados.patrimonio) dados.patrimonio = [];
+        if (!dados.boletos) dados.boletos = [];
+        if (!dados.cheques) dados.cheques = [];
     } catch (e) {
         console.log('Nenhum dado salvo ainda');
     }
@@ -861,4 +845,376 @@ function atualizarListaRendas() {
             <div class="item renda">
                 <div class="linha">
                     <div>
-                        <div class="font-bold
+                        <div class="font-bold text-lg">${item.nome}</div>
+                        <div style="font-size:13px;color:#64748b;">${item.obs ? item.obs + ' • ' : ''}R$ ${formatarDinheiro(item.valor)}</div>
+                    </div>
+                    <div style="text-align:right;">
+                        <div class="mb-2">${status}</div>
+                        <button class="btn btn-pequeno btn-vermelho" onclick="excluirRenda(${item.id})">🗑️ Excluir</button>
+                    </div>
+                </div>
+            </div>`;
+    });
+
+    document.getElementById('r-t-mensal').textContent = 'R$ ' + formatarDinheiro(mensal);
+    document.getElementById('r-t-ocasional').textContent = 'R$ ' + formatarDinheiro(ocasional);
+    document.getElementById('r-t-anual').textContent = 'R$ ' + formatarDinheiro((mensal * 12) + ocasional);
+    document.getElementById('r-t-total').textContent = 'R$ ' + formatarDinheiro(mensal + ocasional);
+    if (lista.innerHTML === '') lista.innerHTML = '<div class="vazio"><p>Nenhuma renda cadastrada.</p></div>';
+}
+
+// ===== MEU PATRIMÔNIO =====
+function adicionarPatrimonio() {
+    const tipo = document.getElementById('pat-tipo').value;
+    const nome = document.getElementById('pat-nome').value.trim();
+    const valor = limparValor(document.getElementById('pat-valor').value);
+    const obs = document.getElementById('pat-obs').value.trim();
+
+    if (!nome) return alert('⚠️ Digite o nome ou descrição do bem!');
+    if (!valor || valor <= 0) return alert('⚠️ Digite um valor válido!');
+
+    dados.patrimonio.push({ id: Date.now(), tipo, nome, valor, obs });
+
+    document.getElementById('pat-nome').value = '';
+    document.getElementById('pat-valor').value = '';
+    document.getElementById('pat-obs').value = '';
+    salvarDados();
+}
+
+function excluirPatrimonio(id) {
+    if (confirm('Excluir este item do patrimônio?')) {
+        dados.patrimonio = dados.patrimonio.filter(p => p.id !== id);
+        salvarDados();
+    }
+}
+
+function atualizarListaPatrimonio() {
+    const lista = document.getElementById('pat-lista');
+    let veiculos = 0, imoveis = 0, investimentos = 0, outros = 0;
+    lista.innerHTML = '';
+
+    dados.patrimonio.forEach(item => {
+        if (item.tipo === 'veiculo') veiculos += item.valor;
+        else if (item.tipo === 'imovel') imoveis += item.valor;
+        else if (item.tipo === 'investimento') investimentos += item.valor;
+        else outros += item.valor;
+
+        const icones = { veiculo: '🚗', imovel: '🏠', investimento: '📈', outro: '📦' };
+        const icone = icones[item.tipo] || '📦';
+
+        lista.innerHTML += `
+            <div class="item ativo">
+                <div class="linha">
+                    <div>
+                        <div class="font-bold text-lg">${icone} ${item.nome}</div>
+                        <div style="font-size:13px;color:#64748b;">${item.obs || 'Sem observações'}</div>
+                        <div class="font-bold text-lg mt-1">R$ ${formatarDinheiro(item.valor)}</div>
+                    </div>
+                    <div>
+                        <button class="btn btn-pequeno btn-vermelho" onclick="excluirPatrimonio(${item.id})">🗑️ Excluir</button>
+                    </div>
+                </div>
+            </div>`;
+    });
+
+    const total = veiculos + imoveis + investimentos + outros;
+    document.getElementById('pat-t-veiculo').textContent = 'R$ ' + formatarDinheiro(veiculos);
+    document.getElementById('pat-t-imovel').textContent = 'R$ ' + formatarDinheiro(imoveis);
+    document.getElementById('pat-t-investimento').textContent = 'R$ ' + formatarDinheiro(investimentos);
+    document.getElementById('pat-t-total').textContent = 'R$ ' + formatarDinheiro(total);
+    if (lista.innerHTML === '') lista.innerHTML = '<div class="vazio"><p>Nenhum bem cadastrado no patrimônio.</p></div>';
+}
+
+// ===== BOLETOS =====
+function adicionarBoleto() {
+    const nome = document.getElementById('b-nome').value.trim();
+    const valor = limparValor(document.getElementById('b-valor').value);
+    const data = document.getElementById('b-data').value;
+    const codigo = document.getElementById('b-codigo').value.trim();
+
+    if (!nome) return alert('⚠️ Digite o nome da empresa/conta do boleto!');
+    if (!valor || valor <= 0) return alert('⚠️ Digite um valor válido!');
+    if (!data) return alert('⚠️ Escolha a data de vencimento!');
+
+    dados.boletos.push({ id: Date.now(), nome, valor, data, codigo, pago: false });
+
+    document.getElementById('b-nome').value = '';
+    document.getElementById('b-valor').value = '';
+    document.getElementById('b-data').value = '';
+    document.getElementById('b-codigo').value = '';
+    salvarDados();
+}
+
+function marcarBoletoPago(id) {
+    const item = dados.boletos.find(b => b.id === id);
+    if (item) { item.pago = !item.pago; salvarDados(); }
+}
+
+function excluirBoleto(id) {
+    if (confirm('Excluir este boleto?')) {
+        dados.boletos = dados.boletos.filter(b => b.id !== id);
+        salvarDados();
+    }
+}
+
+function atualizarListaBoletos() {
+    const lista = document.getElementById('b-lista');
+    const busca = (document.getElementById('b-busca')?.value || '').toLowerCase();
+    const filtro = document.getElementById('b-filtro')?.value || 'todos';
+
+    let qtdVencer = 0, qtd3d = 0, qtdAtrasado = 0, qtdPago = 0;
+    lista.innerHTML = '';
+    const ordenado = [...dados.boletos].sort((a, b) => new Date(a.data) - new Date(b.data));
+
+    ordenado.forEach(item => {
+        const dias = diasAteVencimento(item.data);
+        let classe = '', statusTexto = '', mostrar = true;
+
+        if (item.pago) {
+            classe = 'pago'; statusTexto = '<span class="status st-pago">✅ Pago</span>'; qtdPago++;
+        } else if (dias < 0) {
+            classe = 'atrasado'; statusTexto = `<span class="status st-atrasado">🔴 Atrasado ${Math.abs(dias)}d</span>`; qtdAtrasado++;
+        } else if (dias <= 3) {
+            classe = 'vencer'; statusTexto = `<span class="status st-vencer">⚠️ Vence em ${dias}d</span>`; qtd3d++; qtdVencer++;
+        } else {
+            classe = 'vencer'; statusTexto = `<span class="status st-vencer">⏳ Vence em ${dias}d</span>`; qtdVencer++;
+        }
+
+        if (busca && !item.nome.toLowerCase().includes(busca) && !item.codigo?.toLowerCase().includes(busca)) mostrar = false;
+        if (filtro === 'pago' && !item.pago) mostrar = false;
+        if (filtro === 'avencer' && (item.pago || dias < 0)) mostrar = false;
+        if (filtro === 'atrasado' && (item.pago || dias >= 0)) mostrar = false;
+
+        if (mostrar) {
+            lista.innerHTML += `
+                <div class="item ${classe}">
+                    <div class="linha">
+                        <div>
+                            <div class="font-bold text-lg">${item.nome}</div>
+                            <div style="font-size:13px;color:#64748b;">Vencimento: ${formatarData(item.data)} ${item.codigo ? '• Cód: ' + item.codigo : ''}</div>
+                            <div class="font-bold text-lg mt-1">R$ ${formatarDinheiro(item.valor)}</div>
+                        </div>
+                        <div style="text-align:right;">
+                            <div class="mb-2">${statusTexto}</div>
+                            <div class="linha">
+                                <button class="btn btn-pequeno ${item.pago ? 'btn-cinza' : 'btn-verde'}" onclick="marcarBoletoPago(${item.id})">
+                                    ${item.pago ? '↩️ Desmarcar' : '✓ Pago'}
+                                </button>
+                                <button class="btn btn-pequeno btn-vermelho" onclick="excluirBoleto(${item.id})">🗑️</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+        }
+    });
+
+    document.getElementById('b-qtd-vencer').textContent = qtdVencer;
+    document.getElementById('b-qtd-3d').textContent = qtd3d;
+    document.getElementById('b-qtd-atrasado').textContent = qtdAtrasado;
+    document.getElementById('b-qtd-pago').textContent = qtdPago;
+    if (lista.innerHTML === '') lista.innerHTML = '<div class="vazio"><p>Nenhum boleto encontrado.</p></div>';
+}
+
+// ===== CHEQUES =====
+function adicionarCheque() {
+    const nome = document.getElementById('ch-nome').value.trim();
+    const numero = document.getElementById('ch-numero').value.trim();
+    const valor = limparValor(document.getElementById('ch-valor').value);
+    const data = document.getElementById('ch-data').value;
+
+    if (!nome) return alert('⚠️ Digite o nome do favorecido/emissor!');
+    if (!valor || valor <= 0) return alert('⚠️ Digite um valor válido!');
+    if (!data) return alert('⚠️ Escolha a data de emissão!');
+
+    dados.cheques.push({ id: Date.now(), nome, numero, valor, data, status: 'aberto' });
+
+    document.getElementById('ch-nome').value = '';
+    document.getElementById('ch-numero').value = '';
+    document.getElementById('ch-valor').value = '';
+    document.getElementById('ch-data').value = '';
+    salvarDados();
+}
+
+function alterarStatusCheque(id, novoStatus) {
+    const item = dados.cheques.find(ch => ch.id === id);
+    if (item) { item.status = novoStatus; salvarDados(); }
+}
+
+function excluirCheque(id) {
+    if (confirm('Excluir este cheque?')) {
+        dados.cheques = dados.cheques.filter(ch => ch.id !== id);
+        salvarDados();
+    }
+}
+
+function atualizarListaCheques() {
+    const lista = document.getElementById('ch-lista');
+    const busca = (document.getElementById('ch-busca')?.value || '').toLowerCase();
+    const filtro = document.getElementById('ch-filtro')?.value || 'todos';
+
+    let qtdAberto = 0, qtdPago = 0, qtdDev = 0;
+    lista.innerHTML = '';
+    const ordenado = [...dados.cheques].sort((a, b) => new Date(a.data) - new Date(b.data));
+
+    ordenado.forEach(item => {
+        let classe = '', statusTexto = '', mostrar = true;
+
+        if (item.status === 'pago') {
+            classe = 'pago'; statusTexto = '<span class="status st-compensado">✅ Compensado</span>'; qtdPago++;
+        } else if (item.status === 'dev') {
+            classe = 'atrasado'; statusTexto = '<span class="status st-devolvido">🔴 Devolvido</span>'; qtdDev++;
+        } else {
+            classe = 'vencer'; statusTexto = '<span class="status st-aberto">⏳ Em Aberto</span>'; qtdAberto++;
+        }
+
+        if (busca && !item.nome.toLowerCase().includes(busca) && !item.numero?.toLowerCase().includes(busca)) mostrar = false;
+        if (filtro === 'aberto' && item.status !== 'aberto') mostrar = false;
+        if (filtro === 'pago' && item.status !== 'pago') mostrar = false;
+        if (filtro === 'dev' && item.status !== 'dev') mostrar = false;
+
+        if (mostrar) {
+            lista.innerHTML += `
+                <div class="item ${classe}">
+                    <div class="linha">
+                        <div>
+                            <div class="font-bold text-lg">${item.nome} ${item.numero ? '(Nº ' + item.numero + ')' : ''}</div>
+                            <div style="font-size:13px;color:#64748b;">Emissão/Bom para: ${formatarData(item.data)}</div>
+                            <div class="font-bold text-lg mt-1">R$ ${formatarDinheiro(item.valor)}</div>
+                        </div>
+                        <div style="text-align:right;">
+                            <div class="mb-2">${statusTexto}</div>
+                            <div class="linha">
+                                <select onchange="alterarStatusCheque(${item.id}, this.value)" style="width:auto;padding:4px 8px;font-size:12px;">
+                                    <option value="aberto" ${item.status === 'aberto' ? 'selected' : ''}>Em Aberto</option>
+                                    <option value="pago" ${item.status === 'pago' ? 'selected' : ''}>Compensado</option>
+                                    <option value="dev" ${item.status === 'dev' ? 'selected' : ''}>Devolvido</option>
+                                </select>
+                                <button class="btn btn-pequeno btn-vermelho" onclick="excluirCheque(${item.id})">🗑️</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+        }
+    });
+
+    document.getElementById('ch-qtd-aberto').textContent = qtdAberto;
+    document.getElementById('ch-qtd-pago').textContent = qtdPago;
+    document.getElementById('ch-qtd-dev').textContent = qtdDev;
+    if (lista.innerHTML === '') lista.innerHTML = '<div class="vazio"><p>Nenhum cheque cadastrado.</p></div>';
+}
+
+// ===== PAINEL DE VISÃO GERAL =====
+function atualizarResumo() {
+    let totalPagar = 0, jaPago = 0;
+    dados.dividas.forEach(d => {
+        if (d.paga) jaPago += d.valor;
+        else totalPagar += d.valor;
+    });
+
+    let totalReceber = 0, jaRecebido = 0;
+    dados.receber.forEach(r => {
+        if (r.recebido) jaRecebido += r.valor;
+        else totalReceber += r.valor;
+    });
+
+    let totalRendasMensal = 0;
+    dados.rendas.forEach(r => {
+        if (r.tipo === 'mensal') totalRendasMensal += r.valor;
+    });
+
+    let totalPatrimonio = 0;
+    dados.patrimonio.forEach(p => {
+        totalPatrimonio += p.valor;
+    });
+
+    document.getElementById('r-total-pagar').textContent = 'R$ ' + formatarDinheiro(totalPagar);
+    document.getElementById('r-total-receber').textContent = 'R$ ' + formatarDinheiro(totalReceber);
+    document.getElementById('r-rendas').textContent = 'R$ ' + formatarDinheiro(totalRendasMensal);
+    document.getElementById('r-patrimonio').textContent = 'R$ ' + formatarDinheiro(totalPatrimonio);
+    document.getElementById('r-pago').textContent = 'R$ ' + formatarDinheiro(jaPago);
+    document.getElementById('r-recebido').textContent = 'R$ ' + formatarDinheiro(jaRecebido);
+
+    const lista = document.getElementById('lista-resumo');
+    const saldoProjetado = (totalRendasMensal + totalReceber) - totalPagar;
+
+    lista.innerHTML = `
+        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px,1fr));gap:16px;">
+            <div class="item ${saldoProjetado >= 0 ? 'pago' : 'atrasado'}">
+                <div class="label" style="font-size:13px;color:#64748b;">💡 Saldo Projetado (Rendas + Recebíveis - Contas a Pagar)</div>
+                <div class="font-bold text-2xl mt-1" style="color:${saldoProjetado >= 0 ? '#16a34a' : '#dc2626'}">R$ ${formatarDinheiro(saldoProjetado)}</div>
+            </div>
+            <div class="item">
+                <div class="label" style="font-size:13px;color:#64748b;">📊 Total de Lançamentos</div>
+                <div class="font-bold text-2xl mt-1">${dados.dividas.length + dados.receber.length + dados.rendas.length + dados.patrimonio.length + dados.boletos.length + dados.cheques.length} itens</div>
+            </div>
+        </div>
+    `;
+}
+
+function atualizarTudo() {
+    atualizarResumo();
+    atualizarListaDividas();
+    atualizarListaReceber();
+    atualizarListaRendas();
+    atualizarListaPatrimonio();
+    atualizarListaBoletos();
+    atualizarListaCheques();
+}
+
+// ===== FERRAMENTAS (EXCEL & BACKUP) =====
+function baixarBackup() {
+    const jsonStr = JSON.stringify(dados, null, 2);
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `backup_financas_${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+function restaurarBackup(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const parsed = JSON.parse(e.target.result);
+            if (parsed && typeof parsed === 'object') {
+                dados = Object.assign({ dividas: [], boletos: [], cheques: [], receber: [], rendas: [], patrimonio: [] }, parsed);
+                salvarDados();
+                alert('✅ Backup restaurado com sucesso!');
+            } else {
+                alert('⚠️ Arquivo de backup inválido.');
+            }
+        } catch (err) {
+            alert('⚠️ Erro ao ler o arquivo JSON.');
+        }
+    };
+    reader.readAsText(file);
+}
+
+function exportarExcel() {
+    if (typeof XLSX === 'undefined') {
+        return alert('⚠️ Biblioteca de Excel ainda carregando. Tente novamente em alguns instantes.');
+    }
+    const wb = XLSX.utils.book_new();
+
+    if (dados.dividas.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(dados.dividas), "Contas a Pagar");
+    if (dados.receber.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(dados.receber), "Contas a Receber");
+    if (dados.rendas.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(dados.rendas), "Minhas Rendas");
+    if (dados.patrimonio.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(dados.patrimonio), "Patrimônio");
+    if (dados.boletos.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(dados.boletos), "Boletos");
+    if (dados.cheques.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(dados.cheques), "Cheques");
+
+    XLSX.writeFile(wb, `relatorio_financeiro_${new Date().toISOString().split('T')[0]}.xlsx`);
+}
+
+// INICIALIZAÇÃO
+window.addEventListener('DOMContentLoaded', () => {
+    configurarAbas();
+    carregarDados();
+});
+</script>
+</body>
+</html>
