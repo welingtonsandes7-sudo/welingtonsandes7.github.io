@@ -3,613 +3,613 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Controle de Finanças 💼</title>
+    <title>Controle Financeiro & Patrimonial Premium 💼</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js v4 -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+    <!-- SheetJS Excel -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <!-- Google Font Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f4f8; color: #1e293b; min-height: 100vh; }
-        
-        .topo { background: linear-gradient(135deg, #1e3a5f, #2c5282); color: white; padding: 16px 24px; }
-        .topo h1 { font-size: 22px; margin-bottom: 4px; }
-        .botoes-topo { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
-        
-        .abas { display: flex; background: white; border-bottom: 2px solid #e2e8f0; position: sticky; top: 0; z-index: 100; overflow-x: auto; }
-        .aba { padding: 14px 20px; font-weight: 600; cursor: pointer; border-bottom: 3px solid transparent; color: #64748b; transition: all 0.2s; white-space: nowrap; }
-        .aba.ativa { border-bottom-color: #2563eb; color: #2563eb; background: #eff6ff; }
-        .aba:hover { background: #f8fafc; color: #334155; }
-        
-        .painel { display: none; padding: 24px; max-width: 1200px; margin: 0 auto; }
-        .painel.visivel { display: block; }
-        
-        .card { background: white; border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
-        .card h3 { font-size: 16px; font-weight: 700; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 2px solid #e2e8f0; color: #1e293b; }
-        
-        .grid-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px; }
-        .card-resumo { padding: 20px; border-radius: 10px; color: white; }
-        .card-resumo .label { font-size: 13px; opacity: 0.9; margin-bottom: 6px; }
-        .card-resumo .valor { font-size: 24px; font-weight: 800; }
-        
-        .azul { background: linear-gradient(135deg, #1e40af, #3b82f6); }
-        .verde { background: linear-gradient(135deg, #16a34a, #22c55e); }
-        .amarelo { background: linear-gradient(135deg, #d97706, #f59e0b); }
-        .vermelho { background: linear-gradient(135deg, #dc2626, #ef4444); }
-        .roxo { background: linear-gradient(135deg, #6d28d9, #8b5cf6); }
-        .laranja { background: linear-gradient(135deg, #ea580c, #fb923c); }
-        .cinza { background: linear-gradient(135deg, #475569, #64748b); }
-        
-        input, select { width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; background: #fcfcfc; }
-        input:focus, select:focus { outline: none; border-color: #2563eb; background: white; box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
-        label { font-size: 13px; font-weight: 500; color: #475569; margin-bottom: 4px; display: block; }
-        
-        .btn { padding: 10px 16px; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: transform 0.1s; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
-        .btn:active { transform: scale(0.98); }
-        .btn-verde { background: #16a34a; color: white; }
-        .btn-azul { background: #2563eb; color: white; }
-        .btn-amarelo { background: #f59e0b; color: white; }
-        .btn-cinza { background: #64748b; color: white; }
-        .btn-vermelho { background: #dc2626; color: white; }
-        .btn-roxo { background: #8b5cf6; color: white; }
-        .btn-pequeno { padding: 6px 12px; font-size: 13px; }
-        
-        .grid-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 16px; }
-        .item { padding: 14px; background: #f8fafc; border-radius: 8px; margin-bottom: 8px; border-left: 4px solid #cbd5e1; }
-        .item.pago { background: #f0fdf4; border-left-color: #22c55e; }
-        .item.vencer { background: #fffbeb; border-left-color: #f59e0b; }
-        .item.atrasado { background: #fef2f2; border-left-color: #ef4444; }
-        .item.receber { background: #eff6ff; border-left-color: #3b82f6; }
-        .item.recebido { background: #f0fdf4; border-left-color: #22c55e; }
-        .item.renda { background: #f0fdf4; border-left-color: #22c55e; }
-        .item.ativo { background: #faf5ff; border-left-color: #8b5cf6; }
-        
-        .status { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
-        .st-pago { background: #dcfce7; color: #166534; }
-        .st-vencer { background: #fef3c7; color: #92400e; }
-        .st-atrasado { background: #fee2e2; color: #991b1b; }
-        .st-aberto { background: #e0e7ff; color: #3730a3; }
-        .st-compensado { background: #dcfce7; color: #166534; }
-        .st-devolvido { background: #fee2e2; color: #991b1b; }
-        .st-receber { background: #dbeafe; color: #1e40af; }
-        .st-recebido { background: #dcfce7; color: #166534; }
-        .st-mensal { background: #d1fae5; color: #065f46; }
-        .st-ocasional { background: #fef3c7; color: #92400e; }
-        
-        .filtros { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 20px; padding: 14px; background: #f8fafc; border-radius: 10px; border: 1px solid #e2e8f0; }
-        .aviso { position: fixed; bottom: 20px; right: 20px; background: #16a34a; color: white; padding: 12px 24px; border-radius: 8px; font-weight: 600; display: none; z-index: 9999; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
-        .vazio { text-align: center; padding: 40px; color: #94a3b8; }
-        .linha { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; }
-        .esconder { display: none !important; }
-        .flex-gap { display: flex; gap: 8px; flex-wrap: wrap; }
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #0f172a; }
+        .tab-ativa { border-bottom: 3px solid #2563eb; color: #2563eb; background-color: #eff6ff; font-weight: 700; }
+        .hide-scroll::-webkit-scrollbar { display: none; }
+        .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+        .card-glow { box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05); }
     </style>
 </head>
-<body>
+<body class="min-h-screen flex flex-col">
 
-<div class="aviso" id="aviso">✅ Salvo com sucesso!</div>
-
-<!-- CABEÇALHO -->
-<div class="topo">
-    <h1>💼 Meu Controle de Finanças</h1>
-    <p style="font-size:13px;opacity:0.8;">Suas contas, recebíveis, rendas, empréstimos e patrimônio — tudo em um só lugar</p>
-    <div class="botoes-topo">
-        <button class="btn btn-verde btn-pequeno" onclick="exportarExcel()">📊 Exportar Excel</button>
-        <button class="btn btn-amarelo btn-pequeno" onclick="baixarBackup()">💾 Baixar Backup</button>
-        <label class="btn btn-cinza btn-pequeno" style="margin:0;cursor:pointer;">
-            📂 Restaurar Arquivo
-            <input type="file" id="arquivoBackup" accept=".json" class="esconder" onchange="restaurarBackup(event)">
-        </label>
-    </div>
+<!-- AVISO TOAST -->
+<div id="aviso" class="fixed bottom-5 right-5 bg-emerald-600 text-white px-5 py-3 rounded-xl shadow-2xl font-semibold hidden z-50 transition-all flex items-center gap-2">
+    <span>✅</span> <span id="aviso-texto">Salvo com sucesso!</span>
 </div>
 
-<!-- ABAS -->
-<div class="abas" id="abas">
-    <div class="aba ativa" data-painel="resumo">📈 Visão Geral</div>
-    <div class="aba" data-painel="dividas">💳 Contas a Pagar</div>
-    <div class="aba" data-painel="receber">💰 Contas a Receber</div>
-    <div class="aba" data-painel="rendas">💵 Minhas Rendas</div>
-    <div class="aba" data-painel="emprestimos">🤝 Empréstimos / Juros</div>
-    <div class="aba" data-painel="patrimonio">🏆 Meu Patrimônio</div>
-    <div class="aba" data-painel="boletos">🧾 Boletos</div>
-    <div class="aba" data-painel="cheques">📑 Cheques</div>
-</div>
-
-<!-- ABA 1: VISÃO GERAL -->
-<div id="painel-resumo" class="painel visivel">
-    <h2 style="font-size:20px;margin-bottom:20px;">📈 Resumo Geral</h2>
-    
-    <div class="grid-cards">
-        <div class="card-resumo vermelho">
-            <div class="label">💵 Total a Pagar</div>
-            <div class="valor" id="r-total-pagar">R$ 0,00</div>
+<!-- CABEÇALHO PRINCIPAL -->
+<header class="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white px-6 py-6 shadow-xl border-b border-slate-800">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-blue-600/30 border border-blue-400/30 flex items-center justify-center text-xl">💼</div>
+                <div>
+                    <h1 class="text-2xl font-extrabold tracking-tight">Gestão Financeira & Patrimonial</h1>
+                    <p class="text-xs text-slate-400 font-medium mt-0.5">Visão consolidada de caixa, contas, ativos e liquidez</p>
+                </div>
+            </div>
         </div>
-        <div class="card-resumo azul">
-            <div class="label">💰 Total a Receber</div>
-            <div class="valor" id="r-total-receber">R$ 0,00</div>
-        </div>
-        <div class="card-resumo verde">
-            <div class="label">💵 Rendas Mensais</div>
-            <div class="valor" id="r-rendas">R$ 0,00</div>
-        </div>
-        <div class="card-resumo roxo">
-            <div class="label">🏆 Patrimônio Total</div>
-            <div class="valor" id="r-patrimonio">R$ 0,00</div>
-        </div>
-        <div class="card-resumo verde">
-            <div class="label">✅ Já Pago</div>
-            <div class="valor" id="r-pago">R$ 0,00</div>
-        </div>
-        <div class="card-resumo laranja">
-            <div class="label">✅ Já Recebido</div>
-            <div class="valor" id="r-recebido">R$ 0,00</div>
+        <div class="flex flex-wrap items-center gap-2">
+            <button onclick="exportarExcel()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition shadow-lg shadow-emerald-900/20 flex items-center gap-1.5">
+                📊 Exportar Excel
+            </button>
+            <button onclick="baixarBackup()" class="bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition shadow-lg shadow-amber-900/20 flex items-center gap-1.5">
+                💾 Baixar Backup
+            </button>
+            <label class="bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold px-4 py-2.5 rounded-xl cursor-pointer transition flex items-center gap-1.5 border border-slate-600">
+                📂 Restaurar Arquivo
+                <input type="file" id="arquivoBackup" accept=".json" class="hidden" onchange="restaurarBackup(event)">
+            </label>
         </div>
     </div>
+</header>
 
-    <!-- GRÁFICOS VISUAIS -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        <div class="card">
-            <h3>📊 Entradas vs Saídas</h3>
-            <div style="position: relative; height: 260px; width: 100%;">
-                <canvas id="chartBalanco"></canvas>
-            </div>
-        </div>
-        <div class="card">
-            <h3>🏆 Distribuição do Patrimônio</h3>
-            <div style="position: relative; height: 260px; width: 100%;">
-                <canvas id="chartPatrimonio"></canvas>
-            </div>
-        </div>
+<!-- BARRA DE ABAS DA NAVEGAÇÃO -->
+<nav class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-sm">
+    <div class="max-w-7xl mx-auto flex overflow-x-auto hide-scroll text-sm font-semibold text-slate-500" id="abas">
+        <button class="tab-btn tab-ativa px-5 py-4 whitespace-nowrap transition flex items-center gap-2" data-painel="resumo">📈 Visão Geral</button>
+        <button class="tab-btn px-5 py-4 whitespace-nowrap transition flex items-center gap-2 hover:text-slate-800" data-painel="dividas">💳 Contas a Pagar</button>
+        <button class="tab-btn px-5 py-4 whitespace-nowrap transition flex items-center gap-2 hover:text-slate-800" data-painel="receber">💰 Contas a Receber</button>
+        <button class="tab-btn px-5 py-4 whitespace-nowrap transition flex items-center gap-2 hover:text-slate-800" data-painel="rendas">💵 Minhas Rendas</button>
+        <button class="tab-btn px-5 py-4 whitespace-nowrap transition flex items-center gap-2 hover:text-slate-800" data-painel="emprestimos">🤝 Empréstimos / Juros</button>
+        <button class="tab-btn px-5 py-4 whitespace-nowrap transition flex items-center gap-2 hover:text-slate-800" data-painel="patrimonio">🏆 Meu Patrimônio</button>
+        <button class="tab-btn px-5 py-4 whitespace-nowrap transition flex items-center gap-2 hover:text-slate-800" data-painel="boletos">🧾 Boletos</button>
+        <button class="tab-btn px-5 py-4 whitespace-nowrap transition flex items-center gap-2 hover:text-slate-800" data-painel="cheques">📑 Cheques</button>
     </div>
+</nav>
 
-    <div class="card">
-        <h3>📊 Resumo de Saldo Projetado</h3>
-        <div id="lista-resumo" class="mt-2"></div>
-    </div>
-</div>
+<!-- CONTEÚDO PRINCIPAL -->
+<main class="max-w-7xl mx-auto w-full p-4 md:p-6 flex-1">
 
-<!-- ABA 2: CONTAS A PAGAR -->
-<div id="painel-dividas" class="painel">
-    <h2 style="font-size:20px;margin-bottom:20px;">💳 Minhas Contas a Pagar</h2>
+    <!-- ABA 1: VISÃO GERAL -->
+    <section id="painel-resumo" class="painel-conteudo space-y-6">
+        <div class="flex items-center justify-between">
+            <h2 class="text-xl font-bold text-slate-800">📈 Resumo Financeiro Geral</h2>
+            <span class="text-xs bg-slate-200 text-slate-700 px-3 py-1 rounded-full font-semibold">Atualização em tempo real</span>
+        </div>
 
-    <div class="card">
-        <h3>➕ Adicionar Nova Conta</h3>
-        <div class="grid-form">
-            <div>
-                <label>Descrição (Ex: Aluguel, Carro...)</label>
-                <input type="text" id="d-nome" placeholder="Ex: Financiamento do Carro">
+        <!-- CARDS KPIS -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+            <div class="bg-gradient-to-br from-rose-500 to-red-600 text-white p-4 rounded-2xl shadow-sm card-glow">
+                <div class="text-xs font-medium opacity-80 uppercase tracking-wider">Total a Pagar</div>
+                <div class="text-2xl font-extrabold mt-2" id="r-total-pagar">R$ 0,00</div>
             </div>
-            <div>
-                <label>Valor R$</label>
-                <input type="text" id="d-valor" placeholder="Ex: 850,00">
+            <div class="bg-gradient-to-br from-blue-600 to-indigo-700 text-white p-4 rounded-2xl shadow-sm card-glow">
+                <div class="text-xs font-medium opacity-80 uppercase tracking-wider">Total a Receber</div>
+                <div class="text-2xl font-extrabold mt-2" id="r-total-receber">R$ 0,00</div>
             </div>
-            <div>
-                <label>Data do Vencimento</label>
-                <input type="date" id="d-data">
+            <div class="bg-gradient-to-br from-emerald-600 to-teal-700 text-white p-4 rounded-2xl shadow-sm card-glow">
+                <div class="text-xs font-medium opacity-80 uppercase tracking-wider">Rendas Mensais</div>
+                <div class="text-2xl font-extrabold mt-2" id="r-rendas">R$ 0,00</div>
             </div>
-            <div>
-                <label>Quantas Parcelas?</label>
-                <input type="number" id="d-parcelas" value="1" min="1">
+            <div class="bg-gradient-to-br from-purple-600 to-violet-700 text-white p-4 rounded-2xl shadow-sm card-glow">
+                <div class="text-xs font-medium opacity-80 uppercase tracking-wider">Patrimônio Total</div>
+                <div class="text-2xl font-extrabold mt-2" id="r-patrimonio">R$ 0,00</div>
+            </div>
+            <div class="bg-gradient-to-br from-teal-500 to-emerald-600 text-white p-4 rounded-2xl shadow-sm card-glow">
+                <div class="text-xs font-medium opacity-80 uppercase tracking-wider">Já Pago</div>
+                <div class="text-2xl font-extrabold mt-2" id="r-pago">R$ 0,00</div>
+            </div>
+            <div class="bg-gradient-to-br from-amber-500 to-orange-600 text-white p-4 rounded-2xl shadow-sm card-glow">
+                <div class="text-xs font-medium opacity-80 uppercase tracking-wider">Já Recebido</div>
+                <div class="text-2xl font-extrabold mt-2" id="r-recebido">R$ 0,00</div>
             </div>
         </div>
-        <button class="btn btn-verde" onclick="adicionarDivida()">✅ Salvar Conta</button>
-    </div>
 
-    <div class="filtros">
-        <input type="text" id="d-busca" placeholder="🔍 Buscar conta..." style="max-width:250px;" oninput="atualizarListaDividas()">
-        <select id="d-filtro" onchange="atualizarListaDividas()">
-            <option value="todos">Todas as contas</option>
-            <option value="pago">✅ Já Pagas</option>
-            <option value="vencer">⏳ Ainda a vencer</option>
-            <option value="atrasado">🔴 Atrasadas</option>
-        </select>
-    </div>
-
-    <div class="grid-cards">
-        <div class="card-resumo verde">
-            <div class="label">✅ Pagas</div>
-            <div class="valor" id="d-t-pago">R$ 0,00</div>
-        </div>
-        <div class="card-resumo amarelo">
-            <div class="label">⏳ A Vencer</div>
-            <div class="valor" id="d-t-vencer">R$ 0,00</div>
-        </div>
-        <div class="card-resumo vermelho">
-            <div class="label">🔴 Atrasadas</div>
-            <div class="valor" id="d-t-atrasado">R$ 0,00</div>
-        </div>
-        <div class="card-resumo azul">
-            <div class="label">📊 Total</div>
-            <div class="valor" id="d-t-total">R$ 0,00</div>
-        </div>
-    </div>
-
-    <div class="card">
-        <h3>📋 Lista de Contas</h3>
-        <div id="d-lista"></div>
-    </div>
-</div>
-
-<!-- ABA 3: CONTAS A RECEBER -->
-<div id="painel-receber" class="painel">
-    <h2 style="font-size:20px;margin-bottom:20px;">💰 Contas a Receber</h2>
-    <p style="color:#64748b;margin-bottom:20px;">Pessoas, aluguel, parcelas de venda — tudo que têm a receber de outros</p>
-
-    <div class="card">
-        <h3>➕ Adicionar Valor a Receber</h3>
-        <div class="grid-form">
-            <div>
-                <label>Quem paga? (Ex: Pedro, Inquilino...)</label>
-                <input type="text" id="rec-nome" placeholder="Ex: Pedro Silva">
+        <!-- GRÁFICOS REFORMULADOS -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+                    <h3 class="font-bold text-slate-800 text-base flex items-center gap-2">
+                        <span class="w-3 h-3 rounded-full bg-emerald-500"></span> Entradas vs Saídas
+                    </h3>
+                    <span class="text-xs font-semibold text-slate-400">Projeção Geral</span>
+                </div>
+                <div class="relative h-64 w-full flex items-center justify-center">
+                    <canvas id="chartBalanco"></canvas>
+                </div>
             </div>
-            <div>
-                <label>O que é? (Ex: Aluguel, Empréstimo...)</label>
-                <input type="text" id="rec-descricao" placeholder="Ex: Aluguel da Loja">
+
+            <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+                    <h3 class="font-bold text-slate-800 text-base flex items-center gap-2">
+                        <span class="w-3 h-3 rounded-full bg-purple-500"></span> Distribuição do Patrimônio
+                    </h3>
+                    <span class="text-xs font-semibold text-slate-400">Por Categoria</span>
+                </div>
+                <div class="relative h-64 w-full flex items-center justify-center">
+                    <canvas id="chartPatrimonio"></canvas>
+                </div>
             </div>
-            <div>
-                <label>Valor R$</label>
-                <input type="text" id="rec-valor" placeholder="Ex: 1.200,00">
+        </div>
+
+        <!-- SALDO PROJETADO -->
+        <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm">
+            <h3 class="font-bold text-slate-800 text-base pb-3 border-b border-slate-100 mb-4">📊 Resumo de Balanço Projetado</h3>
+            <div id="lista-resumo"></div>
+        </div>
+    </section>
+
+    <!-- ABA 2: CONTAS A PAGAR -->
+    <section id="painel-dividas" class="painel-conteudo hidden space-y-6">
+        <h2 class="text-xl font-bold text-slate-800">💳 Contas a Pagar</h2>
+
+        <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm">
+            <h3 class="font-bold text-slate-800 text-base pb-3 border-b border-slate-100 mb-4">➕ Cadastrar Nova Conta</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Descrição</label>
+                    <input type="text" id="d-nome" placeholder="Ex: Financiamento, Aluguel" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Valor R$</label>
+                    <input type="text" id="d-valor" placeholder="Ex: 850,00" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Data do Vencimento</label>
+                    <input type="date" id="d-data" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Parcelas</label>
+                    <input type="number" id="d-parcelas" value="1" min="1" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
+                </div>
             </div>
-            <div>
-                <label>Data de Recebimento</label>
-                <input type="date" id="rec-data">
-            </div>
-            <div>
-                <label>Recorrência</label>
-                <select id="rec-tipo">
-                    <option value="unico">Uma vez</option>
-                    <option value="mensal">Mensal</option>
+            <button onclick="adicionarDivida()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm px-5 py-2.5 rounded-xl transition shadow-md shadow-emerald-900/10 flex items-center gap-2">
+                ✅ Salvar Conta
+            </button>
+        </div>
+
+        <!-- FILTROS E RESUMO -->
+        <div class="flex flex-col sm:flex-row gap-3 items-center justify-between bg-slate-100 p-3 rounded-2xl">
+            <div class="flex gap-2 w-full sm:w-auto">
+                <input type="text" id="d-busca" placeholder="🔍 Buscar conta..." oninput="atualizarListaDividas()" class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm w-full sm:w-64 focus:outline-none">
+                <select id="d-filtro" onchange="atualizarListaDividas()" class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none">
+                    <option value="todos">Todas</option>
+                    <option value="pago">✅ Pagas</option>
+                    <option value="vencer">⏳ A Vencer</option>
+                    <option value="atrasado">🔴 Atrasadas</option>
                 </select>
             </div>
-            <div>
-                <label>Quantas parcelas? (se mensal)</label>
-                <input type="number" id="rec-parcelas" value="1" min="1">
+        </div>
+
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="bg-emerald-50 border border-emerald-200/60 p-4 rounded-xl">
+                <span class="text-xs font-bold text-emerald-700 uppercase">Pagas</span>
+                <div class="text-xl font-extrabold text-emerald-800 mt-1" id="d-t-pago">R$ 0,00</div>
+            </div>
+            <div class="bg-amber-50 border border-amber-200/60 p-4 rounded-xl">
+                <span class="text-xs font-bold text-amber-700 uppercase">A Vencer</span>
+                <div class="text-xl font-extrabold text-amber-800 mt-1" id="d-t-vencer">R$ 0,00</div>
+            </div>
+            <div class="bg-rose-50 border border-rose-200/60 p-4 rounded-xl">
+                <span class="text-xs font-bold text-rose-700 uppercase">Atrasadas</span>
+                <div class="text-xl font-extrabold text-rose-800 mt-1" id="d-t-atrasado">R$ 0,00</div>
+            </div>
+            <div class="bg-slate-100 border border-slate-200 p-4 rounded-xl">
+                <span class="text-xs font-bold text-slate-600 uppercase">Total Geral</span>
+                <div class="text-xl font-extrabold text-slate-800 mt-1" id="d-t-total">R$ 0,00</div>
             </div>
         </div>
-        <button class="btn btn-azul" onclick="adicionarReceber()">💾 Salvar</button>
-    </div>
 
-    <div class="filtros">
-        <input type="text" id="rec-busca" placeholder="🔍 Buscar..." style="max-width:250px;" oninput="atualizarListaReceber()">
-        <select id="rec-filtro" onchange="atualizarListaReceber()">
-            <option value="todos">Todos</option>
-            <option value="receber">⏳ A Receber</option>
-            <option value="recebido">✅ Já Recebidos</option>
-            <option value="atrasado">🔴 Atrasados</option>
-        </select>
-    </div>
-
-    <div class="grid-cards">
-        <div class="card-resumo azul">
-            <div class="label">⏳ A Receber</div>
-            <div class="valor" id="rec-t-receber">R$ 0,00</div>
+        <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm">
+            <h3 class="font-bold text-slate-800 text-base pb-3 border-b border-slate-100 mb-4">📋 Lista de Contas</h3>
+            <div id="d-lista" class="space-y-3"></div>
         </div>
-        <div class="card-resumo verde">
-            <div class="label">✅ Já Recebido</div>
-            <div class="valor" id="rec-t-recebido">R$ 0,00</div>
-        </div>
-        <div class="card-resumo vermelho">
-            <div class="label">🔴 Atrasado</div>
-            <div class="valor" id="rec-t-atrasado">R$ 0,00</div>
-        </div>
-        <div class="card-resumo roxo">
-            <div class="label">📊 Total</div>
-            <div class="valor" id="rec-t-total">R$ 0,00</div>
-        </div>
-    </div>
+    </section>
 
-    <div class="card">
-        <h3>📋 Lista de Valores a Receber</h3>
-        <div id="rec-lista"></div>
-    </div>
-</div>
+    <!-- ABA 3: CONTAS A RECEBER -->
+    <section id="painel-receber" class="painel-conteudo hidden space-y-6">
+        <h2 class="text-xl font-bold text-slate-800">💰 Contas a Receber</h2>
 
-<!-- ABA 4: MINHAS RENDAS (COM EDIÇÃO) -->
-<div id="painel-rendas" class="painel">
-    <h2 style="font-size:20px;margin-bottom:20px;">💵 Minhas Rendas</h2>
-    <p style="color:#64748b;margin-bottom:20px;">Seu salário, aluguel recebido, comissões — sua fonte de renda</p>
-
-    <div class="card">
-        <h3 id="renda-form-titulo">➕ Adicionar Fonte de Renda</h3>
-        <input type="hidden" id="renda-id-edicao" value="">
-        <div class="grid-form">
-            <div>
-                <label>Origem (Ex: Salário, Aluguel, Comissão...)</label>
-                <input type="text" id="renda-nome" placeholder="Ex: Aluguel — Casa Comercial">
+        <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm">
+            <h3 class="font-bold text-slate-800 text-base pb-3 border-b border-slate-100 mb-4">➕ Registrar Valor a Receber</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">De quem? (Pagador)</label>
+                    <input type="text" id="rec-nome" placeholder="Ex: Cliente X, Inquilino" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Descrição</label>
+                    <input type="text" id="rec-descricao" placeholder="Ex: Venda de Peças, Aluguel" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Valor R$</label>
+                    <input type="text" id="rec-valor" placeholder="Ex: 1.200,00" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Data Prevista</label>
+                    <input type="date" id="rec-data" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Recorrência</label>
+                    <select id="rec-tipo" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none">
+                        <option value="unico">Uma vez</option>
+                        <option value="mensal">Mensal</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Parcelas</label>
+                    <input type="number" id="rec-parcelas" value="1" min="1" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none">
+                </div>
             </div>
-            <div>
-                <label>Valor Mensal R$</label>
-                <input type="text" id="renda-valor" placeholder="Ex: 2.500,00">
-            </div>
-            <div>
-                <label>Tipo</label>
-                <select id="renda-tipo">
-                    <option value="mensal">📅 Mensal (fixo)</option>
-                    <option value="ocasional">✨ Ocasional (variável)</option>
+            <button onclick="adicionarReceber()" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm px-5 py-2.5 rounded-xl transition shadow-md shadow-blue-900/10 flex items-center gap-2">
+                💾 Salvar Recebível
+            </button>
+        </div>
+
+        <div class="flex flex-col sm:flex-row gap-3 items-center justify-between bg-slate-100 p-3 rounded-2xl">
+            <div class="flex gap-2 w-full sm:w-auto">
+                <input type="text" id="rec-busca" placeholder="🔍 Buscar..." oninput="atualizarListaReceber()" class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm w-full sm:w-64 focus:outline-none">
+                <select id="rec-filtro" onchange="atualizarListaReceber()" class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none">
+                    <option value="todos">Todos</option>
+                    <option value="receber">⏳ A Receber</option>
+                    <option value="recebido">✅ Recebidos</option>
+                    <option value="atrasado">🔴 Atrasados</option>
                 </select>
             </div>
-            <div>
-                <label>Observação</label>
-                <input type="text" id="renda-obs" placeholder="Ex: Todo dia 5">
+        </div>
+
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="bg-blue-50 border border-blue-200/60 p-4 rounded-xl">
+                <span class="text-xs font-bold text-blue-700 uppercase">A Receber</span>
+                <div class="text-xl font-extrabold text-blue-800 mt-1" id="rec-t-receber">R$ 0,00</div>
+            </div>
+            <div class="bg-emerald-50 border border-emerald-200/60 p-4 rounded-xl">
+                <span class="text-xs font-bold text-emerald-700 uppercase">Já Recebido</span>
+                <div class="text-xl font-extrabold text-emerald-800 mt-1" id="rec-t-recebido">R$ 0,00</div>
+            </div>
+            <div class="bg-rose-50 border border-rose-200/60 p-4 rounded-xl">
+                <span class="text-xs font-bold text-rose-700 uppercase">Atrasado</span>
+                <div class="text-xl font-extrabold text-rose-800 mt-1" id="rec-t-atrasado">R$ 0,00</div>
+            </div>
+            <div class="bg-purple-50 border border-purple-200/60 p-4 rounded-xl">
+                <span class="text-xs font-bold text-purple-700 uppercase">Total</span>
+                <div class="text-xl font-extrabold text-purple-800 mt-1" id="rec-t-total">R$ 0,00</div>
             </div>
         </div>
-        <div class="flex-gap">
-            <button class="btn btn-verde" id="btn-salvar-renda" onclick="adicionarOuAtualizarRenda()">💾 Salvar Renda</button>
-            <button class="btn btn-cinza esconder" id="btn-cancelar-renda" onclick="cancelarEdicaoRenda()">❌ Cancelar Edição</button>
-        </div>
-    </div>
 
-    <div class="grid-cards">
-        <div class="card-resumo verde">
-            <div class="label">💰 Renda Mensal</div>
-            <div class="valor" id="r-t-mensal">R$ 0,00</div>
+        <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm">
+            <h3 class="font-bold text-slate-800 text-base pb-3 border-b border-slate-100 mb-4">📋 Lista de Recebíveis</h3>
+            <div id="rec-lista" class="space-y-3"></div>
         </div>
-        <div class="card-resumo laranja">
-            <div class="label">✨ Renda Ocasional</div>
-            <div class="valor" id="r-t-ocasional">R$ 0,00</div>
-        </div>
-        <div class="card-resumo roxo">
-            <div class="label">📊 Renda Anual Estimada</div>
-            <div class="valor" id="r-t-anual">R$ 0,00</div>
-        </div>
-        <div class="card-resumo azul">
-            <div class="label">💵 Total Mensal</div>
-            <div class="valor" id="r-t-total">R$ 0,00</div>
-        </div>
-    </div>
+    </section>
 
-    <div class="card">
-        <h3>📋 Minhas Fontes de Renda</h3>
-        <div id="r-lista"></div>
-    </div>
-</div>
+    <!-- ABA 4: MINHAS RENDAS -->
+    <section id="painel-rendas" class="painel-conteudo hidden space-y-6">
+        <h2 class="text-xl font-bold text-slate-800">💵 Fontes de Renda</h2>
 
-<!-- ABA 5: EMPRÉSTIMOS E JUROS (NOVA ABA) -->
-<div id="painel-emprestimos" class="painel">
-    <h2 style="font-size:20px;margin-bottom:20px;">🤝 Empréstimos e Juros</h2>
-    <p style="color:#64748b;margin-bottom:20px;">Controle dinheiro emprestado a terceiros ou empréstimos pegos com taxa de juros</p>
+        <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm">
+            <h3 class="font-bold text-slate-800 text-base pb-3 border-b border-slate-100 mb-4" id="renda-form-titulo">➕ Adicionar Fonte de Renda</h3>
+            <input type="hidden" id="renda-id-edicao" value="">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Origem (Ex: Salário, Pró-labore)</label>
+                    <input type="text" id="renda-nome" placeholder="Ex: Faturamento Loja" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Valor Mensal R$</label>
+                    <input type="text" id="renda-valor" placeholder="Ex: 5.000,00" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Frequência</label>
+                    <select id="renda-tipo" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none">
+                        <option value="mensal">📅 Mensal (Fixo)</option>
+                        <option value="ocasional">✨ Ocasional (Variável)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Observação</label>
+                    <input type="text" id="renda-obs" placeholder="Ex: Todo dia 5" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none">
+                </div>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="adicionarOuAtualizarRenda()" id="btn-salvar-renda" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm px-5 py-2.5 rounded-xl transition shadow-md shadow-emerald-900/10">
+                    💾 Salvar Renda
+                </button>
+                <button onclick="cancelarEdicaoRenda()" id="btn-cancelar-renda" class="hidden bg-slate-500 hover:bg-slate-400 text-white font-semibold text-sm px-5 py-2.5 rounded-xl transition">
+                    ❌ Cancelar
+                </button>
+            </div>
+        </div>
 
-    <div class="grid-cards">
-        <div class="card-resumo azul">
-            <div class="label">💰 Emprestei (A Receber + Juros)</div>
-            <div class="valor" id="emp-t-concedido">R$ 0,00</div>
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="bg-emerald-50 border border-emerald-200/60 p-4 rounded-xl">
+                <span class="text-xs font-bold text-emerald-700 uppercase">Mensal Fixo</span>
+                <div class="text-xl font-extrabold text-emerald-800 mt-1" id="r-t-mensal">R$ 0,00</div>
+            </div>
+            <div class="bg-amber-50 border border-amber-200/60 p-4 rounded-xl">
+                <span class="text-xs font-bold text-amber-700 uppercase">Ocasional</span>
+                <div class="text-xl font-extrabold text-amber-800 mt-1" id="r-t-ocasional">R$ 0,00</div>
+            </div>
+            <div class="bg-purple-50 border border-purple-200/60 p-4 rounded-xl">
+                <span class="text-xs font-bold text-purple-700 uppercase">Estimativa Anual</span>
+                <div class="text-xl font-extrabold text-purple-800 mt-1" id="r-t-anual">R$ 0,00</div>
+            </div>
+            <div class="bg-blue-50 border border-blue-200/60 p-4 rounded-xl">
+                <span class="text-xs font-bold text-blue-700 uppercase">Total Mensal</span>
+                <div class="text-xl font-extrabold text-blue-800 mt-1" id="r-t-total">R$ 0,00</div>
+            </div>
         </div>
-        <div class="card-resumo vermelho">
-            <div class="label">💵 Peguei Emprestado (A Pagar)</div>
-            <div class="valor" id="emp-t-tomado">R$ 0,00</div>
-        </div>
-        <div class="card-resumo verde">
-            <div class="label">📈 Total em Juros Previstos</div>
-            <div class="valor" id="emp-t-juros">R$ 0,00</div>
-        </div>
-    </div>
 
-    <div class="card">
-        <h3 id="emp-form-titulo">➕ Cadastrar Empréstimo / Financiamento</h3>
-        <input type="hidden" id="emp-id-edicao" value="">
-        <div class="grid-form">
-            <div>
-                <label>Tipo de Operação</label>
-                <select id="emp-tipo">
-                    <option value="concedido">📤 Emprestei para alguém (A Receber)</option>
-                    <option value="tomado">📥 Peguei Emprestado (A Pagar)</option>
+        <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm">
+            <h3 class="font-bold text-slate-800 text-base pb-3 border-b border-slate-100 mb-4">📋 Fontes Registradas</h3>
+            <div id="r-lista" class="space-y-3"></div>
+        </div>
+    </section>
+
+    <!-- ABA 5: EMPRÉSTIMOS E JUROS -->
+    <section id="painel-emprestimos" class="painel-conteudo hidden space-y-6">
+        <h2 class="text-xl font-bold text-slate-800">🤝 Empréstimos e Financiamentos</h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="bg-blue-50 border border-blue-200/60 p-4 rounded-2xl">
+                <span class="text-xs font-bold text-blue-700 uppercase">Emprestei (A Receber)</span>
+                <div class="text-2xl font-extrabold text-blue-900 mt-1" id="emp-t-concedido">R$ 0,00</div>
+            </div>
+            <div class="bg-rose-50 border border-rose-200/60 p-4 rounded-2xl">
+                <span class="text-xs font-bold text-rose-700 uppercase">Tomei Emprestado (A Pagar)</span>
+                <div class="text-2xl font-extrabold text-rose-900 mt-1" id="emp-t-tomado">R$ 0,00</div>
+            </div>
+            <div class="bg-emerald-50 border border-emerald-200/60 p-4 rounded-2xl">
+                <span class="text-xs font-bold text-emerald-700 uppercase">Total de Juros Previstos</span>
+                <div class="text-2xl font-extrabold text-emerald-900 mt-1" id="emp-t-juros">R$ 0,00</div>
+            </div>
+        </div>
+
+        <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm">
+            <h3 class="font-bold text-slate-800 text-base pb-3 border-b border-slate-100 mb-4" id="emp-form-titulo">➕ Cadastrar Operação</h3>
+            <input type="hidden" id="emp-id-edicao" value="">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Tipo de Operação</label>
+                    <select id="emp-tipo" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none">
+                        <option value="concedido">📤 Emprestei (A Receber)</option>
+                        <option value="tomado">📥 Peguei Emprestado (A Pagar)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Pessoa / Instituição</label>
+                    <input type="text" id="emp-nome" placeholder="Ex: João Silva ou Banco" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Valor Principal R$</label>
+                    <input type="text" id="emp-valor" placeholder="Ex: 5.000,00" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Taxa de Juros Mensal (%)</label>
+                    <input type="number" step="0.1" id="emp-juros" placeholder="Ex: 2.5" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Prazo (Meses)</label>
+                    <input type="number" id="emp-meses" value="1" min="1" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Data de Início</label>
+                    <input type="date" id="emp-data" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none">
+                </div>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="adicionarOuAtualizarEmprestimo()" id="btn-salvar-emp" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm px-5 py-2.5 rounded-xl transition">
+                    💾 Salvar Empréstimo
+                </button>
+                <button onclick="cancelarEdicaoEmprestimo()" id="btn-cancelar-emp" class="hidden bg-slate-500 hover:bg-slate-400 text-white font-semibold text-sm px-5 py-2.5 rounded-xl transition">
+                    ❌ Cancelar
+                </button>
+            </div>
+        </div>
+
+        <div class="flex flex-col sm:flex-row gap-3 items-center justify-between bg-slate-100 p-3 rounded-2xl">
+            <div class="flex gap-2 w-full sm:w-auto">
+                <input type="text" id="emp-busca" placeholder="🔍 Buscar nome..." oninput="atualizarListaEmprestimos()" class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm w-full sm:w-64 focus:outline-none">
+                <select id="emp-filtro" onchange="atualizarListaEmprestimos()" class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none">
+                    <option value="todos">Todos</option>
+                    <option value="concedido">📤 Emprestei</option>
+                    <option value="tomado">📥 Peguei Emprestado</option>
+                    <option value="ativo">⏳ Em Aberto</option>
+                    <option value="quitado">✅ Quitados</option>
                 </select>
             </div>
-            <div>
-                <label>Nome da Pessoa / Empresa</label>
-                <input type="text" id="emp-nome" placeholder="Ex: João Silva ou Banco X">
+        </div>
+
+        <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm">
+            <h3 class="font-bold text-slate-800 text-base pb-3 border-b border-slate-100 mb-4">📋 Lista de Empréstimos</h3>
+            <div id="emp-lista" class="space-y-3"></div>
+        </div>
+    </section>
+
+    <!-- ABA 6: MEU PATRIMÔNIO -->
+    <section id="painel-patrimonio" class="painel-conteudo hidden space-y-6">
+        <h2 class="text-xl font-bold text-slate-800">🏆 Meu Patrimônio</h2>
+
+        <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm">
+            <h3 class="font-bold text-slate-800 text-base pb-3 border-b border-slate-100 mb-4">➕ Cadastrar Bem ou Ativo</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Categoria do Bem</label>
+                    <select id="pat-tipo" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none">
+                        <option value="imovel">🏠 Imóvel / Terreno</option>
+                        <option value="veiculo">🚗 Veículo</option>
+                        <option value="investimento">📈 Investimento / Aplicação</option>
+                        <option value="outro">📦 Outros Bens</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Descrição</label>
+                    <input type="text" id="pat-nome" placeholder="Ex: Terreno Lote 12, Carro" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Valor Avaliado R$</label>
+                    <input type="text" id="pat-valor" placeholder="Ex: 120.000,00" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Observações / Detalhes</label>
+                    <input type="text" id="pat-obs" placeholder="Ex: Escriturado, Placa XXX" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none">
+                </div>
             </div>
-            <div>
-                <label>Valor Principal R$</label>
-                <input type="text" id="emp-valor" placeholder="Ex: 5.000,00">
+            <button onclick="adicionarPatrimonio()" class="bg-purple-600 hover:bg-purple-500 text-white font-semibold text-sm px-5 py-2.5 rounded-xl transition shadow-md shadow-purple-900/10">
+                💾 Salvar Patrimônio
+            </button>
+        </div>
+
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="bg-purple-50 border border-purple-200/60 p-4 rounded-xl">
+                <span class="text-xs font-bold text-purple-700 uppercase">Veículos</span>
+                <div class="text-xl font-extrabold text-purple-800 mt-1" id="pat-t-veiculo">R$ 0,00</div>
             </div>
-            <div>
-                <label>Taxa de Juros Mensal (%)</label>
-                <input type="number" step="0.1" id="emp-juros" placeholder="Ex: 2.5">
+            <div class="bg-blue-50 border border-blue-200/60 p-4 rounded-xl">
+                <span class="text-xs font-bold text-blue-700 uppercase">Imóveis / Terrenos</span>
+                <div class="text-xl font-extrabold text-blue-800 mt-1" id="pat-t-imovel">R$ 0,00</div>
             </div>
-            <div>
-                <label>Prazo (Meses)</label>
-                <input type="number" id="emp-meses" value="1" min="1">
+            <div class="bg-emerald-50 border border-emerald-200/60 p-4 rounded-xl">
+                <span class="text-xs font-bold text-emerald-700 uppercase">Investimentos</span>
+                <div class="text-xl font-extrabold text-emerald-800 mt-1" id="pat-t-investimento">R$ 0,00</div>
             </div>
-            <div>
-                <label>Data do Empréstimo</label>
-                <input type="date" id="emp-data">
+            <div class="bg-amber-50 border border-amber-200/60 p-4 rounded-xl">
+                <span class="text-xs font-bold text-amber-700 uppercase">Patrimônio Total</span>
+                <div class="text-xl font-extrabold text-amber-800 mt-1" id="pat-t-total">R$ 0,00</div>
             </div>
         </div>
-        <div class="flex-gap">
-            <button class="btn btn-verde" id="btn-salvar-emp" onclick="adicionarOuAtualizarEmprestimo()">💾 Salvar Empréstimo</button>
-            <button class="btn btn-cinza esconder" id="btn-cancelar-emp" onclick="cancelarEdicaoEmprestimo()">❌ Cancelar Edição</button>
+
+        <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm">
+            <h3 class="font-bold text-slate-800 text-base pb-3 border-b border-slate-100 mb-4">📋 Ativos Cadastrados</h3>
+            <div id="pat-lista" class="space-y-3"></div>
         </div>
-    </div>
+    </section>
 
-    <div class="filtros">
-        <input type="text" id="emp-busca" placeholder="🔍 Buscar por pessoa..." style="max-width:250px;" oninput="atualizarListaEmprestimos()">
-        <select id="emp-filtro" onchange="atualizarListaEmprestimos()">
-            <option value="todos">Todos os empréstimos</option>
-            <option value="concedido">📤 Emprestei (A receber)</option>
-            <option value="tomado">📥 Peguei emprestado (A pagar)</option>
-            <option value="ativo">⏳ Em Aberto</option>
-            <option value="quitado">✅ Quitados</option>
-        </select>
-    </div>
+    <!-- ABA 7: BOLETOS -->
+    <section id="painel-boletos" class="painel-conteudo hidden space-y-6">
+        <h2 class="text-xl font-bold text-slate-800">🧾 Gestão de Boletos</h2>
 
-    <div class="card">
-        <h3>📋 Lista de Empréstimos</h3>
-        <div id="emp-lista"></div>
-    </div>
-</div>
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="bg-amber-50 border border-amber-200/60 p-4 rounded-xl text-center">
+                <span class="text-xs font-bold text-amber-700 uppercase">A Vencer</span>
+                <div class="text-2xl font-extrabold text-amber-800 mt-1" id="b-qtd-vencer">0</div>
+            </div>
+            <div class="bg-purple-50 border border-purple-200/60 p-4 rounded-xl text-center">
+                <span class="text-xs font-bold text-purple-700 uppercase">⚠️ Vence em 3d</span>
+                <div class="text-2xl font-extrabold text-purple-800 mt-1" id="b-qtd-3d">0</div>
+            </div>
+            <div class="bg-rose-50 border border-rose-200/60 p-4 rounded-xl text-center">
+                <span class="text-xs font-bold text-rose-700 uppercase">Atrasados</span>
+                <div class="text-2xl font-extrabold text-rose-800 mt-1" id="b-qtd-atrasado">0</div>
+            </div>
+            <div class="bg-emerald-50 border border-emerald-200/60 p-4 rounded-xl text-center">
+                <span class="text-xs font-bold text-emerald-700 uppercase">Pagos</span>
+                <div class="text-2xl font-extrabold text-emerald-800 mt-1" id="b-qtd-pago">0</div>
+            </div>
+        </div>
 
-<!-- ABA 6: MEU PATRIMÔNIO -->
-<div id="painel-patrimonio" class="painel">
-    <h2 style="font-size:20px;margin-bottom:20px;">🏆 Meu Patrimônio</h2>
-    <p style="color:#64748b;margin-bottom:20px;">Seus bens — carros, imóveis, terrenos, investimentos</p>
+        <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm">
+            <h3 class="font-bold text-slate-800 text-base pb-3 border-b border-slate-100 mb-4">➕ Novo Boleto</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Beneficiário / Empresa</label>
+                    <input type="text" id="b-nome" placeholder="Ex: Enel, Internet" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Valor R$</label>
+                    <input type="text" id="b-valor" placeholder="Ex: 150,00" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Vencimento</label>
+                    <input type="date" id="b-data" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Código de Barras (Opcional)</label>
+                    <input type="text" id="b-codigo" placeholder="Digitação da linha digitável" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none">
+                </div>
+            </div>
+            <button onclick="adicionarBoleto()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm px-5 py-2.5 rounded-xl transition">
+                💾 Salvar Boleto
+            </button>
+        </div>
 
-    <div class="card">
-        <h3>➕ Adicionar Bem ao Patrimônio</h3>
-        <div class="grid-form">
-            <div>
-                <label>Tipo de Bem</label>
-                <select id="pat-tipo">
-                    <option value="imovel">🏠 Imóvel / Terreno</option>
-                    <option value="veiculo">🚗 Veículo</option>
-                    <option value="investimento">📈 Investimento</option>
-                    <option value="outro">📦 Outro</option>
+        <div class="flex flex-col sm:flex-row gap-3 items-center justify-between bg-slate-100 p-3 rounded-2xl">
+            <div class="flex gap-2 w-full sm:w-auto">
+                <input type="text" id="b-busca" placeholder="🔍 Buscar..." oninput="atualizarListaBoletos()" class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm w-full sm:w-64 focus:outline-none">
+                <select id="b-filtro" onchange="atualizarListaBoletos()" class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none">
+                    <option value="todos">Todos</option>
+                    <option value="avencer">A vencer</option>
+                    <option value="atrasado">Atrasados</option>
+                    <option value="pago">Pagos</option>
                 </select>
             </div>
-            <div>
-                <label>Descrição (Ex: Gol G3, Terreno Lote X...)</label>
-                <input type="text" id="pat-nome" placeholder="Ex: Gol G3 2002">
-            </div>
-            <div>
-                <label>Valor Estimado R$</label>
-                <input type="text" id="pat-valor" placeholder="Ex: 35.000,00">
-            </div>
-            <div>
-                <label>Observação / Local</label>
-                <input type="text" id="pat-obs" placeholder="Ex: Placa ABC1234 — Brasília">
-            </div>
         </div>
-        <button class="btn btn-roxo" onclick="adicionarPatrimonio()">💾 Salvar Bem</button>
-    </div>
 
-    <div class="grid-cards">
-        <div class="card-resumo roxo">
-            <div class="label">🚗 Veículos</div>
-            <div class="valor" id="pat-t-veiculo">R$ 0,00</div>
-        </div>
-        <div class="card-resumo azul">
-            <div class="label">🏠 Imóveis/Terrenos</div>
-            <div class="valor" id="pat-t-imovel">R$ 0,00</div>
-        </div>
-        <div class="card-resumo verde">
-            <div class="label">📈 Investimentos</div>
-            <div class="valor" id="pat-t-investimento">R$ 0,00</div>
-        </div>
-        <div class="card-resumo laranja">
-            <div class="label">🏆 PATRIMÔNIO TOTAL</div>
-            <div class="valor" id="pat-t-total">R$ 0,00</div>
-        </div>
-    </div>
+        <div id="b-lista" class="space-y-3"></div>
+    </section>
 
-    <div class="card">
-        <h3>📋 Lista de Bens</h3>
-        <div id="pat-lista"></div>
-    </div>
-</div>
+    <!-- ABA 8: CHEQUES -->
+    <section id="painel-cheques" class="painel-conteudo hidden space-y-6">
+        <h2 class="text-xl font-bold text-slate-800">📑 Gestão de Cheques</h2>
 
-<!-- ABA 7: BOLETOS -->
-<div id="painel-boletos" class="painel">
-    <h2 style="font-size:20px;margin-bottom:20px;">🧾 Controle de Boletos</h2>
-
-    <div class="grid-cards">
-        <div class="card-resumo amarelo">
-            <div class="label">⏳ A Vencer</div>
-            <div class="valor" id="b-qtd-vencer">0</div>
-        </div>
-        <div class="card-resumo roxo">
-            <div class="label">⚠️ Vence em 3 dias</div>
-            <div class="valor" id="b-qtd-3d">0</div>
-        </div>
-        <div class="card-resumo vermelho">
-            <div class="label">🔴 Atrasados</div>
-            <div class="valor" id="b-qtd-atrasado">0</div>
-        </div>
-        <div class="card-resumo verde">
-            <div class="label">✅ Pagos</div>
-            <div class="valor" id="b-qtd-pago">0</div>
-        </div>
-    </div>
-
-    <div class="card">
-        <h3>➕ Cadastrar Novo Boleto</h3>
-        <div class="grid-form">
-            <div>
-                <label>Nome / Empresa</label>
-                <input type="text" id="b-nome" placeholder="Ex: Enel, Água...">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="bg-blue-50 border border-blue-200/60 p-4 rounded-xl text-center">
+                <span class="text-xs font-bold text-blue-700 uppercase">Em Aberto</span>
+                <div class="text-2xl font-extrabold text-blue-800 mt-1" id="ch-qtd-aberto">0</div>
             </div>
-            <div>
-                <label>Valor R$</label>
-                <input type="text" id="b-valor" placeholder="Ex: 150,00">
+            <div class="bg-emerald-50 border border-emerald-200/60 p-4 rounded-xl text-center">
+                <span class="text-xs font-bold text-emerald-700 uppercase">Compensados</span>
+                <div class="text-2xl font-extrabold text-emerald-800 mt-1" id="ch-qtd-pago">0</div>
             </div>
-            <div>
-                <label>Vencimento</label>
-                <input type="date" id="b-data">
-            </div>
-            <div>
-                <label>Código de Barras</label>
-                <input type="text" id="b-codigo" placeholder="Opcional">
+            <div class="bg-rose-50 border border-rose-200/60 p-4 rounded-xl text-center">
+                <span class="text-xs font-bold text-rose-700 uppercase">Devolvidos</span>
+                <div class="text-2xl font-extrabold text-rose-800 mt-1" id="ch-qtd-dev">0</div>
             </div>
         </div>
-        <button class="btn btn-verde" onclick="adicionarBoleto()">💾 Salvar Boleto</button>
-    </div>
 
-    <div class="filtros">
-        <input type="text" id="b-busca" placeholder="🔍 Buscar..." style="max-width:250px;" oninput="atualizarListaBoletos()">
-        <select id="b-filtro" onchange="atualizarListaBoletos()">
-            <option value="todos">Todos</option>
-            <option value="avencer">A vencer</option>
-            <option value="atrasado">Atrasados</option>
-            <option value="pago">Pagos</option>
-        </select>
-    </div>
-
-    <div id="b-lista"></div>
-</div>
-
-<!-- ABA 8: CHEQUES -->
-<div id="painel-cheques" class="painel">
-    <h2 style="font-size:20px;margin-bottom:20px;">📑 Controle de Cheques</h2>
-
-    <div class="grid-cards">
-        <div class="card-resumo azul">
-            <div class="label">⏳ Em Aberto</div>
-            <div class="valor" id="ch-qtd-aberto">0</div>
-        </div>
-        <div class="card-resumo verde">
-            <div class="label">✅ Compensados</div>
-            <div class="valor" id="ch-qtd-pago">0</div>
-        </div>
-        <div class="card-resumo vermelho">
-            <div class="label">🔴 Devolvidos</div>
-            <div class="valor" id="ch-qtd-dev">0</div>
-        </div>
-    </div>
-
-    <div class="card">
-        <h3>➕ Cadastrar Novo Cheque</h3>
-        <div class="grid-form">
-            <div>
-                <label>Nome da Pessoa/Empresa</label>
-                <input type="text" id="ch-nome" placeholder="Ex: Supermercado X">
+        <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm">
+            <h3 class="font-bold text-slate-800 text-base pb-3 border-b border-slate-100 mb-4">➕ Registrar Cheque</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Favorecido / Emissor</label>
+                    <input type="text" id="ch-nome" placeholder="Ex: Fornecedor X" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Nº do Cheque</label>
+                    <input type="text" id="ch-numero" placeholder="Ex: 000123" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Valor R$</label>
+                    <input type="text" id="ch-valor" placeholder="Ex: 500,00" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Bom para (Data)</label>
+                    <input type="date" id="ch-data" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none">
+                </div>
             </div>
-            <div>
-                <label>Número do Cheque</label>
-                <input type="text" id="ch-numero" placeholder="Ex: 123456">
-            </div>
-            <div>
-                <label>Valor R$</label>
-                <input type="text" id="ch-valor" placeholder="Ex: 300,00">
-            </div>
-            <div>
-                <label>Data de Emissão</label>
-                <input type="date" id="ch-data">
+            <button onclick="adicionarCheque()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm px-5 py-2.5 rounded-xl transition">
+                💾 Salvar Cheque
+            </button>
+        </div>
+
+        <div class="flex flex-col sm:flex-row gap-3 items-center justify-between bg-slate-100 p-3 rounded-2xl">
+            <div class="flex gap-2 w-full sm:w-auto">
+                <input type="text" id="ch-busca" placeholder="🔍 Buscar..." oninput="atualizarListaCheques()" class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm w-full sm:w-64 focus:outline-none">
+                <select id="ch-filtro" onchange="atualizarListaCheques()" class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none">
+                    <option value="todos">Todos</option>
+                    <option value="aberto">Em Aberto</option>
+                    <option value="pago">Compensados</option>
+                    <option value="dev">Devolvidos</option>
+                </select>
             </div>
         </div>
-        <button class="btn btn-verde" onclick="adicionarCheque()">💾 Salvar Cheque</button>
-    </div>
 
-    <div class="filtros">
-        <input type="text" id="ch-busca" placeholder="🔍 Buscar..." style="max-width:250px;" oninput="atualizarListaCheques()">
-        <select id="ch-filtro" onchange="atualizarListaCheques()">
-            <option value="todos">Todos</option>
-            <option value="aberto">Em Aberto</option>
-            <option value="pago">Compensados</option>
-            <option value="dev">Devolvidos</option>
-        </select>
-    </div>
+        <div id="ch-lista" class="space-y-3"></div>
+    </section>
 
-    <div id="ch-lista"></div>
-</div>
+</main>
 
-<!-- JAVASCRIPT COMPLETO E ATUALIZADO -->
 <script>
 'use strict';
 const CHAVE_SALVAMENTO = 'CONTROLE_DADOS_02';
@@ -626,7 +626,7 @@ let dados = {
 let chartBalancoInstancia = null;
 let chartPatrimonioInstancia = null;
 
-// ===== FUNÇÕES AUXILIARES =====
+// AUXILIARES DE FORMATAÇÃO E CÁLCULO
 function formatarDinheiro(valor) {
     return Number(valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
@@ -657,11 +657,11 @@ function diasAteVencimento(dataIso) {
     return Math.ceil((alvo - hoje) / (1000 * 60 * 60 * 24));
 }
 
-function mostrarAviso(msg = '✅ Salvo com sucesso!') {
+function mostrarAviso(msg = 'Salvo com sucesso!') {
     const aviso = document.getElementById('aviso');
-    aviso.textContent = msg;
-    aviso.style.display = 'block';
-    setTimeout(() => aviso.style.display = 'none', 2500);
+    document.getElementById('aviso-texto').textContent = msg;
+    aviso.classList.remove('hidden');
+    setTimeout(() => aviso.classList.add('hidden'), 2500);
 }
 
 function salvarDados() {
@@ -682,37 +682,31 @@ function carregarDados() {
         if (!dados.cheques) dados.cheques = [];
         if (!dados.emprestimos) dados.emprestimos = [];
     } catch (e) {
-        console.error('Erro ao carregar dados salvos:', e);
+        console.error('Erro ao carregar dados:', e);
     }
     atualizarTudo();
 }
 
-// ===== TROCA DE ABAS =====
+// TROCA DE ABAS
 function configurarAbas() {
-    const abas = document.querySelectorAll('.aba');
+    const abas = document.querySelectorAll('.tab-btn');
     abas.forEach(aba => {
         aba.addEventListener('click', function() {
-            abas.forEach(a => a.classList.remove('ativa'));
-            this.classList.add('ativa');
-            document.querySelectorAll('.painel').forEach(p => p.classList.remove('visivel'));
+            abas.forEach(a => a.classList.remove('tab-ativa'));
+            this.classList.add('tab-ativa');
+            
+            document.querySelectorAll('.painel-conteudo').forEach(p => p.classList.add('hidden'));
             
             const idPainel = 'painel-' + this.getAttribute('data-painel');
             const painelAlvo = document.getElementById(idPainel);
-            if (painelAlvo) painelAlvo.classList.add('visivel');
+            if (painelAlvo) painelAlvo.classList.remove('hidden');
 
-            if (idPainel === 'painel-resumo') atualizarResumo();
-            if (idPainel === 'painel-dividas') atualizarListaDividas();
-            if (idPainel === 'painel-receber') atualizarListaReceber();
-            if (idPainel === 'painel-rendas') atualizarListaRendas();
-            if (idPainel === 'painel-emprestimos') atualizarListaEmprestimos();
-            if (idPainel === 'painel-patrimonio') atualizarListaPatrimonio();
-            if (idPainel === 'painel-boletos') atualizarListaBoletos();
-            if (idPainel === 'painel-cheques') atualizarListaCheques();
+            atualizarTudo();
         });
     });
 }
 
-// ===== CONTAS A PAGAR =====
+// CONTAS A PAGAR
 function adicionarDivida() {
     const nome = document.getElementById('d-nome').value.trim();
     const valor = limparValor(document.getElementById('d-valor').value);
@@ -772,14 +766,20 @@ function atualizarListaDividas() {
 
     ordenado.forEach(item => {
         const dias = diasAteVencimento(item.data);
-        let classe = '', statusTexto = '', mostrar = true;
+        let classeBorda = '', statusBadge = '', mostrar = true;
 
         if (item.paga) {
-            classe = 'pago'; statusTexto = '<span class="status st-pago">✅ Pago</span>'; totalPago += item.valor;
+            classeBorda = 'border-l-4 border-l-emerald-500 bg-emerald-50/40'; 
+            statusBadge = '<span class="text-xs bg-emerald-100 text-emerald-800 font-bold px-2.5 py-1 rounded-full border border-emerald-200">✅ Pago</span>'; 
+            totalPago += item.valor;
         } else if (dias < 0) {
-            classe = 'atrasado'; statusTexto = `<span class="status st-atrasado">🔴 Atrasado ${Math.abs(dias)}d</span>`; totalAtrasado += item.valor;
+            classeBorda = 'border-l-4 border-l-rose-500 bg-rose-50/40'; 
+            statusBadge = `<span class="text-xs bg-rose-100 text-rose-800 font-bold px-2.5 py-1 rounded-full border border-rose-200">🔴 Atrasado ${Math.abs(dias)}d</span>`; 
+            totalAtrasado += item.valor;
         } else {
-            classe = 'vencer'; statusTexto = `<span class="status st-vencer">⏳ Vence em ${dias}d</span>`; totalVencer += item.valor;
+            classeBorda = 'border-l-4 border-l-amber-500 bg-amber-50/40'; 
+            statusBadge = `<span class="text-xs bg-amber-100 text-amber-800 font-bold px-2.5 py-1 rounded-full border border-amber-200">⏳ Vence em ${dias}d</span>`; 
+            totalVencer += item.valor;
         }
 
         if (busca && !item.nome.toLowerCase().includes(busca)) mostrar = false;
@@ -789,22 +789,18 @@ function atualizarListaDividas() {
 
         if (mostrar) {
             lista.innerHTML += `
-                <div class="item ${classe}">
-                    <div class="linha">
-                        <div>
-                            <div class="font-bold text-lg">${item.nome}</div>
-                            <div style="font-size:13px;color:#64748b;">Parcela ${item.parcela}/${item.totalParcelas} • Vence: ${formatarData(item.data)}</div>
-                            <div class="font-bold text-lg mt-1">R$ ${formatarDinheiro(item.valor)}</div>
-                        </div>
-                        <div style="text-align:right;">
-                            <div class="mb-2">${statusTexto}</div>
-                            <div class="linha">
-                                <button class="btn btn-pequeno ${item.paga ? 'btn-cinza' : 'btn-verde'}" onclick="marcarComoPaga(${item.id})">
-                                    ${item.paga ? '↩️ Desmarcar' : '✓ Pago'}
-                                </button>
-                                <button class="btn btn-pequeno btn-vermelho" onclick="excluirDivida(${item.id})">🗑️</button>
-                            </div>
-                        </div>
+                <div class="p-4 rounded-xl border border-slate-200 ${classeBorda} flex flex-col sm:flex-row justify-between sm:items-center gap-3 transition hover:shadow-sm">
+                    <div>
+                        <div class="font-bold text-slate-800 text-base">${item.nome}</div>
+                        <div class="text-xs text-slate-500 mt-0.5">Parcela ${item.parcela}/${item.totalParcelas} • Vence: ${formatarData(item.data)}</div>
+                        <div class="font-black text-slate-900 text-lg mt-1">R$ ${formatarDinheiro(item.valor)}</div>
+                    </div>
+                    <div class="flex items-center gap-2 self-end sm:self-center">
+                        <div class="mr-2">${statusBadge}</div>
+                        <button class="px-3 py-1.5 text-xs font-semibold rounded-lg transition ${item.paga ? 'bg-slate-200 text-slate-700 hover:bg-slate-300' : 'bg-emerald-600 text-white hover:bg-emerald-500'}" onclick="marcarComoPaga(${item.id})">
+                            ${item.paga ? '↩️ Desmarcar' : '✓ Pagar'}
+                        </button>
+                        <button class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-rose-100 text-rose-700 hover:bg-rose-200 transition" onclick="excluirDivida(${item.id})">🗑️</button>
                     </div>
                 </div>`;
         }
@@ -814,10 +810,10 @@ function atualizarListaDividas() {
     document.getElementById('d-t-vencer').textContent = 'R$ ' + formatarDinheiro(totalVencer);
     document.getElementById('d-t-atrasado').textContent = 'R$ ' + formatarDinheiro(totalAtrasado);
     document.getElementById('d-t-total').textContent = 'R$ ' + formatarDinheiro(totalPago + totalVencer + totalAtrasado);
-    if (lista.innerHTML === '') lista.innerHTML = '<div class="vazio"><p>Nenhuma conta cadastrada.</p></div>';
+    if (lista.innerHTML === '') lista.innerHTML = '<div class="text-center py-8 text-slate-400 font-medium">Nenhuma conta encontrada.</div>';
 }
 
-// ===== CONTAS A RECEBER =====
+// CONTAS A RECEBER
 function adicionarReceber() {
     const nome = document.getElementById('rec-nome').value.trim();
     const descricao = document.getElementById('rec-descricao').value.trim();
@@ -883,14 +879,20 @@ function atualizarListaReceber() {
 
     ordenado.forEach(item => {
         const dias = diasAteVencimento(item.data);
-        let classe = '', statusTexto = '', mostrar = true;
+        let classeBorda = '', statusBadge = '', mostrar = true;
 
         if (item.recebido) {
-            classe = 'recebido'; statusTexto = '<span class="status st-recebido">✅ Recebido</span>'; recebido += item.valor;
+            classeBorda = 'border-l-4 border-l-emerald-500 bg-emerald-50/40'; 
+            statusBadge = '<span class="text-xs bg-emerald-100 text-emerald-800 font-bold px-2.5 py-1 rounded-full border border-emerald-200">✅ Recebido</span>'; 
+            recebido += item.valor;
         } else if (dias < 0) {
-            classe = 'atrasado'; statusTexto = `<span class="status st-atrasado">🔴 Atrasado ${Math.abs(dias)}d</span>`; atrasado += item.valor;
+            classeBorda = 'border-l-4 border-l-rose-500 bg-rose-50/40'; 
+            statusBadge = `<span class="text-xs bg-rose-100 text-rose-800 font-bold px-2.5 py-1 rounded-full border border-rose-200">🔴 Atrasado ${Math.abs(dias)}d</span>`; 
+            atrasado += item.valor;
         } else {
-            classe = 'receber'; statusTexto = `<span class="status st-receber">⏳ Receber em ${dias}d</span>`; receber += item.valor;
+            classeBorda = 'border-l-4 border-l-blue-500 bg-blue-50/40'; 
+            statusBadge = `<span class="text-xs bg-blue-100 text-blue-800 font-bold px-2.5 py-1 rounded-full border border-blue-200">⏳ Receber em ${dias}d</span>`; 
+            receber += item.valor;
         }
 
         if (busca && !item.nome.toLowerCase().includes(busca) && !item.descricao?.toLowerCase().includes(busca)) mostrar = false;
@@ -900,22 +902,18 @@ function atualizarListaReceber() {
 
         if (mostrar) {
             lista.innerHTML += `
-                <div class="item ${classe}">
-                    <div class="linha">
-                        <div>
-                            <div class="font-bold text-lg">${item.nome}</div>
-                            <div style="font-size:13px;color:#64748b;">${item.descricao || ''}${item.totalParcelas > 1 ? ` • Parcela ${item.parcela}/${item.totalParcelas}` : ''} • ${formatarData(item.data)}</div>
-                            <div class="font-bold text-lg mt-1">R$ ${formatarDinheiro(item.valor)}</div>
-                        </div>
-                        <div style="text-align:right;">
-                            <div class="mb-2">${statusTexto}</div>
-                            <div class="linha">
-                                <button class="btn btn-pequeno ${item.recebido ? 'btn-cinza' : 'btn-verde'}" onclick="marcarComoRecebido(${item.id})">
-                                    ${item.recebido ? '↩️ Desmarcar' : '✓ Recebido'}
-                                </button>
-                                <button class="btn btn-pequeno btn-vermelho" onclick="excluirReceber(${item.id})">🗑️</button>
-                            </div>
-                        </div>
+                <div class="p-4 rounded-xl border border-slate-200 ${classeBorda} flex flex-col sm:flex-row justify-between sm:items-center gap-3 transition hover:shadow-sm">
+                    <div>
+                        <div class="font-bold text-slate-800 text-base">${item.nome}</div>
+                        <div class="text-xs text-slate-500 mt-0.5">${item.descricao || 'Sem descrição'}${item.totalParcelas > 1 ? ` • Parcela ${item.parcela}/${item.totalParcelas}` : ''} • Previsão: ${formatarData(item.data)}</div>
+                        <div class="font-black text-slate-900 text-lg mt-1">R$ ${formatarDinheiro(item.valor)}</div>
+                    </div>
+                    <div class="flex items-center gap-2 self-end sm:self-center">
+                        <div class="mr-2">${statusBadge}</div>
+                        <button class="px-3 py-1.5 text-xs font-semibold rounded-lg transition ${item.recebido ? 'bg-slate-200 text-slate-700 hover:bg-slate-300' : 'bg-emerald-600 text-white hover:bg-emerald-500'}" onclick="marcarComoRecebido(${item.id})">
+                            ${item.recebido ? '↩️ Desmarcar' : '✓ Recebido'}
+                        </button>
+                        <button class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-rose-100 text-rose-700 hover:bg-rose-200 transition" onclick="excluirReceber(${item.id})">🗑️</button>
                     </div>
                 </div>`;
         }
@@ -925,10 +923,10 @@ function atualizarListaReceber() {
     document.getElementById('rec-t-recebido').textContent = 'R$ ' + formatarDinheiro(recebido);
     document.getElementById('rec-t-atrasado').textContent = 'R$ ' + formatarDinheiro(atrasado);
     document.getElementById('rec-t-total').textContent = 'R$ ' + formatarDinheiro(receber + recebido + atrasado);
-    if (lista.innerHTML === '') lista.innerHTML = '<div class="vazio"><p>Nenhum valor a receber cadastrado.</p></div>';
+    if (lista.innerHTML === '') lista.innerHTML = '<div class="text-center py-8 text-slate-400 font-medium">Nenhum valor a receber cadastrado.</div>';
 }
 
-// ===== MINHAS RENDAS (COM SUPORTE A EDIÇÃO) =====
+// RENDAS
 function adicionarOuAtualizarRenda() {
     const idEdicao = document.getElementById('renda-id-edicao').value;
     const nome = document.getElementById('renda-nome').value.trim();
@@ -966,8 +964,8 @@ function editarRenda(id) {
     document.getElementById('renda-obs').value = item.obs || '';
 
     document.getElementById('renda-form-titulo').textContent = '✏️ Editar Renda';
-    document.getElementById('btn-salvar-renda').textContent = '🔄 Atualizar Renda';
-    document.getElementById('btn-cancelar-renda').classList.remove('esconder');
+    document.getElementById('btn-salvar-renda').textContent = '🔄 Atualizar';
+    document.getElementById('btn-cancelar-renda').classList.remove('hidden');
 }
 
 function cancelarEdicaoRenda() {
@@ -979,7 +977,7 @@ function cancelarEdicaoRenda() {
 
     document.getElementById('renda-form-titulo').textContent = '➕ Adicionar Fonte de Renda';
     document.getElementById('btn-salvar-renda').textContent = '💾 Salvar Renda';
-    document.getElementById('btn-cancelar-renda').classList.add('esconder');
+    document.getElementById('btn-cancelar-renda').classList.add('hidden');
 }
 
 function excluirRenda(id) {
@@ -1001,24 +999,21 @@ function atualizarListaRendas() {
         if (item.tipo === 'mensal') mensal += item.valor;
         else ocasional += item.valor;
 
-        const status = item.tipo === 'mensal' 
-            ? '<span class="status st-mensal">📅 Mensal</span>' 
-            : '<span class="status st-ocasional">✨ Ocasional</span>';
+        const badge = item.tipo === 'mensal' 
+            ? '<span class="text-xs bg-emerald-100 text-emerald-800 font-bold px-2.5 py-1 rounded-full border border-emerald-200">📅 Mensal</span>' 
+            : '<span class="text-xs bg-amber-100 text-amber-800 font-bold px-2.5 py-1 rounded-full border border-amber-200">✨ Ocasional</span>';
 
         lista.innerHTML += `
-            <div class="item renda">
-                <div class="linha">
-                    <div>
-                        <div class="font-bold text-lg">${item.nome}</div>
-                        <div style="font-size:13px;color:#64748b;">${item.obs ? item.obs + ' • ' : ''}R$ ${formatarDinheiro(item.valor)}</div>
-                    </div>
-                    <div style="text-align:right;">
-                        <div class="mb-2">${status}</div>
-                        <div class="linha">
-                            <button class="btn btn-pequeno btn-azul" onclick="editarRenda(${item.id})">✏️ Editar</button>
-                            <button class="btn btn-pequeno btn-vermelho" onclick="excluirRenda(${item.id})">🗑️ Excluir</button>
-                        </div>
-                    </div>
+            <div class="p-4 rounded-xl border border-slate-200 border-l-4 border-l-emerald-500 bg-white flex flex-col sm:flex-row justify-between sm:items-center gap-3">
+                <div>
+                    <div class="font-bold text-slate-800 text-base">${item.nome}</div>
+                    <div class="text-xs text-slate-500 mt-0.5">${item.obs || 'Sem observações'}</div>
+                    <div class="font-black text-slate-900 text-lg mt-1">R$ ${formatarDinheiro(item.valor)}</div>
+                </div>
+                <div class="flex items-center gap-2 self-end sm:self-center">
+                    <div class="mr-2">${badge}</div>
+                    <button class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-100 text-blue-700 hover:bg-blue-200 transition" onclick="editarRenda(${item.id})">✏️ Editar</button>
+                    <button class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-rose-100 text-rose-700 hover:bg-rose-200 transition" onclick="excluirRenda(${item.id})">🗑️ Excluir</button>
                 </div>
             </div>`;
     });
@@ -1027,10 +1022,10 @@ function atualizarListaRendas() {
     document.getElementById('r-t-ocasional').textContent = 'R$ ' + formatarDinheiro(ocasional);
     document.getElementById('r-t-anual').textContent = 'R$ ' + formatarDinheiro((mensal * 12) + ocasional);
     document.getElementById('r-t-total').textContent = 'R$ ' + formatarDinheiro(mensal + ocasional);
-    if (lista.innerHTML === '') lista.innerHTML = '<div class="vazio"><p>Nenhuma renda cadastrada.</p></div>';
+    if (lista.innerHTML === '') lista.innerHTML = '<div class="text-center py-8 text-slate-400 font-medium">Nenhuma renda cadastrada.</div>';
 }
 
-// ===== EMPRÉSTIMOS E JUROS (NOVA ABA) =====
+// EMPRÉSTIMOS
 function calcularMontanteEmprestimo(principal, taxaMensalPct, meses) {
     const jurosTotal = principal * (taxaMensalPct / 100) * meses;
     const montanteTotal = principal + jurosTotal;
@@ -1047,31 +1042,17 @@ function adicionarOuAtualizarEmprestimo() {
     const meses = parseInt(document.getElementById('emp-meses').value) || 1;
     const data = document.getElementById('emp-data').value;
 
-    if (!nome) return alert('⚠️ Digite o nome da pessoa/empresa!');
+    if (!nome) return alert('⚠️ Digite o nome!');
     if (!valor || valor <= 0) return alert('⚠️ Digite um valor válido!');
-    if (!data) return alert('⚠️ Digite a data do empréstimo!');
+    if (!data) return alert('⚠️ Digite a data!');
 
     if (idEdicao) {
         const item = dados.emprestimos.find(e => e.id === parseInt(idEdicao));
         if (item) {
-            item.tipo = tipo;
-            item.nome = nome;
-            item.valor = valor;
-            item.juros = juros;
-            item.meses = meses;
-            item.data = data;
+            item.tipo = tipo; item.nome = nome; item.valor = valor; item.juros = juros; item.meses = meses; item.data = data;
         }
     } else {
-        dados.emprestimos.push({
-            id: Date.now(),
-            tipo,
-            nome,
-            valor,
-            juros,
-            meses,
-            data,
-            quitado: false
-        });
+        dados.emprestimos.push({ id: Date.now(), tipo, nome, valor, juros, meses, data, quitado: false });
     }
 
     cancelarEdicaoEmprestimo();
@@ -1090,9 +1071,9 @@ function editarEmprestimo(id) {
     document.getElementById('emp-meses').value = item.meses;
     document.getElementById('emp-data').value = item.data;
 
-    document.getElementById('emp-form-titulo').textContent = '✏️ Editar Empréstimo';
-    document.getElementById('btn-salvar-emp').textContent = '🔄 Atualizar Empréstimo';
-    document.getElementById('btn-cancelar-emp').classList.remove('esconder');
+    document.getElementById('emp-form-titulo').textContent = '✏️ Editar Operação';
+    document.getElementById('btn-salvar-emp').textContent = '🔄 Atualizar';
+    document.getElementById('btn-cancelar-emp').classList.remove('hidden');
 }
 
 function cancelarEdicaoEmprestimo() {
@@ -1104,17 +1085,14 @@ function cancelarEdicaoEmprestimo() {
     document.getElementById('emp-meses').value = '1';
     document.getElementById('emp-data').value = '';
 
-    document.getElementById('emp-form-titulo').textContent = '➕ Cadastrar Empréstimo / Financiamento';
+    document.getElementById('emp-form-titulo').textContent = '➕ Cadastrar Operação';
     document.getElementById('btn-salvar-emp').textContent = '💾 Salvar Empréstimo';
-    document.getElementById('btn-cancelar-emp').classList.add('esconder');
+    document.getElementById('btn-cancelar-emp').classList.add('hidden');
 }
 
 function alternarQuitacaoEmprestimo(id) {
     const item = dados.emprestimos.find(e => e.id === id);
-    if (item) {
-        item.quitado = !item.quitado;
-        salvarDados();
-    }
+    if (item) { item.quitado = !item.quitado; salvarDados(); }
 }
 
 function excluirEmprestimo(id) {
@@ -1155,35 +1133,32 @@ function atualizarListaEmprestimos() {
 
         if (mostrar) {
             const badgeTipo = item.tipo === 'concedido' 
-                ? '<span class="status st-receber">📤 Emprestei</span>' 
-                : '<span class="status st-atrasado">📥 Peguei Emprestado</span>';
+                ? '<span class="text-xs bg-blue-100 text-blue-800 font-bold px-2 py-0.5 rounded-full">📤 Emprestei</span>' 
+                : '<span class="text-xs bg-rose-100 text-rose-800 font-bold px-2 py-0.5 rounded-full">📥 Tomei</span>';
 
             const badgeStatus = item.quitado 
-                ? '<span class="status st-pago">✅ Quitado</span>' 
-                : '<span class="status st-vencer">⏳ Em Aberto</span>';
+                ? '<span class="text-xs bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">✅ Quitado</span>' 
+                : '<span class="text-xs bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded-full">⏳ Em Aberto</span>';
 
             lista.innerHTML += `
-                <div class="item ${item.quitado ? 'pago' : (item.tipo === 'concedido' ? 'receber' : 'atrasado')}">
-                    <div class="linha">
-                        <div>
-                            <div class="font-bold text-lg">${item.nome} ${badgeTipo} ${badgeStatus}</div>
-                            <div style="font-size:13px;color:#64748b;margin-top:4px;">
-                                Início: ${formatarData(item.data)} • ${item.meses}x de R$ ${formatarDinheiro(parcelaMensal)} (${item.juros}% a.m.)
-                            </div>
-                            <div class="font-bold text-lg mt-1" style="color:${item.tipo === 'concedido' ? '#16a34a' : '#dc2626'};">
-                                Principal: R$ ${formatarDinheiro(item.valor)} | Total com Juros: R$ ${formatarDinheiro(montanteTotal)}
-                                <span style="font-size:12px;font-weight:normal;color:#64748b;">(+ R$ ${formatarDinheiro(jurosTotal)} de juros)</span>
-                            </div>
+                <div class="p-4 rounded-xl border border-slate-200 ${item.quitado ? 'bg-emerald-50/20 border-emerald-200' : 'bg-white'} flex flex-col sm:flex-row justify-between sm:items-center gap-3">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="font-bold text-slate-800 text-base">${item.nome}</span>
+                            ${badgeTipo} ${badgeStatus}
                         </div>
-                        <div style="text-align:right;">
-                            <div class="linha mt-2">
-                                <button class="btn btn-pequeno ${item.quitado ? 'btn-cinza' : 'btn-verde'}" onclick="alternarQuitacaoEmprestimo(${item.id})">
-                                    ${item.quitado ? '↩️ Reabrir' : '✓ Quitar'}
-                                </button>
-                                <button class="btn btn-pequeno btn-azul" onclick="editarEmprestimo(${item.id})">✏️ Editar</button>
-                                <button class="btn btn-pequeno btn-vermelho" onclick="excluirEmprestimo(${item.id})">🗑️</button>
-                            </div>
+                        <div class="text-xs text-slate-500 mt-1">Início: ${formatarData(item.data)} • ${item.meses}x de R$ ${formatarDinheiro(parcelaMensal)} (${item.juros}% a.m.)</div>
+                        <div class="font-black text-slate-900 text-lg mt-1">
+                            Principal: R$ ${formatarDinheiro(item.valor)} | Total com Juros: R$ ${formatarDinheiro(montanteTotal)}
+                            <span class="text-xs font-normal text-slate-500">(+ R$ ${formatarDinheiro(jurosTotal)} em juros)</span>
                         </div>
+                    </div>
+                    <div class="flex items-center gap-2 self-end sm:self-center">
+                        <button class="px-3 py-1.5 text-xs font-semibold rounded-lg transition ${item.quitado ? 'bg-slate-200 text-slate-700' : 'bg-emerald-600 text-white hover:bg-emerald-500'}" onclick="alternarQuitacaoEmprestimo(${item.id})">
+                            ${item.quitado ? '↩️ Reabrir' : '✓ Quitar'}
+                        </button>
+                        <button class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-100 text-blue-700 hover:bg-blue-200 transition" onclick="editarEmprestimo(${item.id})">✏️ Editar</button>
+                        <button class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-rose-100 text-rose-700 hover:bg-rose-200 transition" onclick="excluirEmprestimo(${item.id})">🗑️</button>
                     </div>
                 </div>`;
         }
@@ -1192,11 +1167,10 @@ function atualizarListaEmprestimos() {
     document.getElementById('emp-t-concedido').textContent = 'R$ ' + formatarDinheiro(totalConcedido);
     document.getElementById('emp-t-tomado').textContent = 'R$ ' + formatarDinheiro(totalTomado);
     document.getElementById('emp-t-juros').textContent = 'R$ ' + formatarDinheiro(totalJurosGeral);
-
-    if (lista.innerHTML === '') lista.innerHTML = '<div class="vazio"><p>Nenhum empréstimo cadastrado.</p></div>';
+    if (lista.innerHTML === '') lista.innerHTML = '<div class="text-center py-8 text-slate-400 font-medium">Nenhum empréstimo cadastrado.</div>';
 }
 
-// ===== MEU PATRIMÔNIO =====
+// PATRIMÔNIO
 function adicionarPatrimonio() {
     const tipo = document.getElementById('pat-tipo').value;
     const nome = document.getElementById('pat-nome').value.trim();
@@ -1235,20 +1209,15 @@ function atualizarListaPatrimonio() {
         else outros += item.valor;
 
         const icones = { veiculo: '🚗', imovel: '🏠', investimento: '📈', outro: '📦' };
-        const icone = icones[item.tipo] || '📦';
 
         lista.innerHTML += `
-            <div class="item ativo">
-                <div class="linha">
-                    <div>
-                        <div class="font-bold text-lg">${icone} ${item.nome}</div>
-                        <div style="font-size:13px;color:#64748b;">${item.obs || 'Sem observações'}</div>
-                        <div class="font-bold text-lg mt-1">R$ ${formatarDinheiro(item.valor)}</div>
-                    </div>
-                    <div>
-                        <button class="btn btn-pequeno btn-vermelho" onclick="excluirPatrimonio(${item.id})">🗑️ Excluir</button>
-                    </div>
+            <div class="p-4 rounded-xl border border-slate-200 border-l-4 border-l-purple-500 bg-white flex justify-between items-center gap-3">
+                <div>
+                    <div class="font-bold text-slate-800 text-base">${icones[item.tipo] || '📦'} ${item.nome}</div>
+                    <div class="text-xs text-slate-500 mt-0.5">${item.obs || 'Sem observações'}</div>
+                    <div class="font-black text-slate-900 text-lg mt-1">R$ ${formatarDinheiro(item.valor)}</div>
                 </div>
+                <button class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-rose-100 text-rose-700 hover:bg-rose-200 transition" onclick="excluirPatrimonio(${item.id})">🗑️ Excluir</button>
             </div>`;
     });
 
@@ -1257,17 +1226,17 @@ function atualizarListaPatrimonio() {
     document.getElementById('pat-t-imovel').textContent = 'R$ ' + formatarDinheiro(imoveis);
     document.getElementById('pat-t-investimento').textContent = 'R$ ' + formatarDinheiro(investimentos);
     document.getElementById('pat-t-total').textContent = 'R$ ' + formatarDinheiro(total);
-    if (lista.innerHTML === '') lista.innerHTML = '<div class="vazio"><p>Nenhum bem cadastrado no patrimônio.</p></div>';
+    if (lista.innerHTML === '') lista.innerHTML = '<div class="text-center py-8 text-slate-400 font-medium">Nenhum bem cadastrado.</div>';
 }
 
-// ===== BOLETOS =====
+// BOLETOS
 function adicionarBoleto() {
     const nome = document.getElementById('b-nome').value.trim();
     const valor = limparValor(document.getElementById('b-valor').value);
     const data = document.getElementById('b-data').value;
     const codigo = document.getElementById('b-codigo').value.trim();
 
-    if (!nome) return alert('⚠️ Digite o nome da empresa/conta do boleto!');
+    if (!nome) return alert('⚠️ Digite o nome da empresa!');
     if (!valor || valor <= 0) return alert('⚠️ Digite um valor válido!');
     if (!data) return alert('⚠️ Escolha a data de vencimento!');
 
@@ -1305,16 +1274,24 @@ function atualizarListaBoletos() {
 
     ordenado.forEach(item => {
         const dias = diasAteVencimento(item.data);
-        let classe = '', statusTexto = '', mostrar = true;
+        let classeBorda = '', statusBadge = '', mostrar = true;
 
         if (item.pago) {
-            classe = 'pago'; statusTexto = '<span class="status st-pago">✅ Pago</span>'; qtdPago++;
+            classeBorda = 'border-l-4 border-l-emerald-500 bg-emerald-50/20'; 
+            statusBadge = '<span class="text-xs bg-emerald-100 text-emerald-800 font-bold px-2.5 py-1 rounded-full">✅ Pago</span>'; 
+            qtdPago++;
         } else if (dias < 0) {
-            classe = 'atrasado'; statusTexto = `<span class="status st-atrasado">🔴 Atrasado ${Math.abs(dias)}d</span>`; qtdAtrasado++;
+            classeBorda = 'border-l-4 border-l-rose-500 bg-rose-50/20'; 
+            statusBadge = `<span class="text-xs bg-rose-100 text-rose-800 font-bold px-2.5 py-1 rounded-full">🔴 Atrasado ${Math.abs(dias)}d</span>`; 
+            qtdAtrasado++;
         } else if (dias <= 3) {
-            classe = 'vencer'; statusTexto = `<span class="status st-vencer">⚠️ Vence em ${dias}d</span>`; qtd3d++; qtdVencer++;
+            classeBorda = 'border-l-4 border-l-purple-500 bg-purple-50/20'; 
+            statusBadge = `<span class="text-xs bg-purple-100 text-purple-800 font-bold px-2.5 py-1 rounded-full">⚠️ Vence em ${dias}d</span>`; 
+            qtd3d++; qtdVencer++;
         } else {
-            classe = 'vencer'; statusTexto = `<span class="status st-vencer">⏳ Vence em ${dias}d</span>`; qtdVencer++;
+            classeBorda = 'border-l-4 border-l-amber-500 bg-amber-50/20'; 
+            statusBadge = `<span class="text-xs bg-amber-100 text-amber-800 font-bold px-2.5 py-1 rounded-full">⏳ Vence em ${dias}d</span>`; 
+            qtdVencer++;
         }
 
         if (busca && !item.nome.toLowerCase().includes(busca) && !item.codigo?.toLowerCase().includes(busca)) mostrar = false;
@@ -1324,22 +1301,18 @@ function atualizarListaBoletos() {
 
         if (mostrar) {
             lista.innerHTML += `
-                <div class="item ${classe}">
-                    <div class="linha">
-                        <div>
-                            <div class="font-bold text-lg">${item.nome}</div>
-                            <div style="font-size:13px;color:#64748b;">Vencimento: ${formatarData(item.data)} ${item.codigo ? '• Cód: ' + item.codigo : ''}</div>
-                            <div class="font-bold text-lg mt-1">R$ ${formatarDinheiro(item.valor)}</div>
-                        </div>
-                        <div style="text-align:right;">
-                            <div class="mb-2">${statusTexto}</div>
-                            <div class="linha">
-                                <button class="btn btn-pequeno ${item.pago ? 'btn-cinza' : 'btn-verde'}" onclick="marcarBoletoPago(${item.id})">
-                                    ${item.pago ? '↩️ Desmarcar' : '✓ Pago'}
-                                </button>
-                                <button class="btn btn-pequeno btn-vermelho" onclick="excluirBoleto(${item.id})">🗑️</button>
-                            </div>
-                        </div>
+                <div class="p-4 rounded-xl border border-slate-200 ${classeBorda} flex flex-col sm:flex-row justify-between sm:items-center gap-3">
+                    <div>
+                        <div class="font-bold text-slate-800 text-base">${item.nome}</div>
+                        <div class="text-xs text-slate-500 mt-0.5">Vencimento: ${formatarData(item.data)} ${item.codigo ? '• Cód: ' + item.codigo : ''}</div>
+                        <div class="font-black text-slate-900 text-lg mt-1">R$ ${formatarDinheiro(item.valor)}</div>
+                    </div>
+                    <div class="flex items-center gap-2 self-end sm:self-center">
+                        <div class="mr-2">${statusBadge}</div>
+                        <button class="px-3 py-1.5 text-xs font-semibold rounded-lg transition ${item.pago ? 'bg-slate-200 text-slate-700' : 'bg-emerald-600 text-white hover:bg-emerald-500'}" onclick="marcarBoletoPago(${item.id})">
+                            ${item.pago ? '↩️ Desmarcar' : '✓ Pago'}
+                        </button>
+                        <button class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-rose-100 text-rose-700 hover:bg-rose-200 transition" onclick="excluirBoleto(${item.id})">🗑️</button>
                     </div>
                 </div>`;
         }
@@ -1349,19 +1322,19 @@ function atualizarListaBoletos() {
     document.getElementById('b-qtd-3d').textContent = qtd3d;
     document.getElementById('b-qtd-atrasado').textContent = qtdAtrasado;
     document.getElementById('b-qtd-pago').textContent = qtdPago;
-    if (lista.innerHTML === '') lista.innerHTML = '<div class="vazio"><p>Nenhum boleto encontrado.</p></div>';
+    if (lista.innerHTML === '') lista.innerHTML = '<div class="text-center py-8 text-slate-400 font-medium">Nenhum boleto cadastrado.</div>';
 }
 
-// ===== CHEQUES =====
+// CHEQUES
 function adicionarCheque() {
     const nome = document.getElementById('ch-nome').value.trim();
     const numero = document.getElementById('ch-numero').value.trim();
     const valor = limparValor(document.getElementById('ch-valor').value);
     const data = document.getElementById('ch-data').value;
 
-    if (!nome) return alert('⚠️ Digite o nome do favorecido/emissor!');
+    if (!nome) return alert('⚠️ Digite o favorecido/emissor!');
     if (!valor || valor <= 0) return alert('⚠️ Digite um valor válido!');
-    if (!data) return alert('⚠️ Escolha a data de emissão!');
+    if (!data) return alert('⚠️ Escolha a data!');
 
     dados.cheques.push({ id: Date.now(), nome, numero, valor, data, status: 'aberto' });
 
@@ -1396,14 +1369,20 @@ function atualizarListaCheques() {
     const ordenado = [...dados.cheques].sort((a, b) => new Date(a.data) - new Date(b.data));
 
     ordenado.forEach(item => {
-        let classe = '', statusTexto = '', mostrar = true;
+        let classeBorda = '', statusBadge = '', mostrar = true;
 
         if (item.status === 'pago') {
-            classe = 'pago'; statusTexto = '<span class="status st-compensado">✅ Compensado</span>'; qtdPago++;
+            classeBorda = 'border-l-4 border-l-emerald-500 bg-emerald-50/20'; 
+            statusBadge = '<span class="text-xs bg-emerald-100 text-emerald-800 font-bold px-2.5 py-1 rounded-full">✅ Compensado</span>'; 
+            qtdPago++;
         } else if (item.status === 'dev') {
-            classe = 'atrasado'; statusTexto = '<span class="status st-devolvido">🔴 Devolvido</span>'; qtdDev++;
+            classeBorda = 'border-l-4 border-l-rose-500 bg-rose-50/20'; 
+            statusBadge = '<span class="text-xs bg-rose-100 text-rose-800 font-bold px-2.5 py-1 rounded-full">🔴 Devolvido</span>'; 
+            qtdDev++;
         } else {
-            classe = 'vencer'; statusTexto = '<span class="status st-aberto">⏳ Em Aberto</span>'; qtdAberto++;
+            classeBorda = 'border-l-4 border-l-blue-500 bg-blue-50/20'; 
+            statusBadge = '<span class="text-xs bg-blue-100 text-blue-800 font-bold px-2.5 py-1 rounded-full">⏳ Em Aberto</span>'; 
+            qtdAberto++;
         }
 
         if (busca && !item.nome.toLowerCase().includes(busca) && !item.numero?.toLowerCase().includes(busca)) mostrar = false;
@@ -1413,24 +1392,20 @@ function atualizarListaCheques() {
 
         if (mostrar) {
             lista.innerHTML += `
-                <div class="item ${classe}">
-                    <div class="linha">
-                        <div>
-                            <div class="font-bold text-lg">${item.nome} ${item.numero ? '(Nº ' + item.numero + ')' : ''}</div>
-                            <div style="font-size:13px;color:#64748b;">Emissão/Bom para: ${formatarData(item.data)}</div>
-                            <div class="font-bold text-lg mt-1">R$ ${formatarDinheiro(item.valor)}</div>
-                        </div>
-                        <div style="text-align:right;">
-                            <div class="mb-2">${statusTexto}</div>
-                            <div class="linha">
-                                <select onchange="alterarStatusCheque(${item.id}, this.value)" style="width:auto;padding:4px 8px;font-size:12px;">
-                                    <option value="aberto" ${item.status === 'aberto' ? 'selected' : ''}>Em Aberto</option>
-                                    <option value="pago" ${item.status === 'pago' ? 'selected' : ''}>Compensado</option>
-                                    <option value="dev" ${item.status === 'dev' ? 'selected' : ''}>Devolvido</option>
-                                </select>
-                                <button class="btn btn-pequeno btn-vermelho" onclick="excluirCheque(${item.id})">🗑️</button>
-                            </div>
-                        </div>
+                <div class="p-4 rounded-xl border border-slate-200 ${classeBorda} flex flex-col sm:flex-row justify-between sm:items-center gap-3">
+                    <div>
+                        <div class="font-bold text-slate-800 text-base">${item.nome} ${item.numero ? '(Nº ' + item.numero + ')' : ''}</div>
+                        <div class="text-xs text-slate-500 mt-0.5">Bom para: ${formatarData(item.data)}</div>
+                        <div class="font-black text-slate-900 text-lg mt-1">R$ ${formatarDinheiro(item.valor)}</div>
+                    </div>
+                    <div class="flex items-center gap-2 self-end sm:self-center">
+                        <div class="mr-2">${statusBadge}</div>
+                        <select onchange="alterarStatusCheque(${item.id}, this.value)" class="bg-white border border-slate-200 rounded-lg text-xs font-semibold p-1.5 focus:outline-none">
+                            <option value="aberto" ${item.status === 'aberto' ? 'selected' : ''}>Em Aberto</option>
+                            <option value="pago" ${item.status === 'pago' ? 'selected' : ''}>Compensado</option>
+                            <option value="dev" ${item.status === 'dev' ? 'selected' : ''}>Devolvido</option>
+                        </select>
+                        <button class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-rose-100 text-rose-700 hover:bg-rose-200 transition" onclick="excluirCheque(${item.id})">🗑️</button>
                     </div>
                 </div>`;
         }
@@ -1439,10 +1414,10 @@ function atualizarListaCheques() {
     document.getElementById('ch-qtd-aberto').textContent = qtdAberto;
     document.getElementById('ch-qtd-pago').textContent = qtdPago;
     document.getElementById('ch-qtd-dev').textContent = qtdDev;
-    if (lista.innerHTML === '') lista.innerHTML = '<div class="vazio"><p>Nenhum cheque cadastrado.</p></div>';
+    if (lista.innerHTML === '') lista.innerHTML = '<div class="text-center py-8 text-slate-400 font-medium">Nenhum cheque cadastrado.</div>';
 }
 
-// ===== PAINEL DE VISÃO GERAL & GRÁFICOS =====
+// RESUMO GERAL & GRÁFICOS REFORMULADOS
 function atualizarResumo() {
     let totalPagar = 0, jaPago = 0;
     dados.dividas.forEach(d => {
@@ -1456,7 +1431,6 @@ function atualizarResumo() {
         else totalReceber += r.valor;
     });
 
-    // Empréstimos em Aberto entram nos totais
     if (dados.emprestimos) {
         dados.emprestimos.forEach(e => {
             if (!e.quitado) {
@@ -1494,14 +1468,20 @@ function atualizarResumo() {
 
     if (lista) {
         lista.innerHTML = `
-            <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px,1fr));gap:16px;">
-                <div class="item ${saldoProjetado >= 0 ? 'pago' : 'atrasado'}">
-                    <div class="label" style="font-size:13px;color:#64748b;">💡 Saldo Projetado (Rendas + Recebíveis/Empréstimos - Contas/Dívidas)</div>
-                    <div class="font-bold text-2xl mt-1" style="color:${saldoProjetado >= 0 ? '#16a34a' : '#dc2626'}">R$ ${formatarDinheiro(saldoProjetado)}</div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="p-4 rounded-xl border ${saldoProjetado >= 0 ? 'bg-emerald-50/50 border-emerald-200' : 'bg-rose-50/50 border-rose-200'}">
+                    <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">💡 Saldo Projetado Líquido</span>
+                    <div class="text-2xl font-black mt-1 ${saldoProjetado >= 0 ? 'text-emerald-700' : 'text-rose-700'}">
+                        R$ ${formatarDinheiro(saldoProjetado)}
+                    </div>
+                    <span class="text-xs text-slate-500 mt-1 block">(Rendas + Recebíveis/Empréstimos - Contas a Pagar/Dívidas)</span>
                 </div>
-                <div class="item">
-                    <div class="label" style="font-size:13px;color:#64748b;">📊 Total de Registros Cadastrados</div>
-                    <div class="font-bold text-2xl mt-1">${dados.dividas.length + dados.receber.length + dados.rendas.length + dados.patrimonio.length + dados.boletos.length + dados.cheques.length + (dados.emprestimos ? dados.emprestimos.length : 0)} itens</div>
+                <div class="p-4 rounded-xl border bg-slate-50 border-slate-200">
+                    <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">📊 Volume de Registros</span>
+                    <div class="text-2xl font-black text-slate-800 mt-1">
+                        ${dados.dividas.length + dados.receber.length + dados.rendas.length + dados.patrimonio.length + dados.boletos.length + dados.cheques.length + (dados.emprestimos ? dados.emprestimos.length : 0)} itens
+                    </div>
+                    <span class="text-xs text-slate-500 mt-1 block">Registros ativos cadastrados na base</span>
                 </div>
             </div>
         `;
@@ -1513,47 +1493,102 @@ function atualizarResumo() {
 function renderizarGraficos(entradas, saidas, patCategorias) {
     if (typeof Chart === 'undefined') return;
 
-    // Gráfico de Entradas vs Saídas
+    // CONFIGURAÇÃO GLOBAL DO CHART.JS
+    Chart.defaults.font.family = 'Inter, sans-serif';
+    Chart.defaults.color = '#64748b';
+
+    // 1. GRÁFICO DE ENTRADAS VS SAÍDAS
     const ctxBalanco = document.getElementById('chartBalanco')?.getContext('2d');
     if (ctxBalanco) {
         if (chartBalancoInstancia) chartBalancoInstancia.destroy();
+
+        const temDados = entradas > 0 || saidas > 0;
+        const dataValores = temDados ? [entradas, saidas] : [1, 1];
+        const cores = temDados ? ['#10b981', '#f43f5e'] : ['#e2e8f0', '#cbd5e1'];
+
         chartBalancoInstancia = new Chart(ctxBalanco, {
             type: 'doughnut',
             data: {
-                labels: ['Entradas (Rendas + Recebíveis)', 'Saídas (Contas a Pagar)'],
+                labels: temDados ? ['Entradas (Rendas + Recebíveis)', 'Saídas (Contas a Pagar)'] : ['Sem Entradas', 'Sem Saídas'],
                 datasets: [{
-                    data: [entradas, saidas],
-                    backgroundColor: ['#22c55e', '#ef4444']
+                    data: dataValores,
+                    backgroundColor: cores,
+                    borderWidth: 2,
+                    borderColor: '#ffffff',
+                    hoverOffset: 6
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                cutout: '72%',
                 plugins: {
-                    legend: { position: 'bottom' }
+                    legend: {
+                        position: 'bottom',
+                        labels: { boxWidth: 12, padding: 16, font: { size: 12, weight: '600' } }
+                    },
+                    tooltip: {
+                        enabled: temDados,
+                        callbacks: {
+                            label: function(c) {
+                                return ` ${c.label}: R$ ${formatarDinheiro(c.raw)}`;
+                            }
+                        }
+                    }
                 }
             }
         });
     }
 
-    // Gráfico do Patrimônio
+    // 2. GRÁFICO DE DISTRIBUIÇÃO DO PATRIMÔNIO
     const ctxPatrimonio = document.getElementById('chartPatrimonio')?.getContext('2d');
     if (ctxPatrimonio) {
         if (chartPatrimonioInstancia) chartPatrimonioInstancia.destroy();
+
+        const totalPat = patCategorias.patVeiculos + patCategorias.patImoveis + patCategorias.patInvest + patCategorias.patOutros;
+        const temPatrimonio = totalPat > 0;
+
+        const dataPat = temPatrimonio 
+            ? [patCategorias.patVeiculos, patCategorias.patImoveis, patCategorias.patInvest, patCategorias.patOutros]
+            : [1];
+
+        const coresPat = temPatrimonio 
+            ? ['#8b5cf6', '#3b82f6', '#10b981', '#f59e0b'] 
+            : ['#e2e8f0'];
+
+        const labelsPat = temPatrimonio 
+            ? ['Veículos', 'Imóveis/Terrenos', 'Investimentos', 'Outros'] 
+            : ['Nenhum bem cadastrado'];
+
         chartPatrimonioInstancia = new Chart(ctxPatrimonio, {
-            type: 'pie',
+            type: 'doughnut',
             data: {
-                labels: ['Veículos', 'Imóveis/Terrenos', 'Investimentos', 'Outros'],
+                labels: labelsPat,
                 datasets: [{
-                    data: [patCategorias.patVeiculos, patCategorias.patImoveis, patCategorias.patInvest, patCategorias.patOutros],
-                    backgroundColor: ['#8b5cf6', '#3b82f6', '#22c55e', '#f59e0b']
+                    data: dataPat,
+                    backgroundColor: coresPat,
+                    borderWidth: 2,
+                    borderColor: '#ffffff',
+                    hoverOffset: 6
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                cutout: '72%',
                 plugins: {
-                    legend: { position: 'bottom' }
+                    legend: {
+                        position: 'bottom',
+                        labels: { boxWidth: 12, padding: 16, font: { size: 12, weight: '600' } }
+                    },
+                    tooltip: {
+                        enabled: temPatrimonio,
+                        callbacks: {
+                            label: function(c) {
+                                return ` ${c.label}: R$ ${formatarDinheiro(c.raw)}`;
+                            }
+                        }
+                    }
                 }
             }
         });
@@ -1571,7 +1606,7 @@ function atualizarTudo() {
     atualizarListaCheques();
 }
 
-// ===== FERRAMENTAS (EXCEL & BACKUP) =====
+// FERRAMENTAS DE BACKUP E EXCEL
 function baixarBackup() {
     const jsonStr = JSON.stringify(dados, null, 2);
     const blob = new Blob([jsonStr], { type: 'application/json' });
@@ -1606,7 +1641,7 @@ function restaurarBackup(event) {
 
 function exportarExcel() {
     if (typeof XLSX === 'undefined') {
-        return alert('⚠️ Biblioteca do Excel ainda está carregando. Tente novamente em instantes.');
+        return alert('⚠️ Biblioteca Excel ainda está carregando.');
     }
     const wb = XLSX.utils.book_new();
 
