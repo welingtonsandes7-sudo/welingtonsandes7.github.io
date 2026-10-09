@@ -35,6 +35,8 @@
         .amarelo { background: linear-gradient(135deg, #d97706, #f59e0b); }
         .vermelho { background: linear-gradient(135deg, #dc2626, #ef4444); }
         .roxo { background: linear-gradient(135deg, #6d28d9, #8b5cf6); }
+        .laranja { background: linear-gradient(135deg, #ea580c, #fb923c); }
+        .cinza { background: linear-gradient(135deg, #475569, #64748b); }
         
         input, select { width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; background: #fcfcfc; }
         input:focus, select:focus { outline: none; border-color: #2563eb; background: white; box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
@@ -47,6 +49,8 @@
         .btn-amarelo { background: #f59e0b; color: white; }
         .btn-cinza { background: #64748b; color: white; }
         .btn-vermelho { background: #dc2626; color: white; }
+        .btn-roxo { background: #8b5cf6; color: white; }
+        .btn-laranja { background: #f97316; color: white; }
         .btn-pequeno { padding: 6px 12px; font-size: 13px; }
         
         .grid-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 16px; }
@@ -54,6 +58,10 @@
         .item.pago { background: #f0fdf4; border-left-color: #22c55e; }
         .item.vencer { background: #fffbeb; border-left-color: #f59e0b; }
         .item.atrasado { background: #fef2f2; border-left-color: #ef4444; }
+        .item.receber { background: #eff6ff; border-left-color: #3b82f6; }
+        .item.recebido { background: #f0fdf4; border-left-color: #22c55e; }
+        .item.renda { background: #f0fdf4; border-left-color: #22c55e; }
+        .item.ativo { background: #faf5ff; border-left-color: #8b5cf6; }
         
         .status { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
         .st-pago { background: #dcfce7; color: #166534; }
@@ -62,6 +70,12 @@
         .st-aberto { background: #e0e7ff; color: #3730a3; }
         .st-compensado { background: #dcfce7; color: #166534; }
         .st-devolvido { background: #fee2e2; color: #991b1b; }
+        .st-receber { background: #dbeafe; color: #1e40af; }
+        .st-recebido { background: #dcfce7; color: #166534; }
+        .st-mensal { background: #d1fae5; color: #065f46; }
+        .st-ocasional { background: #fef3c7; color: #92400e; }
+        .st-ativo { background: #ede9fe; color: #5b21b6; }
+        .st-inativo { background: #e5e7eb; color: #4b5563; }
         
         .filtros { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 20px; padding: 14px; background: #f8fafc; border-radius: 10px; border: 1px solid #e2e8f0; }
         .aviso { position: fixed; bottom: 20px; right: 20px; background: #16a34a; color: white; padding: 12px 24px; border-radius: 8px; font-weight: 600; display: none; z-index: 9999; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
@@ -77,7 +91,7 @@
 <!-- CABEÇALHO -->
 <div class="topo">
     <h1>💼 Meu Controle de Finanças</h1>
-    <p style="font-size:13px;opacity:0.8;">Suas contas, tudo organizado em um só lugar</p>
+    <p style="font-size:13px;opacity:0.8;">Suas contas, recebíveis, rendas e patrimônio — tudo em um só lugar</p>
     <div class="botoes-topo">
         <button class="btn btn-verde btn-pequeno" onclick="exportarExcel()">📊 Exportar Excel</button>
         <button class="btn btn-amarelo btn-pequeno" onclick="baixarBackup()">💾 Baixar Backup</button>
@@ -88,10 +102,13 @@
     </div>
 </div>
 
-<!-- ABAS QUE JÁ FUNCIONAM -->
+<!-- ABAS -->
 <div class="abas" id="abas">
     <div class="aba ativa" data-painel="resumo">📈 Visão Geral</div>
-    <div class="aba" data-painel="dividas">💳 Minhas Dívidas</div>
+    <div class="aba" data-painel="dividas">💳 Contas a Pagar</div>
+    <div class="aba" data-painel="receber">💰 Contas a Receber</div>
+    <div class="aba" data-painel="rendas">💵 Minhas Rendas</div>
+    <div class="aba" data-painel="patrimonio">🏆 Meu Patrimônio</div>
     <div class="aba" data-painel="boletos">🧾 Boletos</div>
     <div class="aba" data-painel="cheques">📑 Cheques</div>
 </div>
@@ -103,43 +120,50 @@
     <h2 style="font-size:20px;margin-bottom:20px;">📈 Resumo Geral</h2>
     
     <div class="grid-cards">
+        <div class="card-resumo vermelho">
+            <div class="label">💵 Total a Pagar</div>
+            <div class="valor" id="r-total-pagar">R$ 0,00</div>
+        </div>
         <div class="card-resumo azul">
-            <div class="label">💵 Total das Contas</div>
-            <div class="valor" id="r-total">R$ 0,00</div>
+            <div class="label">💰 Total a Receber</div>
+            <div class="valor" id="r-total-receber">R$ 0,00</div>
+        </div>
+        <div class="card-resumo verde">
+            <div class="label">💵 Rendas Mensais</div>
+            <div class="valor" id="r-rendas">R$ 0,00</div>
+        </div>
+        <div class="card-resumo roxo">
+            <div class="label">🏆 Patrimônio Total</div>
+            <div class="valor" id="r-patrimonio">R$ 0,00</div>
         </div>
         <div class="card-resumo verde">
             <div class="label">✅ Já Pago</div>
             <div class="valor" id="r-pago">R$ 0,00</div>
         </div>
-        <div class="card-resumo amarelo">
-            <div class="label">⏳ A Vencer</div>
-            <div class="valor" id="r-vencer">R$ 0,00</div>
-        </div>
-        <div class="card-resumo vermelho">
-            <div class="label">🔴 Atrasado</div>
-            <div class="valor" id="r-atrasado">R$ 0,00</div>
+        <div class="card-resumo laranja">
+            <div class="label">✅ Já Recebido</div>
+            <div class="valor" id="r-recebido">R$ 0,00</div>
         </div>
     </div>
 
     <div class="card">
-        <h3>📊 Detalhamento de Todas as Contas</h3>
+        <h3>📊 Resumo de Todas as Contas</h3>
         <div id="lista-resumo" class="mt-2"></div>
     </div>
 </div>
 
 <!-- ===================================
-    ABA 2: MINHAS DÍVIDAS — ONDE VOCÊ ADICIONA SUAS CONTAS
+    ABA 2: CONTAS A PAGAR
 =================================== -->
 <div id="painel-dividas" class="painel">
-    <h2 style="font-size:20px;margin-bottom:20px;">💳 Minhas Dívidas e Contas</h2>
+    <h2 style="font-size:20px;margin-bottom:20px;">💳 Minhas Contas a Pagar</h2>
 
-    <!-- ✅ AQUI VOCÊ ADICIONA SUAS CONTAS: CASA, CARRO, DESPESAS... -->
     <div class="card">
-        <h3>➕ Adicionar Nova Conta / Despesa</h3>
+        <h3>➕ Adicionar Nova Conta</h3>
         <div class="grid-form">
             <div>
-                <label>O que é? (Ex: Casa, Carro, Luz...)</label>
-                <input type="text" id="d-nome" placeholder="Ex: Aluguel da Casa">
+                <label>Descrição (Ex: Aluguel, Carro...)</label>
+                <input type="text" id="d-nome" placeholder="Ex: Financiamento do Carro">
             </div>
             <div>
                 <label>Valor R$</label>
@@ -157,7 +181,6 @@
         <button class="btn btn-verde" onclick="adicionarDivida()">✅ Salvar Conta</button>
     </div>
 
-    <!-- FILTROS -->
     <div class="filtros">
         <input type="text" id="d-busca" placeholder="🔍 Buscar conta..." style="max-width:250px;" oninput="atualizarListaDividas()">
         <select id="d-filtro" onchange="atualizarListaDividas()">
@@ -168,7 +191,6 @@
         </select>
     </div>
 
-    <!-- RESUMO RÁPIDO -->
     <div class="grid-cards">
         <div class="card-resumo verde">
             <div class="label">✅ Pagas</div>
@@ -188,15 +210,208 @@
         </div>
     </div>
 
-    <!-- LISTA DAS SUAS CONTAS -->
     <div class="card">
-        <h3>📋 Minhas Contas Cadastradas</h3>
+        <h3>📋 Lista de Contas</h3>
         <div id="d-lista"></div>
     </div>
 </div>
 
 <!-- ===================================
-    ABA 3: BOLETOS
+    ABA 3: CONTAS A RECEBER — PESSOAS QUE TE DEVEM
+=================================== -->
+<div id="painel-receber" class="painel">
+    <h2 style="font-size:20px;margin-bottom:20px;">💰 Contas a Receber</h2>
+    <p style="color:#64748b;margin-bottom:20px;">Pessoas, aluguel, parcelas de venda — tudo que têm a receber de outros</p>
+
+    <div class="card">
+        <h3>➕ Adicionar Valor a Receber</h3>
+        <div class="grid-form">
+            <div>
+                <label>Quem paga? (Ex: Pedro, Inquilino...)</label>
+                <input type="text" id="rec-nome" placeholder="Ex: Pedro Silva">
+            </div>
+            <div>
+                <label>O que é? (Ex: Aluguel, Empréstimo...)</label>
+                <input type="text" id="rec-descricao" placeholder="Ex: Aluguel da Loja">
+            </div>
+            <div>
+                <label>Valor R$</label>
+                <input type="text" id="rec-valor" placeholder="Ex: 1.200,00">
+            </div>
+            <div>
+                <label>Data de Recebimento</label>
+                <input type="date" id="rec-data">
+            </div>
+            <div>
+                <label>Recorrência</label>
+                <select id="rec-tipo">
+                    <option value="unico">Uma vez</option>
+                    <option value="mensal">Mensal</option>
+                </select>
+            </div>
+            <div>
+                <label>Quantas parcelas? (se mensal)</label>
+                <input type="number" id="rec-parcelas" value="1" min="1">
+            </div>
+        </div>
+        <button class="btn btn-azul" onclick="adicionarReceber()">💾 Salvar</button>
+    </div>
+
+    <div class="filtros">
+        <input type="text" id="rec-busca" placeholder="🔍 Buscar..." style="max-width:250px;" oninput="atualizarListaReceber()">
+        <select id="rec-filtro" onchange="atualizarListaReceber()">
+            <option value="todos">Todos</option>
+            <option value="receber">⏳ A Receber</option>
+            <option value="recebido">✅ Já Recebidos</option>
+            <option value="atrasado">🔴 Atrasados</option>
+        </select>
+    </div>
+
+    <div class="grid-cards">
+        <div class="card-resumo azul">
+            <div class="label">⏳ A Receber</div>
+            <div class="valor" id="rec-t-receber">R$ 0,00</div>
+        </div>
+        <div class="card-resumo verde">
+            <div class="label">✅ Já Recebido</div>
+            <div class="valor" id="rec-t-recebido">R$ 0,00</div>
+        </div>
+        <div class="card-resumo vermelho">
+            <div class="label">🔴 Atrasado</div>
+            <div class="valor" id="rec-t-atrasado">R$ 0,00</div>
+        </div>
+        <div class="card-resumo roxo">
+            <div class="label">📊 Total</div>
+            <div class="valor" id="rec-t-total">R$ 0,00</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>📋 Lista de Valores a Receber</h3>
+        <div id="rec-lista"></div>
+    </div>
+</div>
+
+<!-- ===================================
+    ABA 4: MINHAS RENDAS
+=================================== -->
+<div id="painel-rendas" class="painel">
+    <h2 style="font-size:20px;margin-bottom:20px;">💵 Minhas Rendas</h2>
+    <p style="color:#64748b;margin-bottom:20px;">Seu salário, aluguel recebido, comissões — sua fonte de renda</p>
+
+    <div class="card">
+        <h3>➕ Adicionar Fonte de Renda</h3>
+        <div class="grid-form">
+            <div>
+                <label>Origem (Ex: Salário, Aluguel, Comissão...)</label>
+                <input type="text" id="renda-nome" placeholder="Ex: Aluguel — Casa Comercial">
+            </div>
+            <div>
+                <label>Valor Mensal R$</label>
+                <input type="text" id="renda-valor" placeholder="Ex: 2.500,00">
+            </div>
+            <div>
+                <label>Tipo</label>
+                <select id="renda-tipo">
+                    <option value="mensal">📅 Mensal (fixo)</option>
+                    <option value="ocasional">✨ Ocasional (variável)</option>
+                </select>
+            </div>
+            <div>
+                <label>Observação</label>
+                <input type="text" id="renda-obs" placeholder="Ex: Todo dia 5">
+            </div>
+        </div>
+        <button class="btn btn-verde" onclick="adicionarRenda()">💾 Salvar Renda</button>
+    </div>
+
+    <div class="grid-cards">
+        <div class="card-resumo verde">
+            <div class="label">💰 Renda Mensal</div>
+            <div class="valor" id="r-t-mensal">R$ 0,00</div>
+        </div>
+        <div class="card-resumo laranja">
+            <div class="label">✨ Renda Ocasional</div>
+            <div class="valor" id="r-t-ocasional">R$ 0,00</div>
+        </div>
+        <div class="card-resumo roxo">
+            <div class="label">📊 Renda Anual Estimada</div>
+            <div class="valor" id="r-t-anual">R$ 0,00</div>
+        </div>
+        <div class="card-resumo azul">
+            <div class="label">💵 Total Mensal</div>
+            <div class="valor" id="r-t-total">R$ 0,00</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>📋 Minhas Fontes de Renda</h3>
+        <div id="r-lista"></div>
+    </div>
+</div>
+
+<!-- ===================================
+    ABA 5: MEU PATRIMÔNIO
+=================================== -->
+<div id="painel-patrimonio" class="painel">
+    <h2 style="font-size:20px;margin-bottom:20px;">🏆 Meu Patrimônio</h2>
+    <p style="color:#64748b;margin-bottom:20px;">Seus bens — carros, imóveis, terrenos, investimentos</p>
+
+    <div class="card">
+        <h3>➕ Adicionar Bem ao Patrimônio</h3>
+        <div class="grid-form">
+            <div>
+                <label>Tipo de Bem</label>
+                <select id="pat-tipo">
+                    <option value="imovel">🏠 Imóvel / Terreno</option>
+                    <option value="veiculo">🚗 Veículo</option>
+                    <option value="investimento">📈 Investimento</option>
+                    <option value="outro">📦 Outro</option>
+                </select>
+            </div>
+            <div>
+                <label>Descrição (Ex: Gol G3, Terreno Lote X...)</label>
+                <input type="text" id="pat-nome" placeholder="Ex: Gol G3 2002">
+            </div>
+            <div>
+                <label>Valor Estimado R$</label>
+                <input type="text" id="pat-valor" placeholder="Ex: 35.000,00">
+            </div>
+            <div>
+                <label>Observação / Local</label>
+                <input type="text" id="pat-obs" placeholder="Ex: Placa ABC1234 — Brasília">
+            </div>
+        </div>
+        <button class="btn btn-roxo" onclick="adicionarPatrimonio()">💾 Salvar Bem</button>
+    </div>
+
+    <div class="grid-cards">
+        <div class="card-resumo roxo">
+            <div class="label">🚗 Veículos</div>
+            <div class="valor" id="pat-t-veiculo">R$ 0,00</div>
+        </div>
+        <div class="card-resumo azul">
+            <div class="label">🏠 Imóveis/Terrenos</div>
+            <div class="valor" id="pat-t-imovel">R$ 0,00</div>
+        </div>
+        <div class="card-resumo verde">
+            <div class="label">📈 Investimentos</div>
+            <div class="valor" id="pat-t-investimento">R$ 0,00</div>
+        </div>
+        <div class="card-resumo laranja">
+            <div class="label">🏆 PATRIMÔNIO TOTAL</div>
+            <div class="valor" id="pat-t-total">R$ 0,00</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>📋 Lista de Bens</h3>
+        <div id="pat-lista"></div>
+    </div>
+</div>
+
+<!-- ===================================
+    ABA 6: BOLETOS
 =================================== -->
 <div id="painel-boletos" class="painel">
     <h2 style="font-size:20px;margin-bottom:20px;">🧾 Controle de Boletos</h2>
@@ -257,7 +472,7 @@
 </div>
 
 <!-- ===================================
-    ABA 4: CHEQUES
+    ABA 7: CHEQUES
 =================================== -->
 <div id="painel-cheques" class="painel">
     <h2 style="font-size:20px;margin-bottom:20px;">📑 Controle de Cheques</h2>
@@ -314,12 +529,19 @@
 </div>
 
 <!-- ===================================
-    JAVASCRIPT — TUDO FUNCIONANDO
+    JAVASCRIPT
 =================================== -->
 <script>
 'use strict';
-const CHAVE_SALVAMENTO = 'CONTROLE_DADOS_01';
-let dados = { dividas: [], boletos: [], cheques: [] };
+const CHAVE_SALVAMENTO = 'CONTROLE_DADOS_02';
+let dados = {
+    dividas: [],
+    boletos: [],
+    cheques: [],
+    receber: [],
+    rendas: [],
+    patrimonio: []
+};
 
 // ===== FUNÇÕES BÁSICAS =====
 function formatarDinheiro(valor) {
@@ -354,44 +576,45 @@ function carregarDados() {
     try {
         const salvo = localStorage.getItem(CHAVE_SALVAMENTO);
         if (salvo) dados = JSON.parse(salvo);
+        if (!dados.receber) dados.receber = [];
+        if (!dados.rendas) dados.rendas = [];
+        if (!dados.patrimonio) dados.patrimonio = [];
     } catch (e) {
         console.log('Nenhum dado salvo ainda');
     }
     atualizarTudo();
 }
 
-// ===== SISTEMA DE ABAS — AGORA FUNCIONA DE VERDADE! =====
+// ===== SISTEMA DE ABAS =====
 function configurarAbas() {
     const abas = document.querySelectorAll('.aba');
     abas.forEach(aba => {
         aba.addEventListener('click', function() {
-            // Remove destaque de todas
             abas.forEach(a => a.classList.remove('ativa'));
-            // Destaca a clicada
             this.classList.add('ativa');
-            // Esconde todos os painéis
             document.querySelectorAll('.painel').forEach(p => p.classList.remove('visivel'));
-            // Mostra o painel correto
             const idPainel = 'painel-' + this.getAttribute('data-painel');
             document.getElementById(idPainel).classList.add('visivel');
-            // Atualiza os dados da aba
             if (idPainel === 'painel-resumo') atualizarResumo();
             if (idPainel === 'painel-dividas') atualizarListaDividas();
+            if (idPainel === 'painel-receber') atualizarListaReceber();
+            if (idPainel === 'painel-rendas') atualizarListaRendas();
+            if (idPainel === 'painel-patrimonio') atualizarListaPatrimonio();
             if (idPainel === 'painel-boletos') atualizarListaBoletos();
             if (idPainel === 'painel-cheques') atualizarListaCheques();
         });
     });
 }
 
-// ===== DÍVIDAS =====
+// ===== CONTAS A PAGAR =====
 function adicionarDivida() {
     const nome = document.getElementById('d-nome').value.trim();
     const valor = limparValor(document.getElementById('d-valor').value);
     const data = document.getElementById('d-data').value;
     const parcelas = parseInt(document.getElementById('d-parcelas').value) || 1;
 
-    if (!nome) return alert('⚠️ Digite o nome da conta! Ex: Aluguel, Carro...');
-    if (!valor || valor <= 0) return alert('⚠️ Digite um valor válido! Ex: 850,00');
+    if (!nome) return alert('⚠️ Digite o nome da conta!');
+    if (!valor || valor <= 0) return alert('⚠️ Digite um valor válido!');
     if (!data) return alert('⚠️ Escolha a data de vencimento!');
 
     let [ano, mes, dia] = data.split('-').map(Number);
@@ -415,20 +638,16 @@ function adicionarDivida() {
     document.getElementById('d-valor').value = '';
     document.getElementById('d-data').value = '';
     document.getElementById('d-parcelas').value = '1';
-
     salvarDados();
 }
 
 function marcarComoPaga(id) {
     const item = dados.dividas.find(d => d.id === id);
-    if (item) {
-        item.paga = !item.paga;
-        salvarDados();
-    }
+    if (item) { item.paga = !item.paga; salvarDados(); }
 }
 
 function excluirDivida(id) {
-    if (confirm('Tem certeza que deseja excluir esta conta?')) {
+    if (confirm('Excluir esta conta?')) {
         dados.dividas = dados.dividas.filter(d => d.id !== id);
         salvarDados();
     }
@@ -441,7 +660,6 @@ function atualizarListaDividas() {
     
     let totalPago = 0, totalVencer = 0, totalAtrasado = 0;
     lista.innerHTML = '';
-
     const ordenado = [...dados.dividas].sort((a, b) => new Date(a.data) - new Date(b.data));
 
     ordenado.forEach(item => {
@@ -449,17 +667,11 @@ function atualizarListaDividas() {
         let classe = '', statusTexto = '', mostrar = true;
 
         if (item.paga) {
-            classe = 'pago';
-            statusTexto = '<span class="status st-pago">✅ Pago</span>';
-            totalPago += item.valor;
+            classe = 'pago'; statusTexto = '<span class="status st-pago">✅ Pago</span>'; totalPago += item.valor;
         } else if (dias < 0) {
-            classe = 'atrasado';
-            statusTexto = `<span class="status st-atrasado">🔴 Atrasado ${Math.abs(dias)}d</span>`;
-            totalAtrasado += item.valor;
+            classe = 'atrasado'; statusTexto = `<span class="status st-atrasado">🔴 Atrasado ${Math.abs(dias)}d</span>`; totalAtrasado += item.valor;
         } else {
-            classe = 'vencer';
-            statusTexto = `<span class="status st-vencer">⏳ Vence em ${dias}d</span>`;
-            totalVencer += item.valor;
+            classe = 'vencer'; statusTexto = `<span class="status st-vencer">⏳ Vence em ${dias}d</span>`; totalVencer += item.valor;
         }
 
         if (busca && !item.nome.toLowerCase().includes(busca)) mostrar = false;
@@ -473,7 +685,7 @@ function atualizarListaDividas() {
                     <div class="linha">
                         <div>
                             <div class="font-bold text-lg">${item.nome}</div>
-                            <div style="font-size:13px;color:#64748b;">Parcela ${item.parcela} de ${item.totalParcelas} • Vence: ${formatarData(item.data)}</div>
+                            <div style="font-size:13px;color:#64748b;">Parcela ${item.parcela}/${item.totalParcelas} • Vence: ${formatarData(item.data)}</div>
                             <div class="font-bold text-lg mt-1">R$ ${formatarDinheiro(item.valor)}</div>
                         </div>
                         <div style="text-align:right;">
@@ -494,398 +706,159 @@ function atualizarListaDividas() {
     document.getElementById('d-t-vencer').textContent = 'R$ ' + formatarDinheiro(totalVencer);
     document.getElementById('d-t-atrasado').textContent = 'R$ ' + formatarDinheiro(totalAtrasado);
     document.getElementById('d-t-total').textContent = 'R$ ' + formatarDinheiro(totalPago + totalVencer + totalAtrasado);
-
-    if (lista.innerHTML === '') {
-        lista.innerHTML = '<div class="vazio"><p>Nenhuma conta cadastrada ainda. Vá em "➕ Adicionar Nova Conta" acima e comece!</p></div>';
-    }
+    if (lista.innerHTML === '') lista.innerHTML = '<div class="vazio"><p>Nenhuma conta cadastrada.</p></div>';
 }
 
-// ===== BOLETOS =====
-function adicionarBoleto() {
-    const nome = document.getElementById('b-nome').value.trim();
-    const valor = limparValor(document.getElementById('b-valor').value);
-    const data = document.getElementById('b-data').value;
-    const codigo = document.getElementById('b-codigo').value.trim();
+// ===== CONTAS A RECEBER =====
+function adicionarReceber() {
+    const nome = document.getElementById('rec-nome').value.trim();
+    const descricao = document.getElementById('rec-descricao').value.trim();
+    const valor = limparValor(document.getElementById('rec-valor').value);
+    const data = document.getElementById('rec-data').value;
+    const tipo = document.getElementById('rec-tipo').value;
+    const parcelas = parseInt(document.getElementById('rec-parcelas').value) || 1;
 
-    if (!nome || !valor || !data) return alert('⚠️ Preencha nome, valor e vencimento!');
+    if (!nome) return alert('⚠️ Digite quem vai pagar!');
+    if (!valor || valor <= 0) return alert('⚠️ Digite um valor válido!');
+    if (!data) return alert('⚠️ Escolha a data!');
 
-    dados.boletos.push({ id: Date.now(), nome, valor, data, codigo, pago: false });
-    
-    document.getElementById('b-nome').value = '';
-    document.getElementById('b-valor').value = '';
-    document.getElementById('b-data').value = '';
-    document.getElementById('b-codigo').value = '';
-    
+    let [ano, mes, dia] = data.split('-').map(Number);
+    for (let i = 0; i < parcelas; i++) {
+        let novaData = new Date(ano, mes - 1 + i, dia);
+        if (novaData.getDate() !== dia) {
+            novaData = new Date(novaData.getFullYear(), novaData.getMonth() + 1, 0);
+        }
+        dados.receber.push({
+            id: Date.now() + i,
+            nome: nome,
+            descricao: descricao,
+            valor: valor,
+            data: novaData.toISOString().split('T')[0],
+            tipo: tipo,
+            parcela: i + 1,
+            totalParcelas: parcelas,
+            recebido: false
+        });
+    }
+
+    document.getElementById('rec-nome').value = '';
+    document.getElementById('rec-descricao').value = '';
+    document.getElementById('rec-valor').value = '';
+    document.getElementById('rec-data').value = '';
+    document.getElementById('rec-tipo').value = 'unico';
+    document.getElementById('rec-parcelas').value = '1';
     salvarDados();
 }
 
-function marcarBoletoPago(id) {
-    const b = dados.boletos.find(x => x.id === id);
-    if (b) { b.pago = !b.pago; salvarDados(); }
+function marcarComoRecebido(id) {
+    const item = dados.receber.find(r => r.id === id);
+    if (item) { item.recebido = !item.recebido; salvarDados(); }
 }
 
-function excluirBoleto(id) {
-    if (confirm('Excluir este boleto?')) {
-        dados.boletos = dados.boletos.filter(x => x.id !== id);
+function excluirReceber(id) {
+    if (confirm('Excluir este registro?')) {
+        dados.receber = dados.receber.filter(r => r.id !== id);
         salvarDados();
     }
 }
 
-function copiarCodigo(texto) {
-    navigator.clipboard.writeText(texto).then(() => alert('Copiado! ✅')).catch(() => {
-        const t = document.createElement('textarea');
-        t.value = texto;
-        document.body.appendChild(t);
-        t.select();
-        document.execCommand('copy');
-        document.body.removeChild(t);
-        alert('Copiado! ✅');
-    });
-}
-
-function atualizarListaBoletos() {
-    const lista = document.getElementById('b-lista');
-    const busca = (document.getElementById('b-busca')?.value || '').toLowerCase();
-    const filtro = document.getElementById('b-filtro')?.value || 'todos';
+function atualizarListaReceber() {
+    const lista = document.getElementById('rec-lista');
+    const busca = (document.getElementById('rec-busca')?.value || '').toLowerCase();
+    const filtro = document.getElementById('rec-filtro')?.value || 'todos';
     
-    let vencer = 0, proximo3 = 0, atrasado = 0, pago = 0;
+    let receber = 0, recebido = 0, atrasado = 0;
     lista.innerHTML = '';
+    const ordenado = [...dados.receber].sort((a, b) => new Date(a.data) - new Date(b.data));
 
-    const ordenado = [...dados.boletos].sort((a, b) => (a.pago ? 1 : 0) - (b.pago ? 1 : 0) || new Date(a.data) - new Date(b.data));
+    ordenado.forEach(item => {
+        const dias = diasAteVencimento(item.data);
+        let classe = '', statusTexto = '', mostrar = true;
 
-    ordenado.forEach(b => {
-        const dias = diasAteVencimento(b.data);
-        let statusTexto = '', mostrar = true;
-
-        if (b.pago) {
-            statusTexto = '<span class="status st-pago">✅ Pago</span>';
-            pago++;
+        if (item.recebido) {
+            classe = 'recebido'; statusTexto = '<span class="status st-recebido">✅ Recebido</span>'; recebido += item.valor;
         } else if (dias < 0) {
-            statusTexto = '<span class="status st-atrasado">🔴 Atrasado</span>';
-            atrasado++;
-        } else if (dias <= 3) {
-            statusTexto = `<span class="status st-vencer">⚠️ Vence em ${dias}d</span>`;
-            proximo3++;
-            vencer++;
+            classe = 'atrasado'; statusTexto = `<span class="status st-atrasado">🔴 Atrasado ${Math.abs(dias)}d</span>`; atrasado += item.valor;
         } else {
-            statusTexto = `<span class="status st-vencer">⏳ Vence em ${dias}d</span>`;
-            vencer++;
+            classe = 'receber'; statusTexto = `<span class="status st-receber">⏳ Receber em ${dias}d</span>`; receber += item.valor;
         }
 
-        if (busca && !b.nome.toLowerCase().includes(busca)) mostrar = false;
-        if (filtro === 'avencer' && (b.pago || dias < 0)) mostrar = false;
-        if (filtro === 'atrasado' && (b.pago || dias >= 0)) mostrar = false;
-        if (filtro === 'pago' && !b.pago) mostrar = false;
+        if (busca && !item.nome.toLowerCase().includes(busca) && !item.descricao?.toLowerCase().includes(busca)) mostrar = false;
+        if (filtro === 'recebido' && !item.recebido) mostrar = false;
+        if (filtro === 'receber' && (item.recebido || dias < 0)) mostrar = false;
+        if (filtro === 'atrasado' && (item.recebido || dias >= 0)) mostrar = false;
 
         if (mostrar) {
             lista.innerHTML += `
-                <div class="card" style="opacity:${b.pago ? 0.85 : 1}">
-                    <div class="linha mb-3">
-                        <h4 class="font-bold text-lg">${b.nome}</h4>
-                        ${statusTexto}
-                    </div>
-                    <p class="text-xl font-bold mb-1">R$ ${formatarDinheiro(b.valor)}</p>
-                    <p class="text-sm text-slate-500 mb-3">📅 Vencimento: ${formatarData(b.data)}</p>
-                    ${b.codigo ? `
-                        <div style="background:#f8fafc;padding:10px;border-radius:6px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;">
-                            <span style="font-family:monospace;font-size:12px;">${b.codigo}</span>
-                            <button class="btn btn-pequeno btn-azul" onclick="copiarCodigo('${b.codigo}')">Copiar</button>
-                        </div>` : ''
-                    }
+                <div class="item ${classe}">
                     <div class="linha">
-                        <button class="btn ${b.pago ? 'btn-cinza' : 'btn-verde'}" onclick="marcarBoletoPago(${b.id})">
-                            ${b.pago ? '↩️ Desmarcar' : '✓ Marcar Pago'}
-                        </button>
-                        <button class="btn btn-vermelho" onclick="excluirBoleto(${b.id})">🗑️ Excluir</button>
+                        <div>
+                            <div class="font-bold text-lg">${item.nome}</div>
+                            <div style="font-size:13px;color:#64748b;">${item.descricao || ''}${item.totalParcelas > 1 ? ` • Parcela ${item.parcela}/${item.totalParcelas}` : ''} • ${formatarData(item.data)}</div>
+                            <div class="font-bold text-lg mt-1">R$ ${formatarDinheiro(item.valor)}</div>
+                        </div>
+                        <div style="text-align:right;">
+                            <div class="mb-2">${statusTexto}</div>
+                            <div class="linha">
+                                <button class="btn btn-pequeno ${item.recebido ? 'btn-cinza' : 'btn-verde'}" onclick="marcarComoRecebido(${item.id})">
+                                    ${item.recebido ? '↩️ Desmarcar' : '✓ Recebido'}
+                                </button>
+                                <button class="btn btn-pequeno btn-vermelho" onclick="excluirReceber(${item.id})">🗑️</button>
+                            </div>
+                        </div>
                     </div>
                 </div>`;
         }
     });
 
-    document.getElementById('b-qtd-vencer').textContent = vencer;
-    document.getElementById('b-qtd-3d').textContent = proximo3;
-    document.getElementById('b-qtd-atrasado').textContent = atrasado;
-    document.getElementById('b-qtd-pago').textContent = pago;
-
-    if (lista.innerHTML === '') {
-        lista.innerHTML = '<div class="vazio"><p>Nenhum boleto cadastrado ainda.</p></div>';
-    }
+    document.getElementById('rec-t-receber').textContent = 'R$ ' + formatarDinheiro(receber);
+    document.getElementById('rec-t-recebido').textContent = 'R$ ' + formatarDinheiro(recebido);
+    document.getElementById('rec-t-atrasado').textContent = 'R$ ' + formatarDinheiro(atrasado);
+    document.getElementById('rec-t-total').textContent = 'R$ ' + formatarDinheiro(receber + recebido + atrasado);
+    if (lista.innerHTML === '') lista.innerHTML = '<div class="vazio"><p>Nenhum valor a receber cadastrado.</p></div>';
 }
 
-// ===== CHEQUES =====
-function adicionarCheque() {
-    const nome = document.getElementById('ch-nome').value.trim();
-    const numero = document.getElementById('ch-numero').value.trim();
-    const valor = limparValor(document.getElementById('ch-valor').value);
-    const data = document.getElementById('ch-data').value;
+// ===== RENDAS =====
+function adicionarRenda() {
+    const nome = document.getElementById('renda-nome').value.trim();
+    const valor = limparValor(document.getElementById('renda-valor').value);
+    const tipo = document.getElementById('renda-tipo').value;
+    const obs = document.getElementById('renda-obs').value.trim();
 
-    if (!nome || !numero || !valor || !data) return alert('⚠️ Preencha todos os campos!');
+    if (!nome) return alert('⚠️ Digite a origem da renda!');
+    if (!valor || valor <= 0) return alert('⚠️ Digite um valor válido!');
 
-    dados.cheques.push({ id: Date.now(), nome, numero, valor, data, status: 'aberto' });
-    
-    document.getElementById('ch-nome').value = '';
-    document.getElementById('ch-numero').value = '';
-    document.getElementById('ch-valor').value = '';
-    document.getElementById('ch-data').value = '';
-    
+    dados.rendas.push({ id: Date.now(), nome, valor, tipo, obs });
+
+    document.getElementById('renda-nome').value = '';
+    document.getElementById('renda-valor').value = '';
+    document.getElementById('renda-tipo').value = 'mensal';
+    document.getElementById('renda-obs').value = '';
     salvarDados();
 }
 
-function mudarStatusCheque(id) {
-    const c = dados.cheques.find(x => x.id === id);
-    if (c) {
-        if (c.status === 'aberto') c.status = 'pago';
-        else if (c.status === 'pago') c.status = 'dev';
-        else c.status = 'aberto';
+function excluirRenda(id) {
+    if (confirm('Excluir esta renda?')) {
+        dados.rendas = dados.rendas.filter(r => r.id !== id);
         salvarDados();
     }
 }
 
-function excluirCheque(id) {
-    if (confirm('Excluir este cheque?')) {
-        dados.cheques = dados.cheques.filter(x => x.id !== id);
-        salvarDados();
-    }
-}
-
-function atualizarListaCheques() {
-    const lista = document.getElementById('ch-lista');
-    const busca = (document.getElementById('ch-busca')?.value || '').toLowerCase();
-    const filtro = document.getElementById('ch-filtro')?.value || 'todos';
-    
-    let aberto = 0, pago = 0, dev = 0;
+function atualizarListaRendas() {
+    const lista = document.getElementById('r-lista');
+    let mensal = 0, ocasional = 0;
     lista.innerHTML = '';
 
-    dados.cheques.forEach(c => {
-        let statusTexto = '', mostrar = true;
+    dados.rendas.forEach(item => {
+        if (item.tipo === 'mensal') mensal += item.valor;
+        else ocasional += item.valor;
 
-        if (c.status === 'aberto') {
-            statusTexto = '<span class="status st-aberto">⏳ Em Aberto</span>';
-            aberto++;
-        } else if (c.status === 'pago') {
-            statusTexto = '<span class="status st-compensado">✅ Compensado</span>';
-            pago++;
-        } else {
-            statusTexto = '<span class="status st-devolvido">🔴 Devolvido</span>';
-            dev++;
-        }
+        const status = item.tipo === 'mensal' 
+            ? '<span class="status st-mensal">📅 Mensal</span>' 
+            : '<span class="status st-ocasional">✨ Ocasional</span>';
 
-        if (busca && !c.nome.toLowerCase().includes(busca) && !c.numero.includes(busca)) mostrar = false;
-        if (filtro === 'aberto' && c.status !== 'aberto') mostrar = false;
-        if (filtro === 'pago' && c.status !== 'pago') mostrar = false;
-        if (filtro === 'dev' && c.status !== 'dev') mostrar = false;
-
-        if (mostrar) {
-            lista.innerHTML += `
-                <div class="card">
-                    <div class="linha mb-3">
-                        <h4 class="font-bold text-lg">${c.nome}</h4>
-                        ${statusTexto}
-                    </div>
-                    <p class="text-sm text-slate-500 mb-1">Nº: <strong>${c.numero}</strong> • Data: ${formatarData(c.data)}</p>
-                    <p class="text-xl font-bold mb-4">R$ ${formatarDinheiro(c.valor)}</p>
-                    <div class="linha">
-                        <button class="btn btn-azul" onclick="mudarStatusCheque(${c.id})">↻ Mudar Status</button>
-                        <button class="btn btn-vermelho" onclick="excluirCheque(${c.id})">🗑️ Excluir</button>
-                    </div>
-                </div>`;
-        }
-    });
-
-    document.getElementById('ch-qtd-aberto').textContent = aberto;
-    document.getElementById('ch-qtd-pago').textContent = pago;
-    document.getElementById('ch-qtd-dev').textContent = dev;
-
-    if (lista.innerHTML === '') {
-        lista.innerHTML = '<div class="vazio"><p>Nenhum cheque cadastrado ainda.</p></div>';
-    }
-}
-
-// ===== RESUMO GERAL =====
-function atualizarResumo() {
-    const listaResumo = document.getElementById('lista-resumo');
-    let totalGeral = 0, totalPago = 0, totalVencer = 0, totalAtrasado = 0;
-    listaResumo.innerHTML = '';
-
-    // Dívidas no resumo
-    dados.dividas.forEach(item => {
-        const dias = diasAteVencimento(item.data);
-        totalGeral += item.valor;
-        if (item.paga) totalPago += item.valor;
-        else if (dias < 0) totalAtrasado += item.valor;
-        else totalVencer += item.valor;
-
-        const status = item.paga ? '✅ PAGO' : (dias < 0 ? '🔴 ATRASADO' : '⏳ A VENCER');
-        listaResumo.innerHTML += `
-            <div class="item">
+        lista.innerHTML += `
+            <div class="item renda">
                 <div class="linha">
                     <div>
-                        <div class="font-bold">${item.nome}</div>
-                        <div class="text-sm text-slate-500">Parcela ${item.parcela}/${item.totalParcelas} • ${formatarData(item.data)}</div>
-                    </div>
-                    <div class="text-right">
-                        <div class="font-bold">R$ ${formatarDinheiro(item.valor)}</div>
-                        <div class="text-xs mt-1">${status}</div>
-                    </div>
-                </div>
-            </div>`;
-    });
-
-    // Boletos no resumo
-    dados.boletos.forEach(item => {
-        const dias = diasAteVencimento(item.data);
-        totalGeral += item.valor;
-        if (item.pago) totalPago += item.valor;
-        else if (dias < 0) totalAtrasado += item.valor;
-        else totalVencer += item.valor;
-
-        const status = item.pago ? '✅ PAGO' : (dias < 0 ? '🔴 ATRASADO' : '⏳ A VENCER');
-        listaResumo.innerHTML += `
-            <div class="item">
-                <div class="linha">
-                    <div>
-                        <div class="font-bold">🧾 ${item.nome}</div>
-                        <div class="text-sm text-slate-500">${formatarData(item.data)}</div>
-                    </div>
-                    <div class="text-right">
-                        <div class="font-bold">R$ ${formatarDinheiro(item.valor)}</div>
-                        <div class="text-xs mt-1">${status}</div>
-                    </div>
-                </div>
-            </div>`;
-    });
-
-    // Cheques no resumo
-    dados.cheques.forEach(item => {
-        totalGeral += item.valor;
-        if (item.status === 'pago') totalPago += item.valor;
-        else if (item.status === 'dev') totalAtrasado += item.valor;
-        else totalVencer += item.valor;
-
-        const statusMap = { aberto: '⏳ EM ABERTO', pago: '✅ COMPENSADO', dev: '🔴 DEVOLVIDO' };
-        listaResumo.innerHTML += `
-            <div class="item">
-                <div class="linha">
-                    <div>
-                        <div class="font-bold">📑 ${item.nome} — Cheque nº ${item.numero}</div>
-                        <div class="text-sm text-slate-500">${formatarData(item.data)}</div>
-                    </div>
-                    <div class="text-right">
-                        <div class="font-bold">R$ ${formatarDinheiro(item.valor)}</div>
-                        <div class="text-xs mt-1">${statusMap[item.status]}</div>
-                    </div>
-                </div>
-            </div>`;
-    });
-
-    document.getElementById('r-total').textContent = 'R$ ' + formatarDinheiro(totalGeral);
-    document.getElementById('r-pago').textContent = 'R$ ' + formatarDinheiro(totalPago);
-    document.getElementById('r-vencer').textContent = 'R$ ' + formatarDinheiro(totalVencer);
-    document.getElementById('r-atrasado').textContent = 'R$ ' + formatarDinheiro(totalAtrasado);
-
-    if (listaResumo.innerHTML === '') {
-        listaResumo.innerHTML = '<div class="vazio"><p>Ainda não tem contas cadastradas. Vá em 💳 Minhas Dívidas e comece a adicionar!</p></div>';
-    }
-}
-
-// ===== EXPORTAR EXCEL =====
-function exportarExcel() {
-    try {
-        const dadosParaExcel = [];
-        
-        dadosParaExcel.push(['=== DÍVIDAS ===']);
-        dadosParaExcel.push(['Nome', 'Valor', 'Vencimento', 'Parcela', 'Status']);
-        dados.dividas.forEach(d => {
-            const dias = diasAteVencimento(d.data);
-            const status = d.paga ? 'Pago' : (dias < 0 ? 'Atrasado' : 'A Vencer');
-            dadosParaExcel.push([d.nome, 'R$ ' + formatarDinheiro(d.valor), formatarData(d.data), `${d.parcela}/${d.totalParcelas}`, status]);
-        });
-
-        dadosParaExcel.push([]);
-        dadosParaExcel.push(['=== BOLETOS ===']);
-        dadosParaExcel.push(['Nome', 'Valor', 'Vencimento', 'Código', 'Status']);
-        dados.boletos.forEach(b => {
-            const dias = diasAteVencimento(b.data);
-            const status = b.pago ? 'Pago' : (dias < 0 ? 'Atrasado' : 'A Vencer');
-            dadosParaExcel.push([b.nome, 'R$ ' + formatarDinheiro(b.valor), formatarData(b.data), b.codigo || '', status]);
-        });
-
-        dadosParaExcel.push([]);
-        dadosParaExcel.push(['=== CHEQUES ===']);
-        dadosParaExcel.push(['Nome', 'Número', 'Valor', 'Data', 'Status']);
-        dados.cheques.forEach(c => {
-            const statusMap = { aberto: 'Em Aberto', pago: 'Compensado', dev: 'Devolvido' };
-            dadosParaExcel.push([c.nome, c.numero, 'R$ ' + formatarDinheiro(c.valor), formatarData(c.data), statusMap[c.status]]);
-        });
-
-        const planilha = XLSX.utils.aoa_to_sheet(dadosParaExcel);
-        const livro = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(livro, planilha, 'Controle de Finanças');
-        XLSX.writeFile(livro, 'Controle_Financeiro_' + new Date().toLocaleDateString('pt-BR').replace(/\//g, '-') + '.xlsx');
-        alert('✅ Excel exportado com sucesso!');
-    } catch (erro) {
-        alert('❌ Erro ao exportar Excel: ' + erro.message);
-    }
-}
-
-// ===== BACKUP =====
-function baixarBackup() {
-    try {
-        const conteudo = JSON.stringify(dados, null, 2);
-        const blob = new Blob([conteudo], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'backup_controle_' + new Date().toLocaleDateString('pt-BR').replace(/\//g, '-') + '.json';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        alert('✅ Backup baixado com sucesso! Guarde este arquivo em um lugar seguro.');
-    } catch (erro) {
-        alert('❌ Erro ao baixar backup: ' + erro.message);
-    }
-}
-
-function restaurarBackup(evento) {
-    const arquivo = evento.target.files[0];
-    if (!arquivo) return;
-    
-    if (!confirm('⚠️ Isso vai substituir todos os seus dados atuais. Tem certeza?')) return;
-    
-    const leitor = new FileReader();
-    leitor.onload = function(e) {
-        try {
-            const restaurado = JSON.parse(e.target.result);
-            if (restaurado.dividas || restaurado.boletos || restaurado.cheques) {
-                dados = restaurado;
-                localStorage.setItem(CHAVE_SALVAMENTO, JSON.stringify(dados));
-                atualizarTudo();
-                alert('✅ Backup restaurado com sucesso!');
-            } else {
-                alert('❌ Arquivo inválido!');
-            }
-        } catch (erro) {
-            alert('❌ Erro ao ler arquivo: ' + erro.message);
-        }
-    };
-    leitor.readAsText(arquivo);
-    evento.target.value = '';
-}
-
-// ===== ATUALIZAR TUDO =====
-function atualizarTudo() {
-    atualizarResumo();
-    atualizarListaDividas();
-    atualizarListaBoletos();
-    atualizarListaCheques();
-}
-
-// ===== INICIAR TUDO QUANDO A PÁGINA CARREGAR =====
-document.addEventListener('DOMContentLoaded', function() {
-    configurarAbas();
-    carregarDados();
-});
-</script>
-</body>
-</html>
+                        <div class="font-bold
