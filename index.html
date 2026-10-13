@@ -28,6 +28,7 @@
         .btn-success { background: #16a34a; color: white; }
         .btn-danger { background: #dc2626; color: white; }
         .btn-warning { background: #eab308; color: #1e293b; }
+        .btn-sm { padding: 4px 8px; font-size: 12px; }
         .input-field { width: 100%; padding: 10px 12px; border-radius: 6px; border: 1px solid #475569; background: #0f172a; color: white; margin-bottom: 10px; }
         .input-field:focus { outline: none; border-color: #3b82f6; }
         .tabs-container { position: sticky; top: 0; background: #0f172a; z-index: 100; padding: 10px 0; overflow-x: auto; }
@@ -47,6 +48,8 @@
         .chart-container { position: relative; height: 250px; margin: 20px 0; }
         .empty-state { text-align: center; padding: 40px; color: #64748b; }
         .date-info { font-size: 12px; color: #94a3b8; margin-top: 4px; }
+        .edit-mode { border: 2px solid #3b82f6; border-radius: 8px; padding: 12px; margin-bottom: 12px; background: #1e293b; }
+        .btn-group { display: flex; gap: 6px; }
     </style>
 </head>
 <body>
@@ -176,8 +179,8 @@
 
     <!-- EMPRÉSTIMOS -->
     <div id="emprestimos" class="tab-content">
-        <div class="card">
-            <h2 style="font-size: 18px; margin-bottom: 16px;">🤝 Novo Empréstimo</h2>
+        <div class="card" id="formEmprestimo">
+            <h2 style="font-size: 18px; margin-bottom: 16px;" id="tituloFormEmprestimo">🤝 Novo Empréstimo</h2>
             <div class="form-grid">
                 <input type="text" id="emprestimoPessoa" class="input-field" placeholder="Nome da Pessoa">
                 <input type="text" id="emprestimoDescricao" class="input-field" placeholder="Descrição">
@@ -191,7 +194,11 @@
                     <option value="atrasado">Atrasado ⚠️</option>
                 </select>
             </div>
-            <button class="btn btn-primary" onclick="adicionarEmprestimo()">➕ Adicionar Empréstimo</button>
+            <input type="hidden" id="editandoEmprestimoId" value="">
+            <div style="display: flex; gap: 8px;">
+                <button class="btn btn-primary" id="btnSalvarEmprestimo" onclick="salvarEmprestimo()">➕ Adicionar Empréstimo</button>
+                <button class="btn btn-warning" id="btnCancelarEdicao" onclick="cancelarEdicao()" style="display:none;">❌ Cancelar</button>
+            </div>
         </div>
         <h2 style="font-size: 18px; margin-bottom: 12px;">Meus Empréstimos</h2>
         <div id="listaEmprestimos"></div>
@@ -268,7 +275,7 @@ async function carregarBoletos() {
                 <div style="font-weight:700; font-size:16px">${formatarMoeda(b.valor)}</div>
                 <span class="badge ${classe}">${texto}</span>
             </div>
-            <button class="btn btn-danger" style="padding:4px 8px; font-size:12px" onclick="excluirBoleto('${id}')">🗑️</button>
+            <button class="btn btn-danger btn-sm" onclick="excluirBoleto('${id}')">🗑️</button>
         </div>`;
     });
     atualizarResumo();
@@ -322,7 +329,7 @@ async function carregarCheques() {
                 <div style="font-weight:700; font-size:16px">${formatarMoeda(c.valor)}</div>
                 <span class="badge ${classe}">${texto}</span>
             </div>
-            <button class="btn btn-danger" style="padding:4px 8px; font-size:12px" onclick="excluirCheque('${id}')">🗑️</button>
+            <button class="btn btn-danger btn-sm" onclick="excluirCheque('${id}')">🗑️</button>
         </div>`;
     });
     atualizarResumo();
@@ -369,7 +376,7 @@ async function carregarParcelas() {
                 <div class="date-info">Início: ${formatarData(p.primeiraData)} • ${p.quantidade}x de ${formatarMoeda(valorParcela)}</div>
                 <div style="font-size:12px; color:#94a3b8">Total: ${formatarMoeda(p.valorTotal)}</div>
             </div>
-            <button class="btn btn-danger" style="padding:4px 8px; font-size:12px" onclick="excluirParcela('${id}')">🗑️</button>
+            <button class="btn btn-danger btn-sm" onclick="excluirParcela('${id}')">🗑️</button>
         </div>`;
     });
     atualizarResumo();
@@ -415,7 +422,7 @@ async function carregarReceber() {
                 <div class="date-info">Início: ${formatarData(r.primeiraData)} • ${r.quantidade}x de ${formatarMoeda(valorParcela)}</div>
                 <div style="font-size:12px; color:#94a3b8">Total a receber: ${formatarMoeda(r.valorTotal)}</div>
             </div>
-            <button class="btn btn-danger" style="padding:4px 8px; font-size:12px" onclick="excluirReceber('${id}')">🗑️</button>
+            <button class="btn btn-danger btn-sm" onclick="excluirReceber('${id}')">🗑️</button>
         </div>`;
     });
     atualizarResumo();
@@ -446,6 +453,8 @@ async function excluirReceber(id) {
 }
 
 // ===================== EMPRÉSTIMOS =====================
+let editandoEmprestimoId = null;
+
 async function carregarEmprestimos() {
     const lista = document.getElementById('listaEmprestimos');
     lista.innerHTML = '<div class="empty-state">Carregando...</div>';
@@ -472,13 +481,57 @@ async function carregarEmprestimos() {
             </div>
             <div style="text-align:right">
                 <span class="badge ${classe}">${texto}</span>
+                <div class="btn-group" style="margin-top: 6px;">
+                    <button class="btn btn-primary btn-sm" onclick="editarEmprestimo('${id}')">✏️ Editar</button>
+                    <button class="btn btn-danger btn-sm" onclick="excluirEmprestimo('${id}')">🗑️ Excluir</button>
+                </div>
             </div>
-            <button class="btn btn-danger" style="padding:4px 8px; font-size:12px" onclick="excluirEmprestimo('${id}')">🗑️</button>
         </div>`;
     });
     atualizarResumo();
 }
-async function adicionarEmprestimo() {
+
+async function editarEmprestimo(id) {
+    const doc = await colecoes.emprestimos.doc(id).get();
+    if (!doc.exists) return;
+    
+    const e = doc.data();
+    editandoEmprestimoId = id;
+    
+    // Preenche o formulário com os dados atuais
+    document.getElementById('emprestimoPessoa').value = e.pessoa || '';
+    document.getElementById('emprestimoDescricao').value = e.descricao || '';
+    document.getElementById('emprestimoValor').value = e.valor || '';
+    document.getElementById('emprestimoJuros').value = e.juros || '';
+    document.getElementById('emprestimoData').value = e.data || '';
+    document.getElementById('emprestimoVencimento').value = e.vencimento || '';
+    document.getElementById('emprestimoStatus').value = e.status || 'ativo';
+    
+    // Muda o botão de adicionar para salvar
+    document.getElementById('tituloFormEmprestimo').textContent = '✏️ Editar Empréstimo';
+    document.getElementById('btnSalvarEmprestimo').textContent = '💾 Salvar Alterações';
+    document.getElementById('btnCancelarEdicao').style.display = 'inline-block';
+    
+    // Rola até o formulário
+    document.getElementById('formEmprestimo').scrollIntoView({ behavior: 'smooth' });
+}
+
+function cancelarEdicao() {
+    editandoEmprestimoId = null;
+    document.getElementById('tituloFormEmprestimo').textContent = '🤝 Novo Empréstimo';
+    document.getElementById('btnSalvarEmprestimo').textContent = '➕ Adicionar Empréstimo';
+    document.getElementById('btnCancelarEdicao').style.display = 'none';
+    
+    // Limpa os campos
+    document.getElementById('emprestimoPessoa').value = '';
+    document.getElementById('emprestimoDescricao').value = '';
+    document.getElementById('emprestimoValor').value = '';
+    document.getElementById('emprestimoJuros').value = '';
+    document.getElementById('emprestimoData').value = '';
+    document.getElementById('emprestimoVencimento').value = '';
+}
+
+async function salvarEmprestimo() {
     const dados = {
         pessoa: document.getElementById('emprestimoPessoa').value.trim(),
         descricao: document.getElementById('emprestimoDescricao').value.trim(),
@@ -487,18 +540,34 @@ async function adicionarEmprestimo() {
         data: document.getElementById('emprestimoData').value,
         vencimento: document.getElementById('emprestimoVencimento').value,
         status: document.getElementById('emprestimoStatus').value,
-        criadoEm: new Date()
+        atualizadoEm: new Date()
     };
-    if (!dados.pessoa || !dados.valor || !dados.data || !dados.vencimento) { alert('Preencha os campos principais!'); return; }
-    await colecoes.emprestimos.add(dados);
-    document.getElementById('emprestimoPessoa').value = '';
-    document.getElementById('emprestimoDescricao').value = '';
-    document.getElementById('emprestimoValor').value = '';
-    document.getElementById('emprestimoJuros').value = '';
-    document.getElementById('emprestimoData').value = '';
-    document.getElementById('emprestimoVencimento').value = '';
+    
+    if (!dados.pessoa || !dados.valor || !dados.data || !dados.vencimento) { 
+        alert('Preencha os campos principais!'); 
+        return; 
+    }
+    
+    if (editandoEmprestimoId) {
+        // MODO EDIÇÃO: Atualiza documento existente
+        await colecoes.emprestimos.doc(editandoEmprestimoId).update(dados);
+        cancelarEdicao(); // Volta formulário ao normal
+    } else {
+        // MODO NOVO: Adiciona novo documento
+        dados.criadoEm = new Date();
+        await colecoes.emprestimos.add(dados);
+        // Limpa campos
+        document.getElementById('emprestimoPessoa').value = '';
+        document.getElementById('emprestimoDescricao').value = '';
+        document.getElementById('emprestimoValor').value = '';
+        document.getElementById('emprestimoJuros').value = '';
+        document.getElementById('emprestimoData').value = '';
+        document.getElementById('emprestimoVencimento').value = '';
+    }
+    
     carregarEmprestimos();
 }
+
 async function excluirEmprestimo(id) {
     if (confirm('Excluir este empréstimo?')) {
         await colecoes.emprestimos.doc(id).delete();
