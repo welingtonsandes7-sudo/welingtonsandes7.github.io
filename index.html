@@ -10,17 +10,14 @@
         .container { max-width: 1000px; margin: 0 auto; }
         h1 { text-align: center; margin-bottom: 20px; color: #3b82f6; }
 
-        /* BOTÕES DE ABA */
         .abas { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
         .aba { padding: 10px 16px; background: #1e293b; border: none; color: #94a3b8; border-radius: 8px; cursor: pointer; font-size: 14px; }
         .aba.ativa { background: #3b82f6; color: white; }
 
-        /* BOTÕES DE FILTRO */
         .filtros { display: flex; gap: 6px; margin-bottom: 20px; flex-wrap: wrap; }
         .filtro { padding: 6px 12px; background: transparent; border: 1px solid #3b82f6; color: #94a3b8; border-radius: 6px; cursor: pointer; }
         .filtro.ativo { background: #3b82f6; color: white; }
 
-        /* CONTEÚDO DAS ABAS */
         .conteudo { display: none; }
         .conteudo.visivel { display: block; }
 
@@ -38,6 +35,8 @@
         .valor { font-size: 20px; font-weight: bold; margin-top: 6px; }
         .positivo { color: #22c55e; }
         .negativo { color: #ef4444; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .parcela-valor { background: rgba(234, 179, 8, 0.1); color: #eab308; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -45,17 +44,16 @@
 <div class="container">
     <h1>💼 CONTROLE FINANCEIRO</h1>
 
-    <!-- BOTÕES DAS ABAS -->
     <div class="abas">
         <button class="aba ativa" onclick="abrirAba('resumo')">📊 Resumo</button>
         <button class="aba" onclick="abrirAba('boletos')">📄 Boletos</button>
         <button class="aba" onclick="abrirAba('cheques')">✓ Cheques</button>
+        <button class="aba" onclick="abrirAba('emprestimos')">💰 Empréstimos</button>
         <button class="aba" onclick="abrirAba('eu-devo')">⬆️ O Que Devo</button>
         <button class="aba" onclick="abrirAba('me-devem')">⬇️ Me Devem</button>
         <button class="aba" onclick="abrirAba('contas')">📋 Contas</button>
     </div>
 
-    <!-- FILTROS -->
     <div class="filtros">
         <button class="filtro ativo" onclick="filtro='todos'; atualizarTela()">Todos</button>
         <button class="filtro" onclick="filtro='a_vencer'; atualizarTela()">A Vencer</button>
@@ -63,7 +61,7 @@
         <button class="filtro" onclick="filtro='pago'; atualizarTela()">Pagos</button>
     </div>
 
-    <!-- ABA RESUMO -->
+    <!-- RESUMO -->
     <div id="resumo" class="conteudo visivel">
         <div class="resumo">
             <div class="resumo-card">
@@ -75,13 +73,17 @@
                 <div class="valor negativo" id="valPagar">R$ 0,00</div>
             </div>
             <div class="resumo-card">
+                <div>Empréstimos</div>
+                <div class="valor negativo" id="valEmprestimos">R$ 0,00</div>
+            </div>
+            <div class="resumo-card">
                 <div>Saldo</div>
                 <div class="valor" id="valSaldo">R$ 0,00</div>
             </div>
         </div>
     </div>
 
-    <!-- ABA BOLETOS -->
+    <!-- BOLETOS -->
     <div id="boletos" class="conteudo">
         <div class="card">
             <h2>Novo Boleto</h2>
@@ -102,7 +104,7 @@
         </div>
     </div>
 
-    <!-- ABA CHEQUES -->
+    <!-- CHEQUES -->
     <div id="cheques" class="conteudo">
         <div class="card">
             <h2>Novo Cheque</h2>
@@ -123,7 +125,36 @@
         </div>
     </div>
 
-    <!-- ABA O QUE DEVO -->
+    <!-- 🆕 EMPRÉSTIMOS -->
+    <div id="emprestimos" class="conteudo">
+        <div class="card">
+            <h2>Novo Empréstimo</h2>
+            <input type="text" id="empNome" placeholder="Instituição / Credor">
+            <input type="text" id="empDesc" placeholder="Descrição (opcional)">
+            <div class="grid-2">
+                <div>
+                    <input type="number" step="0.01" id="empTotal" placeholder="Valor Total R$" oninput="calcularParcela()">
+                </div>
+                <div>
+                    <input type="number" id="empParcelas" placeholder="Nº de Parcelas" min="1" oninput="calcularParcela()">
+                </div>
+            </div>
+            <input type="text" id="empParcelaValor" class="parcela-valor" placeholder="Valor da Parcela" readonly>
+            <input type="date" id="empPrimeiraParcela" placeholder="Primeira Parcela">
+            <select id="empStatus">
+                <option value="ativo">🔄 Em Andamento</option>
+                <option value="quitado">✅ Quitado</option>
+                <option value="atrasado">⚠️ Atrasado</option>
+            </select>
+            <button class="salvar" onclick="adicionarEmprestimo()">➕ Adicionar Empréstimo</button>
+        </div>
+        <div class="card">
+            <h2>Meus Empréstimos</h2>
+            <div id="listaEmprestimos" class="vazio">Nenhum empréstimo cadastrado</div>
+        </div>
+    </div>
+
+    <!-- O QUE DEVO -->
     <div id="eu-devo" class="conteudo">
         <div class="card">
             <h2>Novo — O Que Devo</h2>
@@ -144,7 +175,7 @@
         </div>
     </div>
 
-    <!-- ABA ME DEVEM -->
+    <!-- ME DEVEM -->
     <div id="me-devem" class="conteudo">
         <div class="card">
             <h2>Novo — Me Devem</h2>
@@ -165,7 +196,7 @@
         </div>
     </div>
 
-    <!-- ABA CONTAS -->
+    <!-- CONTAS -->
     <div id="contas" class="conteudo">
         <div class="card">
             <h2>Nova Conta</h2>
@@ -185,9 +216,9 @@
 </div>
 
 <script>
-// DADOS — salvam no navegador
 let boletos = JSON.parse(localStorage.getItem('boletos') || '[]');
 let cheques = JSON.parse(localStorage.getItem('cheques') || '[]');
+let emprestimos = JSON.parse(localStorage.getItem('emprestimos') || '[]');
 let euDevo = JSON.parse(localStorage.getItem('euDevo') || '[]');
 let meDevem = JSON.parse(localStorage.getItem('meDevem') || '[]');
 let contas = JSON.parse(localStorage.getItem('contas') || '[]');
@@ -196,6 +227,7 @@ let filtro = 'todos';
 function salvarDados() {
     localStorage.setItem('boletos', JSON.stringify(boletos));
     localStorage.setItem('cheques', JSON.stringify(cheques));
+    localStorage.setItem('emprestimos', JSON.stringify(emprestimos));
     localStorage.setItem('euDevo', JSON.stringify(euDevo));
     localStorage.setItem('meDevem', JSON.stringify(meDevem));
     localStorage.setItem('contas', JSON.stringify(contas));
@@ -214,23 +246,21 @@ function diasAte(dataStr) {
 }
 
 function statusReal(dataStr, statusCadastrado) {
-    if (statusCadastrado === 'pago' || statusCadastrado === 'recebido') return statusCadastrado;
+    if (statusCadastrado === 'pago' || statusCadastrado === 'recebido' || statusCadastrado === 'quitado') return statusCadastrado;
     const dias = diasAte(dataStr);
     if (dias < 0) return 'atrasado';
-    if (dias <= 7) return 'a_vencer';
     return 'a_vencer';
 }
 
 function deveMostrar(dataStr, statusCadastrado) {
     if (filtro === 'todos') return true;
     const s = statusReal(dataStr, statusCadastrado);
-    if (filtro === 'a_vencer') return s === 'a_vencer';
+    if (filtro === 'a_vencer') return s === 'a_vencer' || s === 'ativo';
     if (filtro === 'atrasado') return s === 'atrasado';
-    if (filtro === 'pago') return s === 'pago' || s === 'recebido';
+    if (filtro === 'pago') return s === 'pago' || s === 'recebido' || s === 'quitado';
     return true;
 }
 
-// ABRIR ABAS
 function abrirAba(nome) {
     document.querySelectorAll('.aba').forEach(b => b.classList.remove('ativa'));
     document.querySelectorAll('.conteudo').forEach(c => c.classList.remove('visivel'));
@@ -242,6 +272,7 @@ function abrirAba(nome) {
 function atualizarTela() {
     atualizarBoletos();
     atualizarCheques();
+    atualizarEmprestimos();
     atualizarEuDevo();
     atualizarMeDevem();
     atualizarContas();
@@ -249,21 +280,70 @@ function atualizarTela() {
 }
 
 function atualizarResumo() {
-    let receber = 0, pagar = 0;
+    let receber = 0, pagar = 0, totalEmprestimos = 0;
     meDevem.forEach(i => { if (i.status !== 'recebido') receber += parseFloat(i.valor); });
     euDevo.forEach(i => { if (i.status !== 'pago') pagar += parseFloat(i.valor); });
     boletos.forEach(i => { if (i.status !== 'pago') pagar += parseFloat(i.valor); });
     cheques.forEach(i => { if (i.status !== 'pago') pagar += parseFloat(i.valor); });
+    emprestimos.forEach(e => { if (e.status !== 'quitado') totalEmprestimos += parseFloat(e.valorTotal); });
     contas.forEach(i => {
         if (i.tipo === 'receita') receber += parseFloat(i.valor);
         else pagar += parseFloat(i.valor);
     });
     document.getElementById('valReceber').textContent = moeda(receber);
     document.getElementById('valPagar').textContent = moeda(pagar);
-    const saldo = receber - pagar;
+    document.getElementById('valEmprestimos').textContent = moeda(totalEmprestimos);
+    const saldo = receber - (pagar + totalEmprestimos);
     document.getElementById('valSaldo').textContent = moeda(saldo);
     document.getElementById('valSaldo').className = 'valor ' + (saldo >= 0 ? 'positivo' : 'negativo');
 }
+
+// ===== EMPRÉSTIMOS =====
+function calcularParcela() {
+    const total = parseFloat(document.getElementById('empTotal').value) || 0;
+    const qtd = parseInt(document.getElementById('empParcelas').value) || 1;
+    document.getElementById('empParcelaValor').value = moeda(total / qtd);
+}
+
+function atualizarEmprestimos() {
+    const el = document.getElementById('listaEmprestimos');
+    const filtroLista = emprestimos.filter(e => deveMostrar(e.dataInicio, e.status));
+    if (filtroLista.length === 0) { el.innerHTML = '<div class="vazio">Nenhum empréstimo encontrado</div>'; return; }
+    el.innerHTML = filtroLista.map((e, idx) => {
+        const statusFinal = e.status;
+        const indice = emprestimos.indexOf(e);
+        return `<div class="item">
+            <strong>💰 ${e.nome}</strong><br>
+            ${e.desc || ''}<br>
+            Total: <strong>${moeda(e.valorTotal)}</strong> | ${e.qtdeParcelas}x de ${moeda(e.valorTotal / e.qtdeParcelas)}<br>
+            1ª parcela: ${e.dataInicio || '—'}<br>
+            <small>${statusFinal === 'quitado' ? '✅ Quitado' : statusFinal === 'atrasado' ? '⚠️ Atrasado' : '🔄 Em Andamento'}</small>
+            <br>
+            <button class="pago" onclick="marcarEmprestimoQuitado(${indice})">✅ Quitado</button>
+            <button class="excluir" onclick="excluirEmprestimo(${indice})">🗑️ Excluir</button>
+        </div>`;
+    }).join('');
+}
+
+function adicionarEmprestimo() {
+    const nome = document.getElementById('empNome').value.trim();
+    const desc = document.getElementById('empDesc').value.trim();
+    const valorTotal = parseFloat(document.getElementById('empTotal').value);
+    const qtdeParcelas = parseInt(document.getElementById('empParcelas').value) || 1;
+    const dataInicio = document.getElementById('empPrimeiraParcela').value;
+    const status = document.getElementById('empStatus').value;
+    if (!nome || !valorTotal) { alert('Preencha o nome e o valor total!'); return; }
+    emprestimos.push({ nome, desc, valorTotal, qtdeParcelas, dataInicio, status });
+    salvarDados(); atualizarTela();
+    document.getElementById('empNome').value = '';
+    document.getElementById('empDesc').value = '';
+    document.getElementById('empTotal').value = '';
+    document.getElementById('empParcelas').value = '';
+    document.getElementById('empParcelaValor').value = '';
+    document.getElementById('empPrimeiraParcela').value = '';
+}
+window.marcarEmprestimoQuitado = function(i) { emprestimos[i].status = 'quitado'; salvarDados(); atualizarTela(); };
+window.excluirEmprestimo = function(i) { if(confirm('Excluir este empréstimo?')) { emprestimos.splice(i,1); salvarDados(); atualizarTela(); }};
 
 // ===== BOLETOS =====
 function atualizarBoletos() {
@@ -272,14 +352,15 @@ function atualizarBoletos() {
     if (filtroBoletos.length === 0) { el.innerHTML = '<div class="vazio">Nenhum boleto encontrado</div>'; return; }
     el.innerHTML = filtroBoletos.map((b, idx) => {
         const statusFinal = statusReal(b.data, b.status);
+        const indice = boletos.indexOf(b);
         return `<div class="item">
             <strong>${b.nome}</strong><br>
             Venc: ${b.data} | ${moeda(b.valor)}<br>
             ${b.codigo ? '📎 ' + b.codigo + '<br>' : ''}
             <small>${statusFinal === 'pago' ? '✅ Pago' : statusFinal === 'atrasado' ? '⚠️ Atrasado' : '📅 A Vencer'}</small>
             <br>
-            <button class="pago" onclick="marcarBoletoPago(${boletos.indexOf(b)})">✓ Pago</button>
-            <button class="excluir" onclick="excluirBoleto(${boletos.indexOf(b)})">🗑️ Excluir</button>
+            <button class="pago" onclick="marcarBoletoPago(${indice})">✓ Pago</button>
+            <button class="excluir" onclick="excluirBoleto(${indice})">🗑️ Excluir</button>
         </div>`;
     }).join('');
 }
@@ -308,13 +389,14 @@ function atualizarCheques() {
     if (filtroCheques.length === 0) { el.innerHTML = '<div class="vazio">Nenhum cheque encontrado</div>'; return; }
     el.innerHTML = filtroCheques.map((c, idx) => {
         const statusFinal = statusReal(c.data, c.status);
+        const indice = cheques.indexOf(c);
         return `<div class="item">
             <strong>${c.nome}</strong><br>
             Nº: ${c.numero || '—'} | Venc: ${c.data} | ${moeda(c.valor)}<br>
             <small>${statusFinal === 'pago' ? '✅ Compensado' : statusFinal === 'atrasado' ? '⚠️ Atrasado' : '📅 A Vencer'}</small>
             <br>
-            <button class="pago" onclick="marcarChequePago(${cheques.indexOf(c)})">✓ Pago</button>
-            <button class="excluir" onclick="excluirCheque(${cheques.indexOf(c)})">🗑️ Excluir</button>
+            <button class="pago" onclick="marcarChequePago(${indice})">✓ Pago</button>
+            <button class="excluir" onclick="excluirCheque(${indice})">🗑️ Excluir</button>
         </div>`;
     }).join('');
 }
@@ -343,14 +425,15 @@ function atualizarEuDevo() {
     if (filtroItens.length === 0) { el.innerHTML = '<div class="vazio">Nenhum registro</div>'; return; }
     el.innerHTML = filtroItens.map((d, idx) => {
         const statusFinal = statusReal(d.data, d.status);
+        const indice = euDevo.indexOf(d);
         return `<div class="item">
             <strong>${d.nome}</strong><br>
             ${d.desc || ''}<br>
             Venc: ${d.data} | ${moeda(d.valor)}<br>
             <small>${statusFinal === 'pago' ? '✅ Pago' : statusFinal === 'atrasado' ? '⚠️ Atrasado' : '📅 A Pagar'}</small>
             <br>
-            <button class="pago" onclick="marcarEuDevoPago(${euDevo.indexOf(d)})">✓ Pago</button>
-            <button class="excluir" onclick="excluirEuDevo(${euDevo.indexOf(d)})">🗑️ Excluir</button>
+            <button class="pago" onclick="marcarEuDevoPago(${indice})">✓ Pago</button>
+            <button class="excluir" onclick="excluirEuDevo(${indice})">🗑️ Excluir</button>
         </div>`;
     }).join('');
 }
@@ -379,14 +462,15 @@ function atualizarMeDevem() {
     if (filtroItens.length === 0) { el.innerHTML = '<div class="vazio">Nenhum registro</div>'; return; }
     el.innerHTML = filtroItens.map((d, idx) => {
         const statusFinal = statusReal(d.data, d.status);
+        const indice = meDevem.indexOf(d);
         return `<div class="item">
             <strong>${d.nome}</strong><br>
             ${d.desc || ''}<br>
             Receb: ${d.data} | ${moeda(d.valor)}<br>
             <small>${statusFinal === 'recebido' ? '✅ Recebido' : statusFinal === 'atrasado' ? '⚠️ Atrasado' : '📅 A Receber'}</small>
             <br>
-            <button class="pago" onclick="marcarMeDevemPago(${meDevem.indexOf(d)})">✓ Recebido</button>
-            <button class="excluir" onclick="excluirMeDevem(${meDevem.indexOf(d)})">🗑️ Excluir</button>
+            <button class="pago" onclick="marcarMeDevemPago(${indice})">✓ Recebido</button>
+            <button class="excluir" onclick="excluirMeDevem(${indice})">🗑️ Excluir</button>
         </div>`;
     }).join('');
 }
@@ -413,11 +497,12 @@ function atualizarContas() {
     const el = document.getElementById('listaContas');
     if (contas.length === 0) { el.innerHTML = '<div class="vazio">Nenhuma conta cadastrada</div>'; return; }
     el.innerHTML = contas.map((c, idx) => {
+        const indice = contas.indexOf(c);
         return `<div class="item">
             <strong>${c.nome}</strong> — ${moeda(c.valor)}<br>
             <small>${c.tipo === 'receita' ? '💵 Entrada' : '💸 Saída'}</small>
             <br>
-            <button class="excluir" onclick="excluirConta(${contas.indexOf(c)})">🗑️ Excluir</button>
+            <button class="excluir" onclick="excluirConta(${indice})">🗑️ Excluir</button>
         </div>`;
     }).join('');
 }
@@ -434,7 +519,6 @@ function adicionarConta() {
 }
 window.excluirConta = function(i) { if(confirm('Excluir?')) { contas.splice(i,1); salvarDados(); atualizarTela(); }};
 
-// INICIAR
 atualizarTela();
 </script>
 </body>
