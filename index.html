@@ -30,80 +30,79 @@
         .btn-warning { background: #eab308; color: #1e293b; }
         .input-field { width: 100%; padding: 10px 12px; border-radius: 6px; border: 1px solid #475569; background: #0f172a; color: white; margin-bottom: 10px; }
         .input-field:focus { outline: none; border-color: #3b82f6; }
-        .tabs-container { position: sticky; top: 0; background: #0f172a; z-index: 100; padding: 10px 0; }
-        .tab-btn { padding: 10px 14px; background: #1e293b; color: #94a3b8; border: none; border-radius: 8px; margin: 2px; cursor: pointer; font-weight: 500; }
+        .tabs-container { position: sticky; top: 0; background: #0f172a; z-index: 100; padding: 10px 0; overflow-x: auto; }
+        .tab-btn { padding: 10px 14px; background: #1e293b; color: #94a3b8; border: none; border-radius: 8px; margin: 2px; cursor: pointer; font-weight: 500; white-space: nowrap; }
         .tab-btn.active { background: #3b82f6; color: white; }
         .item-row { padding: 12px; border-bottom: 1px solid #334155; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; }
         .item-row:last-child { border-bottom: none; }
         .badge { padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
         .container { max-width: 1200px; margin: 0 auto; padding: 16px; }
-        .grid-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 20px; }
+        .grid-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 20px; }
         .summary-card { background: linear-gradient(135deg, #1e293b, #334155); border-radius: 12px; padding: 16px; text-align: center; }
+        .summary-card.positive { background: linear-gradient(135deg, #065f46, #16a34a); }
+        .summary-card.negative { background: linear-gradient(135deg, #991b1b, #dc2626); }
         .summary-card h3 { font-size: 14px; color: #94a3b8; margin-bottom: 8px; }
-        .summary-card .value { font-size: 22px; font-weight: 700; }
-        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+        .summary-card .value { font-size: 18px; font-weight: 700; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
         .chart-container { position: relative; height: 250px; margin: 20px 0; }
         .empty-state { text-align: center; padding: 40px; color: #64748b; }
-        h2 { font-size: 18px; margin-bottom: 16px; color: #e2e8f0; border-bottom: 1px solid #334155; padding-bottom: 8px; }
-        h1 { text-align: center; margin: 20px 0; color: #f8fafc; font-size: 24px; }
+        .date-info { font-size: 12px; color: #94a3b8; margin-top: 4px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>💼 Controle de Finanças</h1>
+    <h1 style="text-align: center; margin: 20px 0; font-size: 24px;">💼 Controle de Finanças</h1>
 
     <!-- TABS -->
     <div class="tabs-container">
-        <div style="overflow-x: auto; white-space: nowrap; padding-bottom: 4px;">
+        <div style="display: flex; flex-wrap: nowrap;">
             <button class="tab-btn active" data-tab="resumo">📊 Resumo</button>
             <button class="tab-btn" data-tab="boletos">📄 Boletos</button>
             <button class="tab-btn" data-tab="cheques">✍️ Cheques</button>
-            <button class="tab-btn" data-tab="parcelas">📦 Contas Parceladas</button>
+            <button class="tab-btn" data-tab="parcelas">📦 Parceladas</button>
             <button class="tab-btn" data-tab="receber">💰 A Receber</button>
+            <button class="tab-btn" data-tab="emprestimos">🤝 Empréstimos</button>
         </div>
     </div>
 
     <!-- RESUMO -->
     <div id="resumo" class="tab-content active">
         <div class="grid-summary">
-            <div class="summary-card">
+            <div class="summary-card" id="card-total-pagar">
                 <h3>Total a Pagar</h3>
-                <div class="value" id="totalAPagar" style="color: #f97316;">R$ 0,00</div>
+                <div class="value" style="color: #f97316;">R$ 0,00</div>
             </div>
-            <div class="summary-card">
+            <div class="summary-card" id="card-total-receber">
+                <h3>Total a Receber</h3>
+                <div class="value" style="color: #10b981;">R$ 0,00</div>
+            </div>
+            <div class="summary-card" id="card-saldo">
+                <h3>Saldo Geral</h3>
+                <div class="value">R$ 0,00</div>
+            </div>
+            <div class="summary-card" id="card-vencer">
                 <h3>A Vencer</h3>
-                <div class="value" id="totalAVencer" style="color: #eab308;">R$ 0,00</div>
+                <div class="value" style="color: #facc15;">R$ 0,00</div>
             </div>
-            <div class="summary-card">
+            <div class="summary-card" id="card-atrasado">
                 <h3>Atrasado</h3>
-                <div class="value" id="totalAtrasado" style="color: #dc2626;">R$ 0,00</div>
+                <div class="value" style="color: #ef4444;">R$ 0,00</div>
             </div>
-            <div class="summary-card">
-                <h3>Pago</h3>
-                <div class="value" id="totalPago" style="color: #16a34a;">R$ 0,00</div>
-            </div>
-            <div class="summary-card">
-                <h3>A Receber</h3>
-                <div class="value" id="totalAReceber" style="color: #3b82f6;">R$ 0,00</div>
-            </div>
-            <div class="summary-card">
-                <h3>Recebido</h3>
-                <div class="value" id="totalRecebido" style="color: #10b981;">R$ 0,00</div>
+            <div class="summary-card" id="card-pago">
+                <h3>Pago / Recebido</h3>
+                <div class="value" style="color: #22c55e;">R$ 0,00</div>
             </div>
         </div>
         <div class="chart-container">
             <canvas id="chartResumo"></canvas>
-        </div>
-        <div class="chart-container">
-            <canvas id="chartMes"></canvas>
         </div>
     </div>
 
     <!-- BOLETOS -->
     <div id="boletos" class="tab-content">
         <div class="card">
-            <h2>📄 Novo Boleto</h2>
+            <h2 style="font-size: 18px; margin-bottom: 16px;">📄 Novo Boleto</h2>
             <div class="form-grid">
                 <input type="text" id="boletoNome" class="input-field" placeholder="Nome / Empresa">
                 <input type="text" id="boletoCodigoBarras" class="input-field" placeholder="Código de Barras">
@@ -117,14 +116,14 @@
             </div>
             <button class="btn btn-primary" onclick="adicionarBoleto()">➕ Adicionar Boleto</button>
         </div>
-        <h2>Lista de Boletos</h2>
+        <h2 style="font-size: 18px; margin-bottom: 12px;">Lista de Boletos</h2>
         <div id="listaBoletos"></div>
     </div>
 
     <!-- CHEQUES -->
     <div id="cheques" class="tab-content">
         <div class="card">
-            <h2>✍️ Novo Cheque</h2>
+            <h2 style="font-size: 18px; margin-bottom: 16px;">✍️ Novo Cheque</h2>
             <div class="form-grid">
                 <input type="text" id="chequeEmitente" class="input-field" placeholder="Emitente / Favorecido">
                 <input type="text" id="chequeNumero" class="input-field" placeholder="Nº do Cheque">
@@ -138,46 +137,69 @@
             </div>
             <button class="btn btn-primary" onclick="adicionarCheque()">➕ Adicionar Cheque</button>
         </div>
-        <h2>Lista de Cheques</h2>
+        <h2 style="font-size: 18px; margin-bottom: 12px;">Lista de Cheques</h2>
         <div id="listaCheques"></div>
     </div>
 
     <!-- CONTAS PARCELADAS -->
     <div id="parcelas" class="tab-content">
         <div class="card">
-            <h2>📦 Nova Conta Parcelada</h2>
+            <h2 style="font-size: 18px; margin-bottom: 16px;">📦 Nova Conta Parcelada</h2>
             <div class="form-grid">
-                <input type="text" id="parcelaDescricao" class="input-field" placeholder="Descrição (ex: Celular, Carro)">
+                <input type="text" id="parcelaDescricao" class="input-field" placeholder="Descrição">
                 <input type="number" step="0.01" id="parcelaValorTotal" class="input-field" placeholder="Valor Total R$">
                 <input type="number" id="parcelaQuantidade" class="input-field" placeholder="Nº de Parcelas" min="1">
                 <input type="date" id="parcelaPrimeiraData" class="input-field">
             </div>
-            <button class="btn btn-primary" onclick="adicionarParcela()">➕ Adicionar Conta Parcelada</button>
+            <button class="btn btn-primary" onclick="adicionarParcela()">➕ Adicionar Conta</button>
         </div>
-        <h2>Contas Parceladas</h2>
+        <h2 style="font-size: 18px; margin-bottom: 12px;">Contas Parceladas</h2>
         <div id="listaParcelas"></div>
     </div>
 
     <!-- A RECEBER -->
     <div id="receber" class="tab-content">
         <div class="card">
-            <h2>💰 Novo Valor a Receber</h2>
+            <h2 style="font-size: 18px; margin-bottom: 16px;">💰 Novo Recebível</h2>
             <div class="form-grid">
-                <input type="text" id="receberNome" class="input-field" placeholder="Quem te deve">
+                <input type="text" id="receberNome" class="input-field" placeholder="Quem vai pagar">
                 <input type="text" id="receberDescricao" class="input-field" placeholder="Descrição">
                 <input type="number" step="0.01" id="receberValorTotal" class="input-field" placeholder="Valor Total R$">
                 <input type="number" id="receberParcelas" class="input-field" placeholder="Nº de Parcelas" min="1">
                 <input type="date" id="receberPrimeiraData" class="input-field">
             </div>
-            <button class="btn btn-primary" onclick="adicionarReceber()">➕ Adicionar a Receber</button>
+            <button class="btn btn-primary" onclick="adicionarReceber()">➕ Adicionar</button>
         </div>
-        <h2>Valores a Receber</h2>
+        <h2 style="font-size: 18px; margin-bottom: 12px;">Valores a Receber</h2>
         <div id="listaReceber"></div>
+    </div>
+
+    <!-- EMPRÉSTIMOS -->
+    <div id="emprestimos" class="tab-content">
+        <div class="card">
+            <h2 style="font-size: 18px; margin-bottom: 16px;">🤝 Novo Empréstimo</h2>
+            <div class="form-grid">
+                <input type="text" id="emprestimoPessoa" class="input-field" placeholder="Nome da Pessoa">
+                <input type="text" id="emprestimoDescricao" class="input-field" placeholder="Descrição">
+                <input type="number" step="0.01" id="emprestimoValor" class="input-field" placeholder="Valor Emprestado R$">
+                <input type="number" step="0.01" id="emprestimoJuros" class="input-field" placeholder="Juros % ao mês">
+                <input type="date" id="emprestimoData" class="input-field">
+                <input type="date" id="emprestimoVencimento" class="input-field">
+                <select id="emprestimoStatus" class="input-field">
+                    <option value="ativo">Ativo 🔄</option>
+                    <option value="pago">Pago ✅</option>
+                    <option value="atrasado">Atrasado ⚠️</option>
+                </select>
+            </div>
+            <button class="btn btn-primary" onclick="adicionarEmprestimo()">➕ Adicionar Empréstimo</button>
+        </div>
+        <h2 style="font-size: 18px; margin-bottom: 12px;">Meus Empréstimos</h2>
+        <div id="listaEmprestimos"></div>
     </div>
 </div>
 
 <script>
-// ====================== FIREBASE CONFIGURAÇÃO ======================
+// ===================== FIREBASE =====================
 const firebaseConfig = {
   apiKey: "AIzaSyCPd-aIQVDEP-UK2twGzci8sRLgjTRmI",
   authDomain: "controle-59fff.firebaseapp.com",
@@ -187,83 +209,70 @@ const firebaseConfig = {
   appId: "1:597330115962:web:0d01a891a5745f8e6ac3",
   measurementId: "G-WZ3C45QL6H"
 };
-
-// Inicializar Firebase
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-// Coleções
 const colecoes = {
     boletos: db.collection('boletos'),
     cheques: db.collection('cheques'),
     parcelas: db.collection('parcelas'),
-    receber: db.collection('receber')
+    receber: db.collection('receber'),
+    emprestimos: db.collection('emprestimos')
 };
 
-// ====================== FUNÇÕES AUXILIARES ======================
+// ===================== FUNÇÕES AUXILIARES =====================
 function formatarMoeda(valor) {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor || 0);
 }
-
 function formatarData(dataStr) {
     if (!dataStr) return '';
     const [ano, mes, dia] = dataStr.split('-');
     return `${dia}/${mes}/${ano}`;
 }
-
 function hoje() { return new Date().toISOString().split('T')[0]; }
 function ehAtrasado(dataStr) { return dataStr < hoje(); }
 
-// ====================== ABAS ======================
+// ===================== NAVEGAÇÃO =====================
 document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
         btn.classList.add('active');
         document.getElementById(btn.dataset.tab).classList.add('active');
-        atualizarResumo();
+        if (btn.dataset.tab === 'resumo') atualizarResumo();
     });
 });
 
-// ====================== BOLETOS ======================
+// ===================== BOLETOS =====================
 async function carregarBoletos() {
     const lista = document.getElementById('listaBoletos');
-    lista.innerHTML = '<div style="text-align:center;padding:20px">Carregando...</div>';
+    lista.innerHTML = '<div class="empty-state">Carregando...</div>';
     const snap = await colecoes.boletos.orderBy('vencimento', 'asc').get();
     lista.innerHTML = '';
-    
-    if (snap.empty) {
-        lista.innerHTML = '<div class="empty-state">Nenhum boleto cadastrado</div>';
-        return;
-    }
-    
+    if (snap.empty) { lista.innerHTML = '<div class="empty-state">Nenhum boleto cadastrado</div>'; return; }
     snap.forEach(doc => {
         const b = doc.data();
         const id = doc.id;
-        let classeStatus = '';
-        let textoStatus = '';
-        if (b.status === 'pago') {
-            classeStatus = 'status-pago'; textoStatus = '✅ Pago';
-        } else if (b.status === 'atrasado' || ehAtrasado(b.vencimento)) {
-            classeStatus = 'status-atrasado'; textoStatus = '⚠️ Atrasado';
-        } else {
-            classeStatus = 'status-vencer'; textoStatus = '📅 A Vencer';
-        }
-        
+        let classe = '', texto = '';
+        if (b.status === 'pago') { classe = 'status-pago'; texto = '✅ Pago'; }
+        else if (b.status === 'atrasado' || ehAtrasado(b.vencimento)) { classe = 'status-atrasado'; texto = '⚠️ Atrasado'; }
+        else { classe = 'status-vencer'; texto = '📅 A Vencer'; }
         lista.innerHTML += `
         <div class="item-row">
-            <div style="flex: 1; min-width: 150px;">
+            <div>
                 <div style="font-weight:600">${b.nome || 'Sem nome'}</div>
-                <div style="font-size:12px; color:#94a3b8">Cód: ${b.codigoBarras || 'Não informado'}</div>
-                <div style="font-size:12px; color:#94a3b8">Venc: ${formatarData(b.vencimento)}</div>
+                <div class="date-info">Vence em: ${formatarData(b.vencimento)}</div>
+                <div style="font-size:12px; color:#94a3b8">Cód: ${b.codigoBarras || '—'}</div>
             </div>
-            <div style="font-weight:700; font-size:18px; min-width:100px; text-align:right">${formatarMoeda(b.valor)}</div>
-            <span class="badge ${classeStatus}">${textoStatus}</span>
-            <button class="btn btn-danger" style="padding:6px 10px; font-size:13px" onclick="excluirBoleto('${id}')">🗑️</button>
+            <div style="text-align:right">
+                <div style="font-weight:700; font-size:16px">${formatarMoeda(b.valor)}</div>
+                <span class="badge ${classe}">${texto}</span>
+            </div>
+            <button class="btn btn-danger" style="padding:4px 8px; font-size:12px" onclick="excluirBoleto('${id}')">🗑️</button>
         </div>`;
     });
+    atualizarResumo();
 }
-
 async function adicionarBoleto() {
     const dados = {
         nome: document.getElementById('boletoNome').value.trim(),
@@ -273,89 +282,51 @@ async function adicionarBoleto() {
         status: document.getElementById('boletoStatus').value,
         criadoEm: new Date()
     };
-    
-    if (!dados.nome || !dados.vencimento || !dados.valor) {
-        alert('Preencha os campos principais!'); return;
-    }
-    
+    if (!dados.nome || !dados.vencimento || !dados.valor) { alert('Preencha os campos principais!'); return; }
     await colecoes.boletos.add(dados);
-    limparCampos('boletos');
-    await carregarBoletos();
-    await atualizarResumo();
+    document.getElementById('boletoNome').value = '';
+    document.getElementById('boletoCodigoBarras').value = '';
+    document.getElementById('boletoVencimento').value = '';
+    document.getElementById('boletoValor').value = '';
+    carregarBoletos();
 }
-
 async function excluirBoleto(id) {
     if (confirm('Excluir este boleto?')) {
         await colecoes.boletos.doc(id).delete();
-        await carregarBoletos();
-        await atualizarResumo();
+        carregarBoletos();
     }
 }
 
-function limparCampos(tipo) {
-    if (tipo === 'boletos') {
-        document.getElementById('boletoNome').value = '';
-        document.getElementById('boletoCodigoBarras').value = '';
-        document.getElementById('boletoVencimento').value = '';
-        document.getElementById('boletoValor').value = '';
-    } else if (tipo === 'cheques') {
-        document.getElementById('chequeEmitente').value = '';
-        document.getElementById('chequeNumero').value = '';
-        document.getElementById('chequeVencimento').value = '';
-        document.getElementById('chequeValor').value = '';
-    } else if (tipo === 'parcelas') {
-        document.getElementById('parcelaDescricao').value = '';
-        document.getElementById('parcelaValorTotal').value = '';
-        document.getElementById('parcelaQuantidade').value = '';
-        document.getElementById('parcelaPrimeiraData').value = '';
-    } else if (tipo === 'receber') {
-        document.getElementById('receberNome').value = '';
-        document.getElementById('receberDescricao').value = '';
-        document.getElementById('receberValorTotal').value = '';
-        document.getElementById('receberParcelas').value = '';
-        document.getElementById('receberPrimeiraData').value = '';
-    }
-}
-
-// ====================== CHEQUES ======================
+// ===================== CHEQUES =====================
 async function carregarCheques() {
     const lista = document.getElementById('listaCheques');
-    lista.innerHTML = '<div style="text-align:center;padding:20px">Carregando...</div>';
+    lista.innerHTML = '<div class="empty-state">Carregando...</div>';
     const snap = await colecoes.cheques.orderBy('vencimento', 'asc').get();
     lista.innerHTML = '';
-    
-    if (snap.empty) {
-        lista.innerHTML = '<div class="empty-state">Nenhum cheque cadastrado</div>';
-        return;
-    }
-    
+    if (snap.empty) { lista.innerHTML = '<div class="empty-state">Nenhum cheque cadastrado</div>'; return; }
     snap.forEach(doc => {
         const c = doc.data();
         const id = doc.id;
-        let classeStatus = '';
-        let textoStatus = '';
-        if (c.status === 'pago') {
-            classeStatus = 'status-pago'; textoStatus = '✅ Compensado';
-        } else if (c.status === 'atrasado' || ehAtrasado(c.vencimento)) {
-            classeStatus = 'status-atrasado'; textoStatus = '⚠️ Atrasado';
-        } else {
-            classeStatus = 'status-vencer'; textoStatus = '📅 A Vencer';
-        }
-        
+        let classe = '', texto = '';
+        if (c.status === 'pago') { classe = 'status-pago'; texto = '✅ Compensado'; }
+        else if (c.status === 'atrasado' || ehAtrasado(c.vencimento)) { classe = 'status-atrasado'; texto = '⚠️ Atrasado'; }
+        else { classe = 'status-vencer'; texto = '📅 A Vencer'; }
         lista.innerHTML += `
         <div class="item-row">
-            <div style="flex: 1; min-width: 150px;">
+            <div>
                 <div style="font-weight:600">${c.emitente || 'Sem nome'}</div>
+                <div class="date-info">Vence em: ${formatarData(c.vencimento)}</div>
                 <div style="font-size:12px; color:#94a3b8">Nº: ${c.numero || '—'}</div>
-                <div style="font-size:12px; color:#94a3b8">Venc: ${formatarData(c.vencimento)}</div>
             </div>
-            <div style="font-weight:700; font-size:18px; min-width:100px; text-align:right">${formatarMoeda(c.valor)}</div>
-            <span class="badge ${classeStatus}">${textoStatus}</span>
-            <button class="btn btn-danger" style="padding:6px 10px; font-size:13px" onclick="excluirCheque('${id}')">🗑️</button>
+            <div style="text-align:right">
+                <div style="font-weight:700; font-size:16px">${formatarMoeda(c.valor)}</div>
+                <span class="badge ${classe}">${texto}</span>
+            </div>
+            <button class="btn btn-danger" style="padding:4px 8px; font-size:12px" onclick="excluirCheque('${id}')">🗑️</button>
         </div>`;
     });
+    atualizarResumo();
 }
-
 async function adicionarCheque() {
     const dados = {
         emitente: document.getElementById('chequeEmitente').value.trim(),
@@ -365,320 +336,262 @@ async function adicionarCheque() {
         status: document.getElementById('chequeStatus').value,
         criadoEm: new Date()
     };
-    
-    if (!dados.emitente || !dados.vencimento || !dados.valor) {
-        alert('Preencha os campos principais!'); return;
-    }
-    
+    if (!dados.emitente || !dados.vencimento || !dados.valor) { alert('Preencha os campos principais!'); return; }
     await colecoes.cheques.add(dados);
-    limparCampos('cheques');
-    await carregarCheques();
-    await atualizarResumo();
+    document.getElementById('chequeEmitente').value = '';
+    document.getElementById('chequeNumero').value = '';
+    document.getElementById('chequeVencimento').value = '';
+    document.getElementById('chequeValor').value = '';
+    carregarCheques();
 }
-
 async function excluirCheque(id) {
     if (confirm('Excluir este cheque?')) {
         await colecoes.cheques.doc(id).delete();
-        await carregarCheques();
-        await atualizarResumo();
+        carregarCheques();
     }
 }
 
-// ====================== CONTAS PARCELADAS ======================
+// ===================== PARCELADAS =====================
 async function carregarParcelas() {
     const lista = document.getElementById('listaParcelas');
-    lista.innerHTML = '<div style="text-align:center;padding:20px">Carregando...</div>';
+    lista.innerHTML = '<div class="empty-state">Carregando...</div>';
     const snap = await colecoes.parcelas.orderBy('primeiraData', 'asc').get();
     lista.innerHTML = '';
-    
-    if (snap.empty) {
-        lista.innerHTML = '<div class="empty-state">Nenhuma conta parcelada cadastrada</div>';
-        return;
-    }
-    
+    if (snap.empty) { lista.innerHTML = '<div class="empty-state">Nenhuma conta parcelada</div>'; return; }
     snap.forEach(doc => {
         const p = doc.data();
         const id = doc.id;
         const valorParcela = p.valorTotal / p.quantidade;
-        
-        // Gerar lista de parcelas
-        let parcelasHtml = '<div style="margin-top:10px; font-size:13px">';
-        const data = new Date(p.primeiraData);
-        for (let i = 1; i <= p.quantidade; i++) {
-            const dataStr = data.toISOString().split('T')[0];
-            const status = dataStr < hoje() ? '✅ Paga' : '📅 A vencer';
-            parcelasHtml += `<div style="display:flex; justify-content:space-between; padding:4px 8px; background:#1e293b; border-radius:4px; margin-bottom:4px;">
-                <span>${i}ª parcela — ${formatarData(dataStr)}</span>
-                <span>${formatarMoeda(valorParcela)} ${status}</span>
-            </div>`;
-            data.setMonth(data.getMonth() + 1);
-        }
-        parcelasHtml += '</div>';
-        
         lista.innerHTML += `
-        <div class="card">
-            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-                <div>
-                    <div style="font-weight:700; font-size:17px">${p.descricao}</div>
-                    <div style="color:#94a3b8; font-size:14px">${p.quantidade}x de ${formatarMoeda(valorParcela)}</div>
-                    <div style="color:#e2e8f0; font-size:14px">Total: ${formatarMoeda(p.valorTotal)}</div>
-                </div>
-                <button class="btn btn-danger" style="padding:6px 10px; font-size:13px" onclick="excluirParcela('${id}')">🗑️</button>
+        <div class="item-row">
+            <div>
+                <div style="font-weight:600">${p.descricao || 'Sem descrição'}</div>
+                <div class="date-info">Início: ${formatarData(p.primeiraData)} • ${p.quantidade}x de ${formatarMoeda(valorParcela)}</div>
+                <div style="font-size:12px; color:#94a3b8">Total: ${formatarMoeda(p.valorTotal)}</div>
             </div>
-            ${parcelasHtml}
+            <button class="btn btn-danger" style="padding:4px 8px; font-size:12px" onclick="excluirParcela('${id}')">🗑️</button>
         </div>`;
     });
+    atualizarResumo();
 }
-
 async function adicionarParcela() {
-    const valorTotal = parseFloat(document.getElementById('parcelaValorTotal').value) || 0;
-    const quantidade = parseInt(document.getElementById('parcelaQuantidade').value) || 0;
-    const primeiraData = document.getElementById('parcelaPrimeiraData').value;
-    
-    if (!valorTotal || !quantidade || !primeiraData) {
-        alert('Preencha todos os campos!'); return;
-    }
-    
     const dados = {
         descricao: document.getElementById('parcelaDescricao').value.trim(),
-        valorTotal: valorTotal,
-        quantidade: quantidade,
-        primeiraData: primeiraData,
+        valorTotal: parseFloat(document.getElementById('parcelaValorTotal').value) || 0,
+        quantidade: parseInt(document.getElementById('parcelaQuantidade').value) || 1,
+        primeiraData: document.getElementById('parcelaPrimeiraData').value,
         criadoEm: new Date()
     };
-    
+    if (!dados.descricao || !dados.valorTotal || !dados.quantidade || !dados.primeiraData) { alert('Preencha todos os campos!'); return; }
     await colecoes.parcelas.add(dados);
-    limparCampos('parcelas');
-    await carregarParcelas();
-    await atualizarResumo();
+    document.getElementById('parcelaDescricao').value = '';
+    document.getElementById('parcelaValorTotal').value = '';
+    document.getElementById('parcelaQuantidade').value = '';
+    document.getElementById('parcelaPrimeiraData').value = '';
+    carregarParcelas();
 }
-
 async function excluirParcela(id) {
-    if (confirm('Excluir esta conta parcelada?')) {
+    if (confirm('Excluir esta conta?')) {
         await colecoes.parcelas.doc(id).delete();
-        await carregarParcelas();
-        await atualizarResumo();
+        carregarParcelas();
     }
 }
 
-// ====================== A RECEBER ======================
+// ===================== A RECEBER =====================
 async function carregarReceber() {
     const lista = document.getElementById('listaReceber');
-    lista.innerHTML = '<div style="text-align:center;padding:20px">Carregando...</div>';
+    lista.innerHTML = '<div class="empty-state">Carregando...</div>';
     const snap = await colecoes.receber.orderBy('primeiraData', 'asc').get();
     lista.innerHTML = '';
-    
-    if (snap.empty) {
-        lista.innerHTML = '<div class="empty-state">Nenhum valor a receber cadastrado</div>';
-        return;
-    }
-    
+    if (snap.empty) { lista.innerHTML = '<div class="empty-state">Nenhum valor a receber</div>'; return; }
     snap.forEach(doc => {
         const r = doc.data();
         const id = doc.id;
         const valorParcela = r.valorTotal / r.quantidade;
-        
-        // Gerar lista de parcelas
-        let parcelasHtml = '<div style="margin-top:10px; font-size:13px">';
-        const data = new Date(r.primeiraData);
-        for (let i = 1; i <= r.quantidade; i++) {
-            const dataStr = data.toISOString().split('T')[0];
-            let status = '📅 A receber';
-            if (dataStr < hoje()) status = '✅ Recebido';
-            parcelasHtml += `<div style="display:flex; justify-content:space-between; padding:4px 8px; background:#1e293b; border-radius:4px; margin-bottom:4px;">
-                <span>${i}ª parcela — ${formatarData(dataStr)}</span>
-                <span>${formatarMoeda(valorParcela)} ${status}</span>
-            </div>`;
-            data.setMonth(data.getMonth() + 1);
-        }
-        parcelasHtml += '</div>';
-        
         lista.innerHTML += `
-        <div class="card">
-            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-                <div>
-                    <div style="font-weight:700; font-size:17px">👤 ${r.nome}</div>
-                    <div style="color:#94a3b8; font-size:14px">${r.descricao || ''}</div>
-                    <div style="color:#e2e8f0; font-size:14px">${r.quantidade}x de ${formatarMoeda(valorParcela)}</div>
-                    <div style="color:#10b981; font-size:14px; font-weight:600">Total a receber: ${formatarMoeda(r.valorTotal)}</div>
-                </div>
-                <button class="btn btn-danger" style="padding:6px 10px; font-size:13px" onclick="excluirReceber('${id}')">🗑️</button>
+        <div class="item-row">
+            <div>
+                <div style="font-weight:600">👤 ${r.nome || 'Sem nome'}</div>
+                <div class="date-info">Início: ${formatarData(r.primeiraData)} • ${r.quantidade}x de ${formatarMoeda(valorParcela)}</div>
+                <div style="font-size:12px; color:#94a3b8">Total a receber: ${formatarMoeda(r.valorTotal)}</div>
             </div>
-            ${parcelasHtml}
+            <button class="btn btn-danger" style="padding:4px 8px; font-size:12px" onclick="excluirReceber('${id}')">🗑️</button>
         </div>`;
     });
+    atualizarResumo();
 }
-
 async function adicionarReceber() {
-    const valorTotal = parseFloat(document.getElementById('receberValorTotal').value) || 0;
-    const quantidade = parseInt(document.getElementById('receberParcelas').value) || 0;
-    const primeiraData = document.getElementById('receberPrimeiraData').value;
-    
-    if (!valorTotal || !quantidade || !primeiraData) {
-        alert('Preencha todos os campos!'); return;
-    }
-    
     const dados = {
         nome: document.getElementById('receberNome').value.trim(),
         descricao: document.getElementById('receberDescricao').value.trim(),
-        valorTotal: valorTotal,
-        quantidade: quantidade,
-        primeiraData: primeiraData,
+        valorTotal: parseFloat(document.getElementById('receberValorTotal').value) || 0,
+        quantidade: parseInt(document.getElementById('receberParcelas').value) || 1,
+        primeiraData: document.getElementById('receberPrimeiraData').value,
         criadoEm: new Date()
     };
-    
+    if (!dados.nome || !dados.valorTotal || !dados.quantidade || !dados.primeiraData) { alert('Preencha todos os campos!'); return; }
     await colecoes.receber.add(dados);
-    limparCampos('receber');
-    await carregarReceber();
-    await atualizarResumo();
+    document.getElementById('receberNome').value = '';
+    document.getElementById('receberDescricao').value = '';
+    document.getElementById('receberValorTotal').value = '';
+    document.getElementById('receberParcelas').value = '';
+    document.getElementById('receberPrimeiraData').value = '';
+    carregarReceber();
 }
-
 async function excluirReceber(id) {
     if (confirm('Excluir este registro?')) {
         await colecoes.receber.doc(id).delete();
-        await carregarReceber();
-        await atualizarResumo();
+        carregarReceber();
     }
 }
 
-// ====================== RESUMO E GRÁFICOS ======================
-let chartResumo, chartMes;
-
-async function atualizarResumo() {
-    let totalAPagar = 0, totalAVencer = 0, totalAtrasado = 0, totalPago = 0;
-    let totalAReceber = 0, totalRecebido = 0;
-    
-    // Boletos
-    const snapBoletos = await colecoes.boletos.get();
-    snapBoletos.forEach(doc => {
-        const b = doc.data();
-        totalAPagar += b.valor || 0;
-        if (b.status === 'pago') {
-            totalPago += b.valor || 0;
-        } else if (b.status === 'atrasado' || ehAtrasado(b.vencimento)) {
-            totalAtrasado += b.valor || 0;
-        } else {
-            totalAVencer += b.valor || 0;
-        }
+// ===================== EMPRÉSTIMOS =====================
+async function carregarEmprestimos() {
+    const lista = document.getElementById('listaEmprestimos');
+    lista.innerHTML = '<div class="empty-state">Carregando...</div>';
+    const snap = await colecoes.emprestimos.orderBy('data', 'desc').get();
+    lista.innerHTML = '';
+    if (snap.empty) { lista.innerHTML = '<div class="empty-state">Nenhum empréstimo cadastrado</div>'; return; }
+    snap.forEach(doc => {
+        const e = doc.data();
+        const id = doc.id;
+        const valorComJuros = e.valor * (1 + (e.juros / 100));
+        let classe = '', texto = '';
+        if (e.status === 'pago') { classe = 'status-pago'; texto = '✅ Pago'; }
+        else if (e.status === 'atrasado' || ehAtrasado(e.vencimento)) { classe = 'status-atrasado'; texto = '⚠️ Atrasado'; }
+        else { classe = 'status-a-receber'; texto = '🔄 Ativo'; }
+        lista.innerHTML += `
+        <div class="item-row">
+            <div>
+                <div style="font-weight:600">🤝 ${e.pessoa || 'Sem nome'}</div>
+                <div class="date-info">Empréstimo em: ${formatarData(e.data)} • Vence em: ${formatarData(e.vencimento)}</div>
+                <div style="font-size:12px; color:#94a3b8">
+                    Principal: ${formatarMoeda(e.valor)} • Juros: ${e.juros || 0}% • 
+                    Total: <strong style="color:#10b981">${formatarMoeda(valorComJuros)}</strong>
+                </div>
+            </div>
+            <div style="text-align:right">
+                <span class="badge ${classe}">${texto}</span>
+            </div>
+            <button class="btn btn-danger" style="padding:4px 8px; font-size:12px" onclick="excluirEmprestimo('${id}')">🗑️</button>
+        </div>`;
     });
-    
-    // Cheques
-    const snapCheques = await colecoes.cheques.get();
-    snapCheques.forEach(doc => {
-        const c = doc.data();
-        totalAPagar += c.valor || 0;
-        if (c.status === 'pago') {
-            totalPago += c.valor || 0;
-        } else if (c.status === 'atrasado' || ehAtrasado(c.vencimento)) {
-            totalAtrasado += c.valor || 0;
-        } else {
-            totalAVencer += c.valor || 0;
-        }
-    });
-    
-    // Contas Parceladas (soma as parcelas do mês atual)
-    const snapParcelas = await colecoes.parcelas.get();
-    const hoje = new Date();
-    const mesAtual = hoje.getMonth(), anoAtual = hoje.getFullYear();
-    let totalParcelasMes = 0;
-    
-    snapParcelas.forEach(doc => {
-        const p = doc.data();
-        const valorParcela = p.valorTotal / p.quantidade;
-        const data = new Date(p.primeiraData);
-        for (let i = 0; i < p.quantidade; i++) {
-            if (data.getMonth() === mesAtual && data.getFullYear() === anoAtual) {
-                totalParcelasMes += valorParcela;
-            }
-            data.setMonth(data.getMonth() + 1);
-        }
-    });
-    
-    // A Receber
-    const snapReceber = await colecoes.receber.get();
-    snapReceber.forEach(doc => {
-        const r = doc.data();
-        totalAReceber += r.valorTotal || 0;
-        const data = new Date(r.primeiraData);
-        for (let i = 0; i < r.quantidade; i++) {
-            if (data.toISOString().split('T')[0] <= hoje().split('T')[0]) {
-                totalRecebido += (r.valorTotal / r.quantidade);
-            }
-            data.setMonth(data.getMonth() + 1);
-        }
-    });
-    
-    // Atualizar na tela
-    document.getElementById('totalAPagar').textContent = formatarMoeda(totalAPagar);
-    document.getElementById('totalAVencer').textContent = formatarMoeda(totalAVencer + totalParcelasMes);
-    document.getElementById('totalAtrasado').textContent = formatarMoeda(totalAtrasado);
-    document.getElementById('totalPago').textContent = formatarMoeda(totalPago);
-    document.getElementById('totalAReceber').textContent = formatarMoeda(totalAReceber);
-    document.getElementById('totalRecebido').textContent = formatarMoeda(totalRecebido);
-    
-    // Gráficos
-    atualizarGraficos(totalAVencer + totalParcelasMes, totalAtrasado, totalPago, totalAReceber - totalRecebido, totalRecebido);
+    atualizarResumo();
+}
+async function adicionarEmprestimo() {
+    const dados = {
+        pessoa: document.getElementById('emprestimoPessoa').value.trim(),
+        descricao: document.getElementById('emprestimoDescricao').value.trim(),
+        valor: parseFloat(document.getElementById('emprestimoValor').value) || 0,
+        juros: parseFloat(document.getElementById('emprestimoJuros').value) || 0,
+        data: document.getElementById('emprestimoData').value,
+        vencimento: document.getElementById('emprestimoVencimento').value,
+        status: document.getElementById('emprestimoStatus').value,
+        criadoEm: new Date()
+    };
+    if (!dados.pessoa || !dados.valor || !dados.data || !dados.vencimento) { alert('Preencha os campos principais!'); return; }
+    await colecoes.emprestimos.add(dados);
+    document.getElementById('emprestimoPessoa').value = '';
+    document.getElementById('emprestimoDescricao').value = '';
+    document.getElementById('emprestimoValor').value = '';
+    document.getElementById('emprestimoJuros').value = '';
+    document.getElementById('emprestimoData').value = '';
+    document.getElementById('emprestimoVencimento').value = '';
+    carregarEmprestimos();
+}
+async function excluirEmprestimo(id) {
+    if (confirm('Excluir este empréstimo?')) {
+        await colecoes.emprestimos.doc(id).delete();
+        carregarEmprestimos();
+    }
 }
 
-function atualizarGraficos(vencer, atrasado, pago, aReceber, recebido) {
-    const ctx1 = document.getElementById('chartResumo').getContext('2d');
-    const ctx2 = document.getElementById('chartMes').getContext('2d');
-    
+// ===================== RESUMO E GRÁFICO =====================
+let chartResumo;
+async function atualizarResumo() {
+    let totalPagar = 0, totalReceber = 0, vencer = 0, atrasado = 0, pago = 0;
+
+    const [boletosSnap, chequesSnap, parcelasSnap, receberSnap, emprestimosSnap] = await Promise.all([
+        colecoes.boletos.get(),
+        colecoes.cheques.get(),
+        colecoes.parcelas.get(),
+        colecoes.receber.get(),
+        colecoes.emprestimos.get()
+    ]);
+
+    boletosSnap.forEach(doc => {
+        const b = doc.data();
+        if (b.status === 'pago') { pago += b.valor; }
+        else if (b.status === 'atrasado' || ehAtrasado(b.vencimento)) { atrasado += b.valor; totalPagar += b.valor; }
+        else { vencer += b.valor; totalPagar += b.valor; }
+    });
+
+    chequesSnap.forEach(doc => {
+        const c = doc.data();
+        if (c.status === 'pago') { pago += c.valor; }
+        else if (c.status === 'atrasado' || ehAtrasado(c.vencimento)) { atrasado += c.valor; totalPagar += c.valor; }
+        else { vencer += c.valor; totalPagar += c.valor; }
+    });
+
+    parcelasSnap.forEach(doc => {
+        const p = doc.data();
+        totalPagar += p.valorTotal;
+        vencer += p.valorTotal;
+    });
+
+    receberSnap.forEach(doc => {
+        const r = doc.data();
+        totalReceber += r.valorTotal;
+    });
+
+    emprestimosSnap.forEach(doc => {
+        const e = doc.data();
+        const valorComJuros = e.valor * (1 + (e.juros / 100));
+        if (e.status === 'pago') { pago += valorComJuros; }
+        else { totalReceber += valorComJuros; }
+    });
+
+    const saldo = totalReceber - totalPagar;
+
+    document.querySelector('#card-total-pagar .value').textContent = formatarMoeda(totalPagar);
+    document.querySelector('#card-total-receber .value').textContent = formatarMoeda(totalReceber);
+    document.querySelector('#card-saldo .value').textContent = formatarMoeda(saldo);
+    document.querySelector('#card-vencer .value').textContent = formatarMoeda(vencer);
+    document.querySelector('#card-atrasado .value').textContent = formatarMoeda(atrasado);
+    document.querySelector('#card-pago .value').textContent = formatarMoeda(pago);
+
+    const saldoCard = document.getElementById('card-saldo');
+    saldoCard.classList.remove('positive', 'negative');
+    if (saldo > 0) saldoCard.classList.add('positive');
+    if (saldo < 0) saldoCard.classList.add('negative');
+
     if (chartResumo) chartResumo.destroy();
-    if (chartMes) chartMes.destroy();
-    
-    chartResumo = new Chart(ctx1, {
+    const ctx = document.getElementById('chartResumo').getContext('2d');
+    chartResumo = new Chart(ctx, {
         type: 'doughnut',
         data: {
-            labels: ['A Vencer', 'Atrasado', 'Pago'],
+            labels: ['A Vencer', 'Atrasado', 'Pago', 'A Receber'],
             datasets: [{
-                data: [vencer, atrasado, pago],
-                backgroundColor: ['#eab308', '#dc2626', '#16a34a'],
+                data: [vencer, atrasado, pago, totalReceber],
+                backgroundColor: ['#eab308', '#ef4444', '#22c55e', '#3b82f6'],
                 borderWidth: 0
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: { legend: { position: 'bottom', labels: { color: '#e2e8f0' } } },
-            cutout: '60%'
-        }
-    });
-    
-    chartMes = new Chart(ctx2, {
-        type: 'bar',
-        data: {
-            labels: ['A Pagar', 'A Receber'],
-            datasets: [{
-                label: 'Aguardando',
-                data: [vencer + atrasado, aReceber],
-                backgroundColor: ['#f97316', '#3b82f6'],
-                borderRadius: 6
-            }, {
-                label: 'Concluído',
-                data: [pago, recebido],
-                backgroundColor: ['#16a34a', '#10b981'],
-                borderRadius: 6
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                x: { ticks: { color: '#94a3b8' }, grid: { display: false } },
-                y: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' } }
-            },
             plugins: { legend: { position: 'bottom', labels: { color: '#e2e8f0' } } }
         }
     });
 }
 
-// ====================== INICIALIZAÇÃO ======================
+// ===================== INICIALIZAÇÃO =====================
 window.onload = async function() {
     await carregarBoletos();
     await carregarCheques();
     await carregarParcelas();
     await carregarReceber();
+    await carregarEmprestimos();
     await atualizarResumo();
 };
 </script>
