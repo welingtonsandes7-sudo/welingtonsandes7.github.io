@@ -3,666 +3,810 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Controle de Finanças 💼</title>
+    <title>Controle Financeiro 💼</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: #0f172a; color: #f1f5f9; min-height: 100vh; }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        .status-pago { background: #16a34a; color: white; }
-        .status-vencer { background: #eab308; color: #1e293b; }
-        .status-atrasado { background: #dc2626; color: white; }
-        .status-recebido { background: #16a34a; color: white; }
-        .status-a-receber { background: #3b82f6; color: white; }
-        .status-em-atraso { background: #f97316; color: white; }
-        input, select, button { font-size: 16px; }
-        .card { background: #1e293b; border-radius: 12px; padding: 16px; margin-bottom: 12px; }
-        .btn { padding: 10px 16px; border-radius: 8px; font-weight: 600; border: none; cursor: pointer; transition: 0.2s; }
-        .btn:hover { transform: translateY(-1px); }
-        .btn-primary { background: #3b82f6; color: white; }
-        .btn-success { background: #16a34a; color: white; }
-        .btn-danger { background: #dc2626; color: white; }
-        .btn-warning { background: #eab308; color: #1e293b; }
-        .btn-sm { padding: 4px 8px; font-size: 12px; }
-        .input-field { width: 100%; padding: 10px 12px; border-radius: 6px; border: 1px solid #475569; background: #0f172a; color: white; margin-bottom: 10px; }
-        .input-field:focus { outline: none; border-color: #3b82f6; }
-        .tabs-container { position: sticky; top: 0; background: #0f172a; z-index: 100; padding: 10px 0; overflow-x: auto; }
-        .tab-btn { padding: 10px 14px; background: #1e293b; color: #94a3b8; border: none; border-radius: 8px; margin: 2px; cursor: pointer; font-weight: 500; white-space: nowrap; }
-        .tab-btn.active { background: #3b82f6; color: white; }
-        .item-row { padding: 12px; border-bottom: 1px solid #334155; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; }
-        .item-row:last-child { border-bottom: none; }
-        .badge { padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
-        .container { max-width: 1200px; margin: 0 auto; padding: 16px; }
-        .grid-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 20px; }
-        .summary-card { background: linear-gradient(135deg, #1e293b, #334155); border-radius: 12px; padding: 16px; text-align: center; }
-        .summary-card.positive { background: linear-gradient(135deg, #065f46, #16a34a); }
-        .summary-card.negative { background: linear-gradient(135deg, #991b1b, #dc2626); }
-        .summary-card h3 { font-size: 14px; color: #94a3b8; margin-bottom: 8px; }
-        .summary-card .value { font-size: 18px; font-weight: 700; }
-        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
-        .chart-container { position: relative; height: 250px; margin: 20px 0; }
-        .empty-state { text-align: center; padding: 40px; color: #64748b; }
-        .date-info { font-size: 12px; color: #94a3b8; margin-top: 4px; }
-        .edit-mode { border: 2px solid #3b82f6; border-radius: 8px; padding: 12px; margin-bottom: 12px; background: #1e293b; }
-        .btn-group { display: flex; gap: 6px; }
+        :root {
+            --primaria: #3b82f6;
+            --sucesso: #22c55e;
+            --aviso: #eab308;
+            --perigo: #ef4444;
+            --fundo: #0f172a;
+            --card: #1e293b;
+            --texto: #f1f5f9;
+            --texto-claro: #94a3b8;
+        }
+        body {
+            font-family: 'Segoe UI', 'Inter', Arial, sans-serif;
+            background: linear-gradient(135deg, var(--fundo) 0%, #1a2744 50%, var(--fundo) 100%);
+            color: var(--texto);
+            min-height: 100vh;
+            padding: 16px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        
+        .cabecalho { text-align: center; margin: 24px 0; padding: 16px; }
+        .cabecalho h1 {
+            font-size: 26px;
+            background: linear-gradient(90deg, #3b82f6, #10b981, #3b82f6);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 800;
+        }
+        .cabecalho p { color: var(--texto-claro); font-size: 14px; margin-top: 4px; }
+        
+        .barra-topo {
+            display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+            margin-bottom: 20px; padding: 14px; background: rgba(30, 41, 59, 0.6);
+            border-radius: 14px; border: 1px solid rgba(59, 130, 246, 0.15);
+        }
+        .busca { flex: 1; min-width: 200px; position: relative; }
+        .busca i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--texto-claro); }
+        .busca input { padding: 10px 12px 10px 36px; border-radius: 8px; border: 1px solid rgba(71, 85, 105, 0.6); background: rgba(15, 23, 42, 0.5); color: white; width: 100%; }
+        .filtros { display: flex; gap: 6px; flex-wrap: wrap; }
+        .filtro-btn { padding: 8px 12px; background: transparent; border: 1px solid rgba(59, 130, 246, 0.3); color: var(--texto-claro); border-radius: 6px; font-size: 13px; cursor: pointer; transition: all 0.2s; }
+        .filtro-btn.ativo { background: var(--primaria); color: white; border-color: var(--primaria); }
+        
+        .navegacao {
+            display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px;
+            position: sticky; top: 0; z-index: 100; padding: 12px;
+            background: rgba(15, 23, 42, 0.85);
+            border-radius: 14px; border: 1px solid rgba(59, 130, 246, 0.15);
+        }
+        .nav-btn {
+            padding: 10px 14px; background: rgba(30, 41, 59, 0.5); color: var(--texto-claro);
+            border: 1px solid transparent; border-radius: 8px; cursor: pointer;
+            font-size: 14px; font-weight: 500; transition: all 0.25s ease;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .nav-btn:hover { background: rgba(59, 130, 246, 0.15); color: white; }
+        .nav-btn.ativo { background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3); }
+        
+        .painel { display: none; }
+        .painel.visivel { display: block; }
+        
+        .card {
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 16px; padding: 22px; margin-bottom: 22px;
+            border: 1px solid rgba(59, 130, 246, 0.12);
+        }
+        .card h2 { font-size: 17px; margin-bottom: 18px; color: var(--texto); display: flex; align-items: center; gap: 8px; font-weight: 600; }
+        .card h2 i { color: var(--primaria); }
+        
+        .grupo { margin-bottom: 16px; }
+        label { font-size: 13px; color: var(--texto-claro); margin-bottom: 6px; display: block; font-weight: 500; }
+        input, select {
+            width: 100%; padding: 12px 14px; border-radius: 8px;
+            border: 1px solid rgba(71, 85, 105, 0.6);
+            background: rgba(15, 23, 42, 0.5); color: white;
+            font-size: 15px;
+        }
+        input:focus, select:focus { outline: none; border-color: var(--primaria); }
+        
+        button { border: none; cursor: pointer; font-weight: 600; transition: all 0.15s ease; }
+        button:active { transform: scale(0.97); }
+        
+        .btn-primario { background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; padding: 12px 20px; border-radius: 8px; font-size: 14px; width: 100%; }
+        .btn-sucesso { background: linear-gradient(135deg, #22c55e, #16a34a); color: white; padding: 8px 14px; border-radius: 6px; font-size: 13px; }
+        .btn-aviso { background: linear-gradient(135deg, #eab308, #ca8a04); color: #1e293b; padding: 8px 14px; border-radius: 6px; font-size: 13px; }
+        .btn-perigo { background: linear-gradient(135deg, #ef4444, #dc2626); color: white; padding: 8px 14px; border-radius: 6px; font-size: 13px; }
+        
+        .resumo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .resumo-card { background: linear-gradient(145deg, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.5)); border-radius: 14px; padding: 20px; border: 1px solid rgba(59, 130, 246, 0.12); }
+        .resumo-card h3 { font-size: 13px; color: var(--texto-claro); margin-bottom: 8px; font-weight: 500; text-transform: uppercase; }
+        .resumo-card .valor { font-size: 22px; font-weight: 800; }
+        .positivo { color: #22c55e; }
+        .negativo { color: #ef4444; }
+        .laranja { color: #f97316; }
+        
+        .linha {
+            padding: 16px; border-radius: 10px; margin-bottom: 8px;
+            background: rgba(15, 23, 42, 0.3);
+        }
+        .linha-acoes { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+        .linha-corpo { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 10px; }
+        
+        .status { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+        .status-pago { background: rgba(34, 197, 94, 0.12); color: #22c55e; }
+        .status-atrasado { background: rgba(239, 68, 68, 0.12); color: #ef4444; }
+        .status-proximo { background: rgba(234, 179, 8, 0.12); color: #eab308; }
+        .status-vencer { background: rgba(59, 130, 246, 0.12); color: #60a5fa; }
+        
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+        @media(max-width: 768px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+        
+        .vazio { text-align: center; padding: 40px 20px; color: var(--texto-claro); font-style: italic; }
+        .vazio i { font-size: 40px; opacity: 0.3; margin-bottom: 10px; }
+        
+        .modal-fundo { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 200; align-items: center; justify-content: center; padding: 20px; }
+        .modal-fundo.visivel { display: flex; }
+        .modal { background: var(--card); border-radius: 14px; padding: 24px; max-width: 400px; width: 100%; border: 1px solid rgba(59, 130, 246, 0.2); }
+        .modal-botoes { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+        
+        .proximos-vencimentos { background: rgba(234, 179, 8, 0.05); border: 1px solid rgba(234, 179, 8, 0.2); border-radius: 12px; padding: 16px; margin-bottom: 20px; }
+        .proximos-vencimentos h3 { font-size: 14px; color: var(--aviso); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+        .item-aviso { padding: 8px 0; border-bottom: 1px solid rgba(234, 179, 8, 0.1); font-size: 14px; display: flex; justify-content: space-between; }
+        .item-aviso:last-child { border-bottom: none; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1 style="text-align: center; margin: 20px 0; font-size: 24px;">💼 Controle de Finanças</h1>
+    <div class="cabecalho">
+        <h1>💼 CONTROLE FINANCEIRO</h1>
+        <p>Simples • Rápido • Organizado</p>
+    </div>
 
-    <!-- TABS -->
-    <div class="tabs-container">
-        <div style="display: flex; flex-wrap: nowrap;">
-            <button class="tab-btn active" data-tab="resumo">📊 Resumo</button>
-            <button class="tab-btn" data-tab="boletos">📄 Boletos</button>
-            <button class="tab-btn" data-tab="cheques">✍️ Cheques</button>
-            <button class="tab-btn" data-tab="parcelas">📦 Parceladas</button>
-            <button class="tab-btn" data-tab="receber">💰 A Receber</button>
-            <button class="tab-btn" data-tab="emprestimos">🤝 Empréstimos</button>
+    <div class="barra-topo">
+        <div class="busca">
+            <i class="fa fa-search"></i>
+            <input type="text" id="buscaGlobal" placeholder="Buscar...">
+        </div>
+        <div class="filtros">
+            <button class="filtro-btn ativo" onclick="aplicarFiltro('todos')">Todos</button>
+            <button class="filtro-btn" onclick="aplicarFiltro('a_vencer')">A Vencer</button>
+            <button class="filtro-btn" onclick="aplicarFiltro('atrasado')">Atrasados</button>
+            <button class="filtro-btn" onclick="aplicarFiltro('pago')">Pagos</button>
         </div>
     </div>
 
+    <div class="navegacao">
+        <button class="nav-btn ativo" onclick="abrirPainel('resumo')"><i class="fa fa-bar-chart"></i> Resumo</button>
+        <button class="nav-btn" onclick="abrirPainel('boletos')"><i class="fa fa-barcode"></i> Boletos</button>
+        <button class="nav-btn" onclick="abrirPainel('cheques')"><i class="fa fa-file-text-o"></i> Cheques</button>
+        <button class="nav-btn" onclick="abrirPainel('eu-devo')"><i class="fa fa-arrow-up"></i> O Que Devo</button>
+        <button class="nav-btn" onclick="abrirPainel('me-devem')"><i class="fa fa-arrow-down"></i> Quem Me Deve</button>
+        <button class="nav-btn" onclick="abrirPainel('contas')"><i class="fa fa-list-ul"></i> Contas</button>
+    </div>
+
     <!-- RESUMO -->
-    <div id="resumo" class="tab-content active">
-        <div class="grid-summary">
-            <div class="summary-card" id="card-total-pagar">
-                <h3>Total a Pagar</h3>
-                <div class="value" style="color: #f97316;">R$ 0,00</div>
-            </div>
-            <div class="summary-card" id="card-total-receber">
-                <h3>Total a Receber</h3>
-                <div class="value" style="color: #10b981;">R$ 0,00</div>
-            </div>
-            <div class="summary-card" id="card-saldo">
-                <h3>Saldo Geral</h3>
-                <div class="value">R$ 0,00</div>
-            </div>
-            <div class="summary-card" id="card-vencer">
-                <h3>A Vencer</h3>
-                <div class="value" style="color: #facc15;">R$ 0,00</div>
-            </div>
-            <div class="summary-card" id="card-atrasado">
-                <h3>Atrasado</h3>
-                <div class="value" style="color: #ef4444;">R$ 0,00</div>
-            </div>
-            <div class="summary-card" id="card-pago">
-                <h3>Pago / Recebido</h3>
-                <div class="value" style="color: #22c55e;">R$ 0,00</div>
+    <div id="resumo" class="painel visivel">
+        <div class="proximos-vencimentos">
+            <h3><i class="fa fa-bell"></i> Próximos Vencimentos</h3>
+            <div id="alertasVencimento">
+                <div class="vazio" style="padding:5px;">Tudo em dia! ✅</div>
             </div>
         </div>
-        <div class="chart-container">
-            <canvas id="chartResumo"></canvas>
+        <div class="resumo-grid">
+            <div class="resumo-card">
+                <h3>💰 A Receber</h3>
+                <div class="valor positivo" id="receberMes">R$ 0,00</div>
+            </div>
+            <div class="resumo-card">
+                <h3>💸 A Pagar</h3>
+                <div class="valor negativo" id="pagarMes">R$ 0,00</div>
+            </div>
+            <div class="resumo-card">
+                <h3>📈 Saldo</h3>
+                <div class="valor" id="saldoMes">R$ 0,00</div>
+            </div>
+            <div class="resumo-card">
+                <h3>⚠️ Atrasados</h3>
+                <div class="valor laranja" id="totalAtrasados">0</div>
+            </div>
+        </div>
+        <div class="card">
+            <h2><i class="fa fa-pie-chart"></i> Visão Geral</h2>
+            <canvas id="graficoPrincipal" style="height: 260px;"></canvas>
         </div>
     </div>
 
     <!-- BOLETOS -->
-    <div id="boletos" class="tab-content">
+    <div id="boletos" class="painel">
         <div class="card">
-            <h2 style="font-size: 18px; margin-bottom: 16px;">📄 Novo Boleto</h2>
-            <div class="form-grid">
-                <input type="text" id="boletoNome" class="input-field" placeholder="Nome / Empresa">
-                <input type="text" id="boletoCodigoBarras" class="input-field" placeholder="Código de Barras">
-                <input type="date" id="boletoVencimento" class="input-field">
-                <input type="number" step="0.01" id="boletoValor" class="input-field" placeholder="Valor R$">
-                <select id="boletoStatus" class="input-field">
-                    <option value="a_vencer">A Vencer</option>
-                    <option value="pago">Pago ✅</option>
-                    <option value="atrasado">Atrasado ⚠️</option>
+            <h2><i class="fa fa-plus-circle"></i> Novo Boleto</h2>
+            <div class="grupo">
+                <label>Nome / Empresa *</label>
+                <input type="text" id="boletoNome" placeholder="Ex: Energia Elétrica">
+            </div>
+            <div class="grupo">
+                <label>Código de Barras</label>
+                <input type="text" id="boletoCodigo" placeholder="Cole aqui">
+            </div>
+            <div class="grid-2">
+                <div class="grupo">
+                    <label>Vencimento *</label>
+                    <input type="date" id="boletoData">
+                </div>
+                <div class="grupo">
+                    <label>Valor (R$) *</label>
+                    <input type="number" step="0.01" id="boletoValor" placeholder="0,00">
+                </div>
+            </div>
+            <div class="grupo">
+                <label>Status</label>
+                <select id="boletoStatus">
+                    <option value="a_vencer">📅 A Vencer</option>
+                    <option value="pago">✅ Pago</option>
+                    <option value="atrasado">⚠️ Atrasado</option>
                 </select>
             </div>
-            <button class="btn btn-primary" onclick="adicionarBoleto()">➕ Adicionar Boleto</button>
+            <button class="btn-primario" onclick="adicionarBoleto()">
+                <i class="fa fa-plus"></i> Adicionar Boleto
+            </button>
         </div>
-        <h2 style="font-size: 18px; margin-bottom: 12px;">Lista de Boletos</h2>
-        <div id="listaBoletos"></div>
+        <div class="card">
+            <h2><i class="fa fa-barcode"></i> Meus Boletos</h2>
+            <div id="listaBoletos">
+                <div class="vazio"><i class="fa fa-barcode"></i><br>Nenhum boleto cadastrado</div>
+            </div>
+        </div>
     </div>
 
     <!-- CHEQUES -->
-    <div id="cheques" class="tab-content">
+    <div id="cheques" class="painel">
         <div class="card">
-            <h2 style="font-size: 18px; margin-bottom: 16px;">✍️ Novo Cheque</h2>
-            <div class="form-grid">
-                <input type="text" id="chequeEmitente" class="input-field" placeholder="Emitente / Favorecido">
-                <input type="text" id="chequeNumero" class="input-field" placeholder="Nº do Cheque">
-                <input type="date" id="chequeVencimento" class="input-field">
-                <input type="number" step="0.01" id="chequeValor" class="input-field" placeholder="Valor R$">
-                <select id="chequeStatus" class="input-field">
-                    <option value="a_vencer">A Vencer</option>
-                    <option value="pago">Compensado ✅</option>
-                    <option value="atrasado">Atrasado ⚠️</option>
+            <h2><i class="fa fa-plus-circle"></i> Novo Cheque</h2>
+            <div class="grid-2">
+                <div class="grupo">
+                    <label>Emitente *</label>
+                    <input type="text" id="chequeNome" placeholder="Nome da pessoa">
+                </div>
+                <div class="grupo">
+                    <label>Número</label>
+                    <input type="text" id="chequeNum" placeholder="000000">
+                </div>
+            </div>
+            <div class="grid-2">
+                <div class="grupo">
+                    <label>Valor (R$) *</label>
+                    <input type="number" step="0.01" id="chequeValor" placeholder="0,00">
+                </div>
+                <div class="grupo">
+                    <label>Vencimento *</label>
+                    <input type="date" id="chequeVenc">
+                </div>
+            </div>
+            <div class="grupo">
+                <label>Status</label>
+                <select id="chequeStatus">
+                    <option value="a_vencer">📅 A Vencer</option>
+                    <option value="pago">✅ Compensado</option>
+                    <option value="atrasado">⚠️ Atrasado</option>
                 </select>
             </div>
-            <button class="btn btn-primary" onclick="adicionarCheque()">➕ Adicionar Cheque</button>
+            <button class="btn-primario" onclick="adicionarCheque()">
+                <i class="fa fa-plus"></i> Adicionar Cheque
+            </button>
         </div>
-        <h2 style="font-size: 18px; margin-bottom: 12px;">Lista de Cheques</h2>
-        <div id="listaCheques"></div>
-    </div>
-
-    <!-- CONTAS PARCELADAS -->
-    <div id="parcelas" class="tab-content">
         <div class="card">
-            <h2 style="font-size: 18px; margin-bottom: 16px;">📦 Nova Conta Parcelada</h2>
-            <div class="form-grid">
-                <input type="text" id="parcelaDescricao" class="input-field" placeholder="Descrição">
-                <input type="number" step="0.01" id="parcelaValorTotal" class="input-field" placeholder="Valor Total R$">
-                <input type="number" id="parcelaQuantidade" class="input-field" placeholder="Nº de Parcelas" min="1">
-                <input type="date" id="parcelaPrimeiraData" class="input-field">
+            <h2><i class="fa fa-file-text"></i> Controle de Cheques</h2>
+            <div id="listaCheques">
+                <div class="vazio"><i class="fa fa-file-text-o"></i><br>Nenhum cheque cadastrado</div>
             </div>
-            <button class="btn btn-primary" onclick="adicionarParcela()">➕ Adicionar Conta</button>
         </div>
-        <h2 style="font-size: 18px; margin-bottom: 12px;">Contas Parceladas</h2>
-        <div id="listaParcelas"></div>
     </div>
 
-    <!-- A RECEBER -->
-    <div id="receber" class="tab-content">
+    <!-- O QUE EU DEVO -->
+    <div id="eu-devo" class="painel">
         <div class="card">
-            <h2 style="font-size: 18px; margin-bottom: 16px;">💰 Novo Recebível</h2>
-            <div class="form-grid">
-                <input type="text" id="receberNome" class="input-field" placeholder="Quem vai pagar">
-                <input type="text" id="receberDescricao" class="input-field" placeholder="Descrição">
-                <input type="number" step="0.01" id="receberValorTotal" class="input-field" placeholder="Valor Total R$">
-                <input type="number" id="receberParcelas" class="input-field" placeholder="Nº de Parcelas" min="1">
-                <input type="date" id="receberPrimeiraData" class="input-field">
+            <h2><i class="fa fa-plus-circle"></i> Novo — O Que Devo</h2>
+            <div class="grupo">
+                <label>Para quem *</label>
+                <input type="text" id="devEuNome" placeholder="Ex: Fornecedor, Banco...">
             </div>
-            <button class="btn btn-primary" onclick="adicionarReceber()">➕ Adicionar</button>
-        </div>
-        <h2 style="font-size: 18px; margin-bottom: 12px;">Valores a Receber</h2>
-        <div id="listaReceber"></div>
-    </div>
-
-    <!-- EMPRÉSTIMOS -->
-    <div id="emprestimos" class="tab-content">
-        <div class="card" id="formEmprestimo">
-            <h2 style="font-size: 18px; margin-bottom: 16px;" id="tituloFormEmprestimo">🤝 Novo Empréstimo</h2>
-            <div class="form-grid">
-                <input type="text" id="emprestimoPessoa" class="input-field" placeholder="Nome da Pessoa">
-                <input type="text" id="emprestimoDescricao" class="input-field" placeholder="Descrição">
-                <input type="number" step="0.01" id="emprestimoValor" class="input-field" placeholder="Valor Emprestado R$">
-                <input type="number" step="0.01" id="emprestimoJuros" class="input-field" placeholder="Juros % ao mês">
-                <input type="date" id="emprestimoData" class="input-field">
-                <input type="date" id="emprestimoVencimento" class="input-field">
-                <select id="emprestimoStatus" class="input-field">
-                    <option value="ativo">Ativo 🔄</option>
-                    <option value="pago">Pago ✅</option>
-                    <option value="atrasado">Atrasado ⚠️</option>
+            <div class="grupo">
+                <label>Descrição</label>
+                <input type="text" id="devEuDesc" placeholder="Opcional">
+            </div>
+            <div class="grid-3">
+                <div class="grupo">
+                    <label>Valor Total (R$) *</label>
+                    <input type="number" step="0.01" id="devEuTotal" placeholder="0,00">
+                </div>
+                <div class="grupo">
+                    <label>Nº Parcelas</label>
+                    <input type="number" id="devEuParcelas" placeholder="1" min="1" oninput="calcularParcelaEuDevo()">
+                </div>
+                <div class="grupo">
+                    <label>Valor Parcela</label>
+                    <input type="text" id="devEuParcelaValor" placeholder="Calculando..." readonly style="background: rgba(239,68,68,0.1); color:#ef4444; font-weight:600;">
+                </div>
+            </div>
+            <div class="grupo">
+                <label>Data de Vencimento *</label>
+                <input type="date" id="devEuData">
+            </div>
+            <div class="grupo">
+                <label>Status</label>
+                <select id="devEuStatus">
+                    <option value="a_pagar">📅 A Pagar</option>
+                    <option value="pago">✅ Pago</option>
+                    <option value="atrasado">⚠️ Atrasado</option>
                 </select>
             </div>
-            <input type="hidden" id="editandoEmprestimoId" value="">
-            <div style="display: flex; gap: 8px;">
-                <button class="btn btn-primary" id="btnSalvarEmprestimo" onclick="salvarEmprestimo()">➕ Adicionar Empréstimo</button>
-                <button class="btn btn-warning" id="btnCancelarEdicao" onclick="cancelarEdicao()" style="display:none;">❌ Cancelar</button>
+            <button class="btn-primario" onclick="adicionarDevo()">
+                <i class="fa fa-plus"></i> Adicionar
+            </button>
+        </div>
+        <div class="card">
+            <h2><i class="fa fa-arrow-up"></i> O Que Eu Devo</h2>
+            <div id="listaEuDevo">
+                <div class="vazio"><i class="fa fa-arrow-up"></i><br>Nenhum registro ainda</div>
             </div>
         </div>
-        <h2 style="font-size: 18px; margin-bottom: 12px;">Meus Empréstimos</h2>
-        <div id="listaEmprestimos"></div>
+    </div>
+
+    <!-- QUEM ME DEVE -->
+    <div id="me-devem" class="painel">
+        <div class="card">
+            <h2><i class="fa fa-plus-circle"></i> Novo — Quem Me Deve</h2>
+            <div class="grupo">
+                <label>Nome da Pessoa *</label>
+                <input type="text" id="devNome" placeholder="Ex: Pedro Costa">
+            </div>
+            <div class="grupo">
+                <label>Descrição</label>
+                <input type="text" id="devDesc" placeholder="Opcional">
+            </div>
+            <div class="grid-3">
+                <div class="grupo">
+                    <label>Valor Total (R$) *</label>
+                    <input type="number" step="0.01" id="devTotal" placeholder="0,00" oninput="calcularParcelaMeDevem()">
+                </div>
+                <div class="grupo">
+                    <label>Nº Parcelas</label>
+                    <input type="number" id="devParcelas" placeholder="1" min="1" oninput="calcularParcelaMeDevem()">
+                </div>
+                <div class="grupo">
+                    <label>Valor Parcela</label>
+                    <input type="text" id="devParcelaValor" placeholder="Calculando..." readonly style="background: rgba(34,197,94,0.1); color:#22c55e; font-weight:600;">
+                </div>
+            </div>
+            <div class="grupo">
+                <label>Data de Recebimento *</label>
+                <input type="date" id="devData">
+            </div>
+            <div class="grupo">
+                <label>Status</label>
+                <select id="devStatus">
+                    <option value="a_receber">📅 A Receber</option>
+                    <option value="recebido">✅ Recebido</option>
+                    <option value="atrasado">⚠️ Atrasado</option>
+                </select>
+            </div>
+            <button class="btn-primario" onclick="adicionarMeDevem()">
+                <i class="fa fa-plus"></i> Adicionar
+            </button>
+        </div>
+        <div class="card">
+            <h2><i class="fa fa-arrow-down"></i> Quem Me Deve</h2>
+            <div id="listaMeDevem">
+                <div class="vazio"><i class="fa fa-arrow-down"></i><br>Nenhum registro ainda</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CONTAS -->
+    <div id="contas" class="painel">
+        <div class="card">
+            <h2><i class="fa fa-plus-circle"></i> Nova Conta</h2>
+            <div class="grupo">
+                <label>Nome da Conta *</label>
+                <input type="text" id="contaNome" placeholder="Ex: Internet, Seguro...">
+            </div>
+            <div class="grid-2">
+                <div class="grupo">
+                    <label>Valor Mensal (R$) *</label>
+                    <input type="number" step="0.01" id="contaValor" placeholder="0,00">
+                </div>
+                <div class="grupo">
+                    <label>Dia Vencimento</label>
+                    <input type="number" id="contaDia" placeholder="1-31" min="1" max="31">
+                </div>
+            </div>
+            <div class="grupo">
+                <label>Tipo</label>
+                <select id="contaTipo">
+                    <option value="despesa">🔸 Despesa</option>
+                    <option value="receita">💵 Entrada / Renda</option>
+                </select>
+            </div>
+            <button class="btn-primario" onclick="adicionarConta()">
+                <i class="fa fa-plus"></i> Adicionar Conta
+            </button>
+        </div>
+        <div class="card">
+            <h2><i class="fa fa-list-ul"></i> Minhas Contas</h2>
+            <div id="listaContas">
+                <div class="vazio"><i class="fa fa-list-ul"></i><br>Nenhuma conta cadastrada</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL DE CONFIRMAÇÃO -->
+<div id="modalConfirma" class="modal-fundo" onclick="fecharModal(event)">
+    <div class="modal" onclick="event.stopPropagation()">
+        <h3 id="modalTitulo">Confirmação</h3>
+        <p id="modalTexto" style="color:#94a3b8; margin-bottom:20px;"></p>
+        <div class="modal-botoes">
+            <button class="btn-aviso" onclick="fecharModal()">Cancelar</button>
+            <button class="btn-perigo" id="modalBtnOk">Excluir</button>
+        </div>
     </div>
 </div>
 
 <script>
-// ===================== FIREBASE =====================
+// ========== FIREBASE ==========
 const firebaseConfig = {
   apiKey: "AIzaSyCPd-aIQVDEP-UK2twGzci8sRLgjTRmI",
   authDomain: "controle-59fff.firebaseapp.com",
   projectId: "controle-59fff",
   storageBucket: "controle-59fff.firebasestorage.app",
   messagingSenderId: "597330115962",
-  appId: "1:597330115962:web:0d01a891a5745f8e6ac3",
-  measurementId: "G-WZ3C45QL6H"
+  appId: "1:597330115962:web:0d01a891a5745f8e6ac3"
 };
+
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
-
 const colecoes = {
-    boletos: db.collection('boletos'),
-    cheques: db.collection('cheques'),
-    parcelas: db.collection('parcelas'),
-    receber: db.collection('receber'),
-    emprestimos: db.collection('emprestimos')
+    boletos: db.collection('boletos_v6'),
+    cheques: db.collection('cheques_v6'),
+    euDevo: db.collection('eu_devo_v6'),
+    meDevem: db.collection('me_devem_v6'),
+    contas: db.collection('contas_v6')
 };
 
-// ===================== FUNÇÕES AUXILIARES =====================
-function formatarMoeda(valor) {
+// ========== ESTADO ==========
+let filtroAtual = 'todos';
+let termoBusca = '';
+let grafico = null;
+let funcaoConfirmar = null;
+
+// ========== UTILITÁRIOS ==========
+function moeda(valor) {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor || 0);
 }
-function formatarData(dataStr) {
-    if (!dataStr) return '';
-    const [ano, mes, dia] = dataStr.split('-');
-    return `${dia}/${mes}/${ano}`;
+function formatarData(data) {
+    if (!data) return '';
+    const [a, m, d] = data.split('-');
+    return `${d}/${m}/${a}`;
 }
 function hoje() { return new Date().toISOString().split('T')[0]; }
-function ehAtrasado(dataStr) { return dataStr < hoje(); }
+function diasParaVencer(dataStr) {
+    if (!dataStr) return null;
+    const hojeDt = new Date(hoje());
+    hojeDt.setHours(0,0,0,0);
+    const data = new Date(dataStr);
+    data.setHours(0,0,0,0);
+    return Math.ceil((data - hojeDt) / (1000 * 60 * 60 * 24));
+}
+function getStatus(dataStr, statusCadastrado) {
+    if (statusCadastrado === 'pago' || statusCadastrado === 'recebido') return statusCadastrado;
+    const dias = diasParaVencer(dataStr);
+    if (dias === null) return 'vencer';
+    if (dias < 0) return 'atrasado';
+    if (dias === 0) return 'hoje';
+    if (dias <= 7) return 'proximo';
+    return 'vencer';
+}
+function getStatusTexto(status) {
+    const map = {
+        'pago': '✅ Pago', 'recebido': '✅ Recebido', 'atrasado': '⚠️ Atrasado',
+        'hoje': '📅 Hoje', 'proximo': '🔔 Próximo', 'vencer': '📅 A Vencer',
+        'a_pagar': '📅 A Pagar', 'a_receber': '📅 A Receber'
+    };
+    return map[status] || status;
+}
+function getMes(data) { return data ? data.slice(0, 7) : ''; }
 
-// ===================== NAVEGAÇÃO =====================
-document.querySelectorAll('.tab-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-        btn.classList.add('active');
-        document.getElementById(btn.dataset.tab).classList.add('active');
-        if (btn.dataset.tab === 'resumo') atualizarResumo();
-    });
+// ========== MODAL ==========
+function confirmar(pergunta, acao) {
+    document.getElementById('modalTexto').textContent = pergunta;
+    document.getElementById('modalConfirma').classList.add('visivel');
+    funcaoConfirmar = acao;
+}
+function fecharModal(event) {
+    if (!event || event.target === event.currentTarget) {
+        document.getElementById('modalConfirma').classList.remove('visivel');
+        funcaoConfirmar = null;
+    }
+}
+document.getElementById('modalBtnOk').addEventListener('click', () => {
+    if (funcaoConfirmar) funcaoConfirmar();
+    fecharModal();
 });
 
-// ===================== BOLETOS =====================
-async function carregarBoletos() {
-    const lista = document.getElementById('listaBoletos');
-    lista.innerHTML = '<div class="empty-state">Carregando...</div>';
-    const snap = await colecoes.boletos.orderBy('vencimento', 'asc').get();
-    lista.innerHTML = '';
-    if (snap.empty) { lista.innerHTML = '<div class="empty-state">Nenhum boleto cadastrado</div>'; return; }
-    snap.forEach(doc => {
-        const b = doc.data();
-        const id = doc.id;
-        let classe = '', texto = '';
-        if (b.status === 'pago') { classe = 'status-pago'; texto = '✅ Pago'; }
-        else if (b.status === 'atrasado' || ehAtrasado(b.vencimento)) { classe = 'status-atrasado'; texto = '⚠️ Atrasado'; }
-        else { classe = 'status-vencer'; texto = '📅 A Vencer'; }
-        lista.innerHTML += `
-        <div class="item-row">
-            <div>
-                <div style="font-weight:600">${b.nome || 'Sem nome'}</div>
-                <div class="date-info">Vence em: ${formatarData(b.vencimento)}</div>
-                <div style="font-size:12px; color:#94a3b8">Cód: ${b.codigoBarras || '—'}</div>
-            </div>
-            <div style="text-align:right">
-                <div style="font-weight:700; font-size:16px">${formatarMoeda(b.valor)}</div>
-                <span class="badge ${classe}">${texto}</span>
-            </div>
-            <button class="btn btn-danger btn-sm" onclick="excluirBoleto('${id}')">🗑️</button>
-        </div>`;
-    });
-    atualizarResumo();
-}
-async function adicionarBoleto() {
-    const dados = {
-        nome: document.getElementById('boletoNome').value.trim(),
-        codigoBarras: document.getElementById('boletoCodigoBarras').value.trim(),
-        vencimento: document.getElementById('boletoVencimento').value,
-        valor: parseFloat(document.getElementById('boletoValor').value) || 0,
-        status: document.getElementById('boletoStatus').value,
-        criadoEm: new Date()
-    };
-    if (!dados.nome || !dados.vencimento || !dados.valor) { alert('Preencha os campos principais!'); return; }
-    await colecoes.boletos.add(dados);
-    document.getElementById('boletoNome').value = '';
-    document.getElementById('boletoCodigoBarras').value = '';
-    document.getElementById('boletoVencimento').value = '';
-    document.getElementById('boletoValor').value = '';
-    carregarBoletos();
-}
-async function excluirBoleto(id) {
-    if (confirm('Excluir este boleto?')) {
-        await colecoes.boletos.doc(id).delete();
-        carregarBoletos();
-    }
+// ========== NAVEGAÇÃO ==========
+function abrirPainel(nome) {
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('ativo'));
+    document.querySelectorAll('.painel').forEach(p => p.classList.remove('visivel'));
+    event.target.closest('.nav-btn').classList.add('ativo');
+    document.getElementById(nome).classList.add('visivel');
+    if (nome === 'resumo') atualizarResumoGeral();
 }
 
-// ===================== CHEQUES =====================
-async function carregarCheques() {
-    const lista = document.getElementById('listaCheques');
-    lista.innerHTML = '<div class="empty-state">Carregando...</div>';
-    const snap = await colecoes.cheques.orderBy('vencimento', 'asc').get();
-    lista.innerHTML = '';
-    if (snap.empty) { lista.innerHTML = '<div class="empty-state">Nenhum cheque cadastrado</div>'; return; }
-    snap.forEach(doc => {
-        const c = doc.data();
-        const id = doc.id;
-        let classe = '', texto = '';
-        if (c.status === 'pago') { classe = 'status-pago'; texto = '✅ Compensado'; }
-        else if (c.status === 'atrasado' || ehAtrasado(c.vencimento)) { classe = 'status-atrasado'; texto = '⚠️ Atrasado'; }
-        else { classe = 'status-vencer'; texto = '📅 A Vencer'; }
-        lista.innerHTML += `
-        <div class="item-row">
-            <div>
-                <div style="font-weight:600">${c.emitente || 'Sem nome'}</div>
-                <div class="date-info">Vence em: ${formatarData(c.vencimento)}</div>
-                <div style="font-size:12px; color:#94a3b8">Nº: ${c.numero || '—'}</div>
-            </div>
-            <div style="text-align:right">
-                <div style="font-weight:700; font-size:16px">${formatarMoeda(c.valor)}</div>
-                <span class="badge ${classe}">${texto}</span>
-            </div>
-            <button class="btn btn-danger btn-sm" onclick="excluirCheque('${id}')">🗑️</button>
-        </div>`;
-    });
-    atualizarResumo();
+// ========== FILTROS E BUSCA ==========
+document.getElementById('buscaGlobal').addEventListener('input', (e) => {
+    termoBusca = e.target.value.toLowerCase().trim();
+    carregarTudo();
+});
+function aplicarFiltro(filtro) {
+    filtroAtual = filtro;
+    document.querySelectorAll('.filtro-btn').forEach(b => b.classList.remove('ativo'));
+    event.target.classList.add('ativo');
+    carregarTudo();
 }
-async function adicionarCheque() {
-    const dados = {
-        emitente: document.getElementById('chequeEmitente').value.trim(),
-        numero: document.getElementById('chequeNumero').value.trim(),
-        vencimento: document.getElementById('chequeVencimento').value,
-        valor: parseFloat(document.getElementById('chequeValor').value) || 0,
-        status: document.getElementById('chequeStatus').value,
-        criadoEm: new Date()
-    };
-    if (!dados.emitente || !dados.vencimento || !dados.valor) { alert('Preencha os campos principais!'); return; }
-    await colecoes.cheques.add(dados);
-    document.getElementById('chequeEmitente').value = '';
-    document.getElementById('chequeNumero').value = '';
-    document.getElementById('chequeVencimento').value = '';
-    document.getElementById('chequeValor').value = '';
-    carregarCheques();
-}
-async function excluirCheque(id) {
-    if (confirm('Excluir este cheque?')) {
-        await colecoes.cheques.doc(id).delete();
-        carregarCheques();
-    }
+function deveExibir(textoBusca, dataVenc, statusCadastrado) {
+    if (termoBusca && !textoBusca.includes(termoBusca)) return false;
+    if (filtroAtual === 'todos') return true;
+    const status = getStatus(dataVenc, statusCadastrado);
+    if (filtroAtual === 'a_vencer') return ['vencer','proximo','a_pagar','a_receber'].includes(status);
+    if (filtroAtual === 'atrasado') return status === 'atrasado';
+    if (filtroAtual === 'pago') return ['pago','recebido'].includes(status);
+    return true;
 }
 
-// ===================== PARCELADAS =====================
-async function carregarParcelas() {
-    const lista = document.getElementById('listaParcelas');
-    lista.innerHTML = '<div class="empty-state">Carregando...</div>';
-    const snap = await colecoes.parcelas.orderBy('primeiraData', 'asc').get();
-    lista.innerHTML = '';
-    if (snap.empty) { lista.innerHTML = '<div class="empty-state">Nenhuma conta parcelada</div>'; return; }
-    snap.forEach(doc => {
-        const p = doc.data();
-        const id = doc.id;
-        const valorParcela = p.valorTotal / p.quantidade;
-        lista.innerHTML += `
-        <div class="item-row">
-            <div>
-                <div style="font-weight:600">${p.descricao || 'Sem descrição'}</div>
-                <div class="date-info">Início: ${formatarData(p.primeiraData)} • ${p.quantidade}x de ${formatarMoeda(valorParcela)}</div>
-                <div style="font-size:12px; color:#94a3b8">Total: ${formatarMoeda(p.valorTotal)}</div>
-            </div>
-            <button class="btn btn-danger btn-sm" onclick="excluirParcela('${id}')">🗑️</button>
-        </div>`;
-    });
-    atualizarResumo();
+// ========== CÁLCULO DE PARCELAS ==========
+document.getElementById('devTotal').addEventListener('input', calcularParcelaMeDevem);
+document.getElementById('devParcelas').addEventListener('input', calcularParcelaMeDevem);
+function calcularParcelaMeDevem() {
+    const total = parseFloat(document.getElementById('devTotal').value) || 0;
+    const qtd = parseInt(document.getElementById('devParcelas').value) || 1;
+    document.getElementById('devParcelaValor').value = moeda(total / qtd);
 }
-async function adicionarParcela() {
-    const dados = {
-        descricao: document.getElementById('parcelaDescricao').value.trim(),
-        valorTotal: parseFloat(document.getElementById('parcelaValorTotal').value) || 0,
-        quantidade: parseInt(document.getElementById('parcelaQuantidade').value) || 1,
-        primeiraData: document.getElementById('parcelaPrimeiraData').value,
-        criadoEm: new Date()
-    };
-    if (!dados.descricao || !dados.valorTotal || !dados.quantidade || !dados.primeiraData) { alert('Preencha todos os campos!'); return; }
-    await colecoes.parcelas.add(dados);
-    document.getElementById('parcelaDescricao').value = '';
-    document.getElementById('parcelaValorTotal').value = '';
-    document.getElementById('parcelaQuantidade').value = '';
-    document.getElementById('parcelaPrimeiraData').value = '';
-    carregarParcelas();
-}
-async function excluirParcela(id) {
-    if (confirm('Excluir esta conta?')) {
-        await colecoes.parcelas.doc(id).delete();
-        carregarParcelas();
-    }
+document.getElementById('devEuTotal').addEventListener('input', calcularParcelaEuDevo);
+document.getElementById('devEuParcelas').addEventListener('input', calcularParcelaEuDevo);
+function calcularParcelaEuDevo() {
+    const total = parseFloat(document.getElementById('devEuTotal').value) || 0;
+    const qtd = parseInt(document.getElementById('devEuParcelas').value) || 1;
+    document.getElementById('devEuParcelaValor').value = moeda(total / qtd);
 }
 
-// ===================== A RECEBER =====================
-async function carregarReceber() {
-    const lista = document.getElementById('listaReceber');
-    lista.innerHTML = '<div class="empty-state">Carregando...</div>';
-    const snap = await colecoes.receber.orderBy('primeiraData', 'asc').get();
-    lista.innerHTML = '';
-    if (snap.empty) { lista.innerHTML = '<div class="empty-state">Nenhum valor a receber</div>'; return; }
-    snap.forEach(doc => {
-        const r = doc.data();
-        const id = doc.id;
-        const valorParcela = r.valorTotal / r.quantidade;
-        lista.innerHTML += `
-        <div class="item-row">
-            <div>
-                <div style="font-weight:600">👤 ${r.nome || 'Sem nome'}</div>
-                <div class="date-info">Início: ${formatarData(r.primeiraData)} • ${r.quantidade}x de ${formatarMoeda(valorParcela)}</div>
-                <div style="font-size:12px; color:#94a3b8">Total a receber: ${formatarMoeda(r.valorTotal)}</div>
-            </div>
-            <button class="btn btn-danger btn-sm" onclick="excluirReceber('${id}')">🗑️</button>
-        </div>`;
-    });
-    atualizarResumo();
-}
-async function adicionarReceber() {
-    const dados = {
-        nome: document.getElementById('receberNome').value.trim(),
-        descricao: document.getElementById('receberDescricao').value.trim(),
-        valorTotal: parseFloat(document.getElementById('receberValorTotal').value) || 0,
-        quantidade: parseInt(document.getElementById('receberParcelas').value) || 1,
-        primeiraData: document.getElementById('receberPrimeiraData').value,
-        criadoEm: new Date()
-    };
-    if (!dados.nome || !dados.valorTotal || !dados.quantidade || !dados.primeiraData) { alert('Preencha todos os campos!'); return; }
-    await colecoes.receber.add(dados);
-    document.getElementById('receberNome').value = '';
-    document.getElementById('receberDescricao').value = '';
-    document.getElementById('receberValorTotal').value = '';
-    document.getElementById('receberParcelas').value = '';
-    document.getElementById('receberPrimeiraData').value = '';
-    carregarReceber();
-}
-async function excluirReceber(id) {
-    if (confirm('Excluir este registro?')) {
-        await colecoes.receber.doc(id).delete();
-        carregarReceber();
-    }
-}
+// ========== RESUMO ==========
+async function atualizarResumoGeral() {
+    let receberMes = 0, pagarMes = 0, totalAtrasados = 0;
+    const proximosVencimentos = [];
+    const mesAtual = new Date().toISOString().slice(0, 7);
 
-// ===================== EMPRÉSTIMOS =====================
-let editandoEmprestimoId = null;
-
-async function carregarEmprestimos() {
-    const lista = document.getElementById('listaEmprestimos');
-    lista.innerHTML = '<div class="empty-state">Carregando...</div>';
-    const snap = await colecoes.emprestimos.orderBy('data', 'desc').get();
-    lista.innerHTML = '';
-    if (snap.empty) { lista.innerHTML = '<div class="empty-state">Nenhum empréstimo cadastrado</div>'; return; }
-    snap.forEach(doc => {
-        const e = doc.data();
-        const id = doc.id;
-        const valorComJuros = e.valor * (1 + (e.juros / 100));
-        let classe = '', texto = '';
-        if (e.status === 'pago') { classe = 'status-pago'; texto = '✅ Pago'; }
-        else if (e.status === 'atrasado' || ehAtrasado(e.vencimento)) { classe = 'status-atrasado'; texto = '⚠️ Atrasado'; }
-        else { classe = 'status-a-receber'; texto = '🔄 Ativo'; }
-        lista.innerHTML += `
-        <div class="item-row">
-            <div>
-                <div style="font-weight:600">🤝 ${e.pessoa || 'Sem nome'}</div>
-                <div class="date-info">Empréstimo em: ${formatarData(e.data)} • Vence em: ${formatarData(e.vencimento)}</div>
-                <div style="font-size:12px; color:#94a3b8">
-                    Principal: ${formatarMoeda(e.valor)} • Juros: ${e.juros || 0}% • 
-                    Total: <strong style="color:#10b981">${formatarMoeda(valorComJuros)}</strong>
-                </div>
-            </div>
-            <div style="text-align:right">
-                <span class="badge ${classe}">${texto}</span>
-                <div class="btn-group" style="margin-top: 6px;">
-                    <button class="btn btn-primary btn-sm" onclick="editarEmprestimo('${id}')">✏️ Editar</button>
-                    <button class="btn btn-danger btn-sm" onclick="excluirEmprestimo('${id}')">🗑️ Excluir</button>
-                </div>
-            </div>
-        </div>`;
-    });
-    atualizarResumo();
-}
-
-async function editarEmprestimo(id) {
-    const doc = await colecoes.emprestimos.doc(id).get();
-    if (!doc.exists) return;
-    
-    const e = doc.data();
-    editandoEmprestimoId = id;
-    
-    // Preenche o formulário com os dados atuais
-    document.getElementById('emprestimoPessoa').value = e.pessoa || '';
-    document.getElementById('emprestimoDescricao').value = e.descricao || '';
-    document.getElementById('emprestimoValor').value = e.valor || '';
-    document.getElementById('emprestimoJuros').value = e.juros || '';
-    document.getElementById('emprestimoData').value = e.data || '';
-    document.getElementById('emprestimoVencimento').value = e.vencimento || '';
-    document.getElementById('emprestimoStatus').value = e.status || 'ativo';
-    
-    // Muda o botão de adicionar para salvar
-    document.getElementById('tituloFormEmprestimo').textContent = '✏️ Editar Empréstimo';
-    document.getElementById('btnSalvarEmprestimo').textContent = '💾 Salvar Alterações';
-    document.getElementById('btnCancelarEdicao').style.display = 'inline-block';
-    
-    // Rola até o formulário
-    document.getElementById('formEmprestimo').scrollIntoView({ behavior: 'smooth' });
-}
-
-function cancelarEdicao() {
-    editandoEmprestimoId = null;
-    document.getElementById('tituloFormEmprestimo').textContent = '🤝 Novo Empréstimo';
-    document.getElementById('btnSalvarEmprestimo').textContent = '➕ Adicionar Empréstimo';
-    document.getElementById('btnCancelarEdicao').style.display = 'none';
-    
-    // Limpa os campos
-    document.getElementById('emprestimoPessoa').value = '';
-    document.getElementById('emprestimoDescricao').value = '';
-    document.getElementById('emprestimoValor').value = '';
-    document.getElementById('emprestimoJuros').value = '';
-    document.getElementById('emprestimoData').value = '';
-    document.getElementById('emprestimoVencimento').value = '';
-}
-
-async function salvarEmprestimo() {
-    const dados = {
-        pessoa: document.getElementById('emprestimoPessoa').value.trim(),
-        descricao: document.getElementById('emprestimoDescricao').value.trim(),
-        valor: parseFloat(document.getElementById('emprestimoValor').value) || 0,
-        juros: parseFloat(document.getElementById('emprestimoJuros').value) || 0,
-        data: document.getElementById('emprestimoData').value,
-        vencimento: document.getElementById('emprestimoVencimento').value,
-        status: document.getElementById('emprestimoStatus').value,
-        atualizadoEm: new Date()
-    };
-    
-    if (!dados.pessoa || !dados.valor || !dados.data || !dados.vencimento) { 
-        alert('Preencha os campos principais!'); 
-        return; 
-    }
-    
-    if (editandoEmprestimoId) {
-        // MODO EDIÇÃO: Atualiza documento existente
-        await colecoes.emprestimos.doc(editandoEmprestimoId).update(dados);
-        cancelarEdicao(); // Volta formulário ao normal
-    } else {
-        // MODO NOVO: Adiciona novo documento
-        dados.criadoEm = new Date();
-        await colecoes.emprestimos.add(dados);
-        // Limpa campos
-        document.getElementById('emprestimoPessoa').value = '';
-        document.getElementById('emprestimoDescricao').value = '';
-        document.getElementById('emprestimoValor').value = '';
-        document.getElementById('emprestimoJuros').value = '';
-        document.getElementById('emprestimoData').value = '';
-        document.getElementById('emprestimoVencimento').value = '';
-    }
-    
-    carregarEmprestimos();
-}
-
-async function excluirEmprestimo(id) {
-    if (confirm('Excluir este empréstimo?')) {
-        await colecoes.emprestimos.doc(id).delete();
-        carregarEmprestimos();
-    }
-}
-
-// ===================== RESUMO E GRÁFICO =====================
-let chartResumo;
-async function atualizarResumo() {
-    let totalPagar = 0, totalReceber = 0, vencer = 0, atrasado = 0, pago = 0;
-
-    const [boletosSnap, chequesSnap, parcelasSnap, receberSnap, emprestimosSnap] = await Promise.all([
+    const [bSnap, cSnap, euDevoSnap, meDevemSnap, contSnap] = await Promise.all([
         colecoes.boletos.get(),
         colecoes.cheques.get(),
-        colecoes.parcelas.get(),
-        colecoes.receber.get(),
-        colecoes.emprestimos.get()
+        colecoes.euDevo.get(),
+        colecoes.meDevem.get(),
+        colecoes.contas.get()
     ]);
 
-    boletosSnap.forEach(doc => {
-        const b = doc.data();
-        if (b.status === 'pago') { pago += b.valor; }
-        else if (b.status === 'atrasado' || ehAtrasado(b.vencimento)) { atrasado += b.valor; totalPagar += b.valor; }
-        else { vencer += b.valor; totalPagar += b.valor; }
+    contSnap.forEach(d => {
+        const c = d.data();
+        if (c.tipo === 'receita') receberMes += parseFloat(c.valor || 0);
+        else pagarMes += parseFloat(c.valor || 0);
     });
 
-    chequesSnap.forEach(doc => {
-        const c = doc.data();
-        if (c.status === 'pago') { pago += c.valor; }
-        else if (c.status === 'atrasado' || ehAtrasado(c.vencimento)) { atrasado += c.valor; totalPagar += c.valor; }
-        else { vencer += c.valor; totalPagar += c.valor; }
+    bSnap.forEach(d => {
+        const b = d.data();
+        const status = getStatus(b.vencimento, b.status);
+        if (b.status !== 'pago') {
+            if (getMes(b.vencimento) === mesAtual) pagarMes += parseFloat(b.valor || 0);
+            if (status === 'atrasado') totalAtrasados++;
+            const dias = diasParaVencer(b.vencimento);
+            if (dias !== null && dias >= 0 && dias <= 7 && b.status !== 'pago') {
+                proximosVencimentos.push({nome: b.nome, data: b.vencimento, valor: b.valor, dias});
+            }
+        }
     });
 
-    parcelasSnap.forEach(doc => {
-        const p = doc.data();
-        totalPagar += p.valorTotal;
-        vencer += p.valorTotal;
+    cSnap.forEach(d => {
+        const c = d.data();
+        const status = getStatus(c.vencimento, c.status);
+        if (c.status !== 'pago') {
+            if (getMes(c.vencimento) === mesAtual) pagarMes += parseFloat(c.valor || 0);
+            if (status === 'atrasado') totalAtrasados++;
+            const dias = diasParaVencer(c.vencimento);
+            if (dias !== null && dias >= 0 && dias <= 7 && c.status !== 'pago') {
+                proximosVencimentos.push({nome: c.nome, data: c.vencimento, valor: c.valor, dias});
+            }
+        }
     });
 
-    receberSnap.forEach(doc => {
-        const r = doc.data();
-        totalReceber += r.valorTotal;
+    euDevoSnap.forEach(d => {
+        const dv = d.data();
+        if (dv.status !== 'pago') {
+            pagarMes += parseFloat(dv.valorTotal || 0);
+            const dias = diasParaVencer(dv.data);
+            if (dias !== null && dias >= 0 && dias <= 7 && dv.status !== 'pago') {
+                proximosVencimentos.push({nome: 'Para: ' + dv.nome, data: dv.data, valor: dv.valorTotal, dias});
+            }
+            if (getStatus(dv.data, dv.status) === 'atrasado') totalAtrasados++;
+        }
     });
 
-    emprestimosSnap.forEach(doc => {
-        const e = doc.data();
-        const valorComJuros = e.valor * (1 + (e.juros / 100));
-        if (e.status === 'pago') { pago += valorComJuros; }
-        else { totalReceber += valorComJuros; }
+    meDevemSnap.forEach(d => {
+        const md = d.data();
+        if (md.status !== 'recebido') {
+            receberMes += parseFloat(md.valorTotal || 0);
+        }
     });
 
-    const saldo = totalReceber - totalPagar;
+    const saldo = receberMes - pagarMes;
+    document.getElementById('receberMes').textContent = moeda(receberMes);
+    document.getElementById('pagarMes').textContent = moeda(pagarMes);
+    document.getElementById('saldoMes').textContent = moeda(saldo);
+    document.getElementById('saldoMes').className = 'valor ' + (saldo >= 0 ? 'positivo' : 'negativo');
+    document.getElementById('totalAtrasados').textContent = totalAtrasados;
 
-    document.querySelector('#card-total-pagar .value').textContent = formatarMoeda(totalPagar);
-    document.querySelector('#card-total-receber .value').textContent = formatarMoeda(totalReceber);
-    document.querySelector('#card-saldo .value').textContent = formatarMoeda(saldo);
-    document.querySelector('#card-vencer .value').textContent = formatarMoeda(vencer);
-    document.querySelector('#card-atrasado .value').textContent = formatarMoeda(atrasado);
-    document.querySelector('#card-pago .value').textContent = formatarMoeda(pago);
+    const alertasDiv = document.getElementById('alertasVencimento');
+    proximosVencimentos.sort((a,b) => a.dias - b.dias);
+    if (proximosVencimentos.length === 0) {
+        alertasDiv.innerHTML = '<div class="vazio" style="padding:5px;">Nenhum vencimento nos próximos 7 dias ✅</div>';
+    } else {
+        alertasDiv.innerHTML = proximosVencimentos.map(v => `
+            <div class="item-aviso">
+                <span>${v.nome} — ${formatarData(v.data)} ${v.dias === 0 ? '<strong>HOJE!</strong>' : v.dias === 1 ? 'amanhã' : `em ${v.dias} dias`}</span>
+                <span style="font-weight:600;">${moeda(v.valor)}</span>
+            </div>
+        `).join('');
+    }
 
-    const saldoCard = document.getElementById('card-saldo');
-    saldoCard.classList.remove('positive', 'negative');
-    if (saldo > 0) saldoCard.classList.add('positive');
-    if (saldo < 0) saldoCard.classList.add('negative');
-
-    if (chartResumo) chartResumo.destroy();
-    const ctx = document.getElementById('chartResumo').getContext('2d');
-    chartResumo = new Chart(ctx, {
+    if (grafico) grafico.destroy();
+    const ctx = document.getElementById('graficoPrincipal').getContext('2d');
+    grafico = new Chart(ctx, {
         type: 'doughnut',
         data: {
-            labels: ['A Vencer', 'Atrasado', 'Pago', 'A Receber'],
+            labels: ['A Receber', 'A Pagar'],
             datasets: [{
-                data: [vencer, atrasado, pago, totalReceber],
-                backgroundColor: ['#eab308', '#ef4444', '#22c55e', '#3b82f6'],
-                borderWidth: 0
+                data: [receberMes, pagarMes],
+                backgroundColor: ['#22c55e', '#ef4444'],
+                borderWidth: 0,
+                cutout: '70%'
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: { legend: { position: 'bottom', labels: { color: '#e2e8f0' } } }
+            plugins: { legend: { position: 'bottom', labels: { color: '#e2e8f0', padding: 20 } } }
         }
     });
 }
 
-// ===================== INICIALIZAÇÃO =====================
-window.onload = async function() {
-    await carregarBoletos();
-    await carregarCheques();
-    await carregarParcelas();
-    await carregarReceber();
-    await carregarEmprestimos();
-    await atualizarResumo();
-};
-</script>
-</body>
-</html>
+// ========== BOLETOS ==========
+async function carregarBoletos() {
+    const lista = document.getElementById('listaBoletos');
+    const snap = await colecoes.boletos.orderBy('vencimento', 'asc').get();
+    lista.innerHTML = '';
+    if (snap.empty) { lista.innerHTML = '<div class="vazio"><i class="fa fa-barcode"></i><br>Nenhum boleto cadastrado</div>'; return; }
+    snap.forEach(doc => {
+        const b = doc.data();
+        const id = doc.id;
+        const status = getStatus(b.vencimento, b.status);
+        if (!deveExibir((b.nome+' '+(b.codigo||'')).toLowerCase(), b.vencimento, b.status)) return;
+        lista.innerHTML += `
+        <div class="linha">
+            <div class="linha-corpo">
+                <div>
+                    <div style="font-weight:600;">${b.nome}</div>
+                    <div style="font-size:12px; color:#94a3b8;">Venc: ${formatarData(b.vencimento)}</div>
+                    ${b.codigo ? `<div style="font-size:11px; color:#64748b; margin-top:4px;">📎 ${b.codigo}</div>` : ''}
+                </div>
+                <div style="text-align:right;">
+                    <div style="font-weight:700; font-size:16px;">${moeda(b.valor)}</div>
+                    <span class="status status-${status === 'pago' ? 'pago' : status === 'atrasado' ? 'atrasado' : 'vencer'}">${getStatusTexto(status)}</span>
+                </div>
+            </div>
+            <div class="linha-acoes">
+                <button class="btn-sucesso" onclick="marcarBoletoPago('${id}')">✓ Pago</button>
+                <button class="btn-perigo" onclick="excluirBoleto('${id}')">🗑️ Excluir</button>
+            </div>
+        </div>`;
+    });
+}
+async function adicionarBoleto() {
+    const nome = document.getElementById('boletoNome').value.trim();
+    const codigo = document.getElementById('boletoCodigo').value.trim();
+    const vencimento = document.getElementById('boletoData').value;
+    const valor = parseFloat(document.getElementById('boletoValor').value);
+    const status = document.getElementById('boletoStatus').value;
+    if (!nome || !vencimento || !valor) { alert('Preencha os campos obrigatórios!'); return; }
+    await colecoes.boletos.add({ nome, codigo, vencimento, valor, status, criadoEm: firebase.firestore.FieldValue.serverTimestamp() });
+    document.getElementById('boletoNome').value = '';
+    document.getElementById('boletoCodigo').value = '';
+    document.getElementById('boletoData').value = '';
+    document.getElementById('boletoValor').value = '';
+    carregarBoletos();
+    atualizarResumoGeral();
+}
+async function marcarBoletoPago(id) {
+    await colecoes.boletos.doc(id).update({ status: 'pago' });
+    carregarBoletos();
+    atualizarResumoGeral();
+}
+async function excluirBoleto(id) {
+    confirmar('Excluir este boleto?', async () => {
+        await colecoes.boletos.doc(id).delete();
+        carregarBoletos();
+        atualizarResumoGeral();
+    });
+}
+
+// ========== CHEQUES ==========
+async function carregarCheques() {
+    const lista = document.getElementById('listaCheques');
+    const snap = await colecoes.cheques.orderBy('vencimento', 'asc').get();
+    lista.innerHTML = '';
+    if (snap.empty) { lista.innerHTML = '<div class="vazio"><i class="fa fa-file-text-o"></i><br>Nenhum cheque cadastrado</div>'; return; }
+    snap.forEach(doc => {
+        const c = doc.data();
+        const id = doc.id;
+        const status = getStatus(c.vencimento, c.status);
+        if (!deveExibir((c.nome+' '+(c.numero||'')).toLowerCase(), c.vencimento, c.status)) return;
+        lista.innerHTML += `
+        <div class="linha">
+            <div class="linha-corpo">
+                <div>
+                    <div style="font-weight:600;">${c.nome}</div>
+                    <div style="font-size:12px; color:#94a3b8;">Nº: ${c.numero || '—'} | Venc: ${formatarData(c.vencimento)}</div>
+                </div>
+                <div style="text-align:right;">
+                    <div style="font-weight:700; font-size:16px;">${moeda(c.valor)}</div>
+                    <span class="status status-${status === 'pago' ? 'pago' : status === 'atrasado' ? 'atrasado' : 'vencer'}">${getStatusTexto(status)}</span>
+                </div>
+            </div>
+            <div class="linha-acoes">
+                <button class="btn-sucesso" onclick="marcarChequePago('${id}')">✓ Compensado</button>
+                <button class="btn-perigo" onclick="excluirCheque('${id}')">🗑️ Excluir</button>
+            </div>
+        </div>`;
+    });
+}
+async function adicionarCheque() {
+    const nome = document.getElementById('chequeNome').value.trim();
+    const numero = document.getElementById('chequeNum').value.trim();
+    const valor = parseFloat(document.getElementById('chequeValor').value);
+    const vencimento = document.getElementById('chequeVenc').value;
+    const status = document.getElementById('chequeStatus').value;
+    if (!nome || !valor || !vencimento) { alert('Preencha os campos obrigatórios!'); return; }
+    await colecoes.cheques.add({ nome, numero, valor, vencimento, status, criadoEm: firebase.firestore.FieldValue.serverTimestamp() });
+    document.getElementById('chequeNome').value = '';
+    document.getElementById('chequeNum').value = '';
+    document.getElementById('chequeValor').value = '';
+    document.getElementById('chequeVenc').value = '';
+    carregarCheques();
+    atualizarResumoGeral();
+}
+async function marcarChequePago(id) {
+    await colecoes.cheques.doc(id).update({ status: 'pago' });
+    carregarCheques();
+    atualizarResumoGeral();
+}
+async function excluirCheque(id) {
+    confirmar('Excluir este cheque?', async () => {
+        await colecoes.cheques.doc(id).delete();
+        carregarCheques();
+        atualizarResumoGeral();
+    });
+}
+
+// ========== EU DEVO ==========
+async function carregarEuDevo() {
+    const lista = document.getElementById('listaEuDevo');
+    const snap = await colecoes.euDevo.orderBy('data', 'asc').get();
+    lista.innerHTML = '';
+    if (snap.empty) { lista.innerHTML = '<div class="vazio"><i class="fa fa-arrow-up"></i><br>Nenhum registro ainda</div>'; return; }
+    snap.forEach(doc => {
+        const d = doc.data();
+        const id = doc.id;
+        const status = getStatus(d.data, d.status);
+        if (!deveExibir((d.nome+' '+(d.desc||'')).toLowerCase(), d.data, d.status)) return;
+        lista.innerHTML += `
+        <div class="linha">
+            <div class="linha-corpo">
+                <div>
+                    <div style="font-weight:600;">${d.nome}</div>
+                    <div style="font-size:12px; color:#94a3b8;">${d.desc || 'Sem descrição'} | Venc: ${formatarData(d.data)}</div>
+                    <div style="font-size:11px; color:#64748b;">${d.parcelas || 1}x de ${moeda((d.valorTotal || 0) / (d.parcelas || 1))}</div>
+                </div>
+                <div style="text-align:right;">
+                    <div style="font-weight:700; font-size:16px; color:#ef4444;">${moeda(d.valorTotal)}</div>
+                    <span class="status status-${status === 'pago' ? 'pago' : status === 'atrasado' ? 'atrasado' : 'vencer'}">${getStatusTexto(status)}</span>
+                </div>
+            </div>
+            <div class="linha-acoes">
+                <button class="btn-sucesso" onclick="
