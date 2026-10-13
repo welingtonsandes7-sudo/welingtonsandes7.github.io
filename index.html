@@ -31,6 +31,8 @@
         .item-row { display: flex; align-items: center; justify-content: space-between; padding: 12px; border-bottom: 1px solid #334155; flex-wrap: wrap; gap: 8px; }
         .hidden-tab { display: none; }
         .sync-indicator { font-size: 12px; color: #94a3b8; }
+        .mes-card { background: #334155; border-radius: 8px; padding: 15px; text-align: center; }
+        .mes-atual { border: 2px solid #3b82f6; }
     </style>
 </head>
 <body>
@@ -41,32 +43,55 @@
 
     <!-- Abas -->
     <div class="flex flex-wrap gap-2 mb-6 justify-center">
-        <button class="tab-btn active btn" onclick="showTab('resumo')">📊 Resumo</button>
+        <button class="tab-btn active btn" onclick="showTab('resumo')">📊 Resumo Mensal</button>
         <button class="tab-btn btn" onclick="showTab('boletos')">📄 Boletos</button>
         <button class="tab-btn btn" onclick="showTab('cheques')">✍️ Cheques</button>
-        <button class="tab-btn btn" onclick="showTab('rendas')">💰 Rendas</button>
+        <button class="tab-btn btn" onclick="showTab('emprestimos')">💵 Empréstimos</button>
+        <button class="tab-btn btn" onclick="showTab('receber')">📥 Contas a Receber</button>
         <button class="tab-btn btn" onclick="showTab('patrimonio')">🚗 Patrimônio</button>
     </div>
 
-    <!-- ABA RESUMO -->
+    <!-- ABA RESUMO MENSAL -->
     <div id="tab-resumo" class="card">
-        <h2 class="text-xl font-semibold mb-4">📊 Visão Geral</h2>
+        <h2 class="text-xl font-semibold mb-4">📊 Resumo Mensal</h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div class="mes-card mes-atual">
+                <p class="text-sm text-gray-400">Este Mês</p>
+                <p class="text-2xl font-bold text-red-400" id="mesAtualDevo">R$ 0,00</p>
+                <p class="text-sm text-green-400" id="mesAtualRecebo">Receber: R$ 0,00</p>
+                <p class="text-sm text-blue-300" id="mesAtualSaldo">Saldo: R$ 0,00</p>
+            </div>
+            <div class="mes-card">
+                <p class="text-sm text-gray-400">Próximo Mês</p>
+                <p class="text-2xl font-bold text-orange-400" id="mesSeguinteDevo">R$ 0,00</p>
+                <p class="text-sm text-green-400" id="mesSeguinteRecebo">Receber: R$ 0,00</p>
+                <p class="text-sm text-blue-300" id="mesSeguinteSaldo">Saldo: R$ 0,00</p>
+            </div>
+            <div class="mes-card">
+                <p class="text-sm text-gray-400">Demais Meses</p>
+                <p class="text-2xl font-bold text-purple-400" id="mesFuturoDevo">R$ 0,00</p>
+                <p class="text-sm text-green-400" id="mesFuturoRecebo">Receber: R$ 0,00</p>
+                <p class="text-sm text-blue-300" id="mesFuturoSaldo">Saldo: R$ 0,00</p>
+            </div>
+        </div>
+
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
             <div class="text-center p-4 bg-blue-900/30 rounded-lg">
-                <p class="text-sm text-gray-400">A Vencer</p>
+                <p class="text-sm text-gray-400">A Vencer Total</p>
                 <p class="text-xl font-bold text-blue-400" id="resumoVencer">R$ 0,00</p>
-            </div>
-            <div class="text-center p-4 bg-yellow-900/30 rounded-lg">
-                <p class="text-sm text-gray-400">A Vencer (30d)</p>
-                <p class="text-xl font-bold text-yellow-400" id="resumoProximos">R$ 0,00</p>
             </div>
             <div class="text-center p-4 bg-red-900/30 rounded-lg">
                 <p class="text-sm text-gray-400">Atrasados</p>
                 <p class="text-xl font-bold text-red-400" id="resumoAtrasado">R$ 0,00</p>
             </div>
             <div class="text-center p-4 bg-green-900/30 rounded-lg">
+                <p class="text-sm text-gray-400">Total a Receber</p>
+                <p class="text-xl font-bold text-green-400" id="resumoReceber">R$ 0,00</p>
+            </div>
+            <div class="text-center p-4 bg-emerald-900/30 rounded-lg">
                 <p class="text-sm text-gray-400">Total Pago</p>
-                <p class="text-xl font-bold text-green-400" id="resumoPago">R$ 0,00</p>
+                <p class="text-xl font-bold text-emerald-400" id="resumoPago">R$ 0,00</p>
             </div>
         </div>
         <div style="height: 250px;">
@@ -127,30 +152,66 @@
         <div id="listaCheques"></div>
     </div>
 
-    <!-- ABA RENDAS -->
-    <div id="tab-rendas" class="card hidden-tab">
-        <h2 class="text-xl font-semibold mb-4">💰 Rendas e Recebíveis</h2>
+    <!-- ABA EMPRÉSTIMOS -->
+    <div id="tab-emprestimos" class="card hidden-tab">
+        <h2 class="text-xl font-semibold mb-4">💵 Empréstimos Concedidos</h2>
+        <p class="text-sm text-gray-400 mb-4">Controle quem te deve, com juros e parcelas</p>
         
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <div>
-                <label>Origem / Descrição</label>
-                <input type="text" id="rendaNome" placeholder="Ex: Aluguel da casa, Royalties...">
+                <label>Nome da Pessoa</label>
+                <input type="text" id="emprestimoNome" placeholder="Ex: João da Silva">
+                <label>Valor Emprestado R$</label>
+                <input type="number" step="0.01" id="emprestimoValor" placeholder="0,00">
+                <label>Taxa de Juros % ao mês</label>
+                <input type="number" step="0.01" id="emprestimoJuros" placeholder="0.00">
+            </div>
+            <div>
+                <label>Data do Empréstimo</label>
+                <input type="date" id="emprestimoData">
+                <label>Número de Parcelas</label>
+                <input type="number" id="emprestimoParcelas" placeholder="1">
+                <label>Data da Primeira Parcela</label>
+                <input type="date" id="emprestimoPrimeira">
+            </div>
+        </div>
+        <button class="btn btn-primary w-full mb-6" onclick="adicionarEmprestimo()">➕ Adicionar Empréstimo</button>
+        <div id="listaEmprestimos"></div>
+    </div>
+
+    <!-- ABA CONTAS A RECEBER -->
+    <div id="tab-receber" class="card hidden-tab">
+        <h2 class="text-xl font-semibold mb-4">📥 Contas a Receber</h2>
+        <p class="text-sm text-gray-400 mb-4">Aluguéis, pagamentos de clientes, rendas diversas</p>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div>
+                <label>Descrição / Origem</label>
+                <input type="text" id="receberNome" placeholder="Ex: Aluguel — Casa X">
                 <label>Valor R$</label>
-                <input type="number" step="0.01" id="rendaValor" placeholder="0,00">
+                <input type="number" step="0.01" id="receberValor" placeholder="0,00">
             </div>
             <div>
                 <label>Data Prevista</label>
-                <input type="date" id="rendaData">
-                <label>Tipo</label>
-                <select id="rendaTipo">
-                    <option value="mensal">Mensal</option>
-                    <option value="unica">Receita Única</option>
-                    <option value="anual">Anual</option>
+                <input type="date" id="receberData">
+                <label>Status</label>
+                <select id="receberStatus">
+                    <option value="a receber">A Receber</option>
+                    <option value="recebido">Recebido ✅</option>
+                    <option value="atrasado">Atrasado ⚠️</option>
                 </select>
             </div>
         </div>
-        <button class="btn btn-primary w-full mb-6" onclick="adicionarRenda()">➕ Adicionar Renda</button>
-        <div id="listaRendas"></div>
+        <button class="btn btn-primary w-full mb-6" onclick="adicionarReceber()">➕ Adicionar Conta</button>
+        
+        <div class="flex gap-2 mb-4 flex-wrap">
+            <button class="btn btn-primary" onclick="filtrarReceber('todos')">Todos</button>
+            <button class="btn btn-warning" onclick="filtrarReceber('a receber')">A Receber</button>
+            <button class="btn btn-danger" onclick="filtrarReceber('atrasado')">Atrasados</button>
+            <button class="btn btn-success" onclick="filtrarReceber('recebido')">Recebidos</button>
+        </div>
+        
+        <div id="listaReceber"></div>
     </div>
 
     <!-- ABA PATRIMÔNIO -->
@@ -184,7 +245,7 @@
 
 <script>
 // ==========================================
-// FIREBASE CONFIGURAÇÃO — JÁ PREENCHIDO ✅
+// FIREBASE CONFIG
 // ==========================================
 const firebaseConfig = {
   apiKey: "AIzaSyCPd_aIQVDEP-UK-N2twGzci8sRLgJTRmI",
@@ -196,37 +257,37 @@ const firebaseConfig = {
   measurementId: "G-WZ3C45QL6H"
 };
 
-// Inicializar Firebase
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
 // Coleções
 const boletosRef = db.collection('boletos');
 const chequesRef = db.collection('cheques');
-const rendasRef = db.collection('rendas');
+const emprestimosRef = db.collection('emprestimos');
+const receberRef = db.collection('receber');
 const patrimonioRef = db.collection('patrimonio');
 
 // Estado
 let boletos = [];
 let cheques = [];
-let rendas = [];
+let emprestimos = [];
+let receber = [];
 let patrimonio = [];
-let filtroAtual = 'todos';
+let filtroBoletos = 'todos';
+let filtroReceber = 'todos';
 let grafico = null;
 
-// Formatar moeda
+// Utilitários
 function formatarValor(valor) {
     return Number(valor).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-// Formatar data
 function formatarData(dataStr) {
     if (!dataStr) return '--';
     const [ano, mes, dia] = dataStr.split('-');
     return `${dia}/${mes}/${ano}`;
 }
 
-// Hoje
 function hoje() {
     return new Date().toISOString().split('T')[0];
 }
@@ -235,16 +296,29 @@ function ehAtrasado(dataStr) {
     return dataStr < hoje();
 }
 
-function ehProximos30Dias(dataStr) {
-    const data = new Date(dataStr);
-    const agora = new Date();
-    const trintaDias = new Date();
-    trintaDias.setDate(trintaDias.getDate() + 30);
-    return data >= agora && data <= trintaDias;
+function getMes(dataStr) {
+    return dataStr ? dataStr.substring(0, 7) : '';
+}
+
+function mesAtual() {
+    return new Date().toISOString().substring(0, 7);
+}
+
+function mesSeguinte() {
+    const d = new Date();
+    d.setMonth(d.getMonth() + 1);
+    return d.toISOString().substring(0, 7);
+}
+
+function calcularValorComJuros(valor, jurosPercent, parcelas) {
+    const taxa = jurosPercent / 100;
+    const valorTotal = valor * Math.pow(1 + taxa, parcelas);
+    const valorParcela = valorTotal / parcelas;
+    return { valorTotal, valorParcela };
 }
 
 // ==========================================
-// CARREGAR DADOS DO FIREBASE
+// CARREGAR DADOS
 // ==========================================
 async function carregarDados() {
     try {
@@ -256,17 +330,20 @@ async function carregarDados() {
         const snapCheques = await chequesRef.orderBy('data', 'asc').get();
         cheques = snapCheques.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         
-        const snapRendas = await rendasRef.orderBy('data', 'asc').get();
-        rendas = snapRendas.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const snapEmp = await emprestimosRef.orderBy('data', 'desc').get();
+        emprestimos = snapEmp.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         
-        const snapPatrimonio = await patrimonioRef.get();
-        patrimonio = snapPatrimonio.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const snapRec = await receberRef.orderBy('data', 'asc').get();
+        receber = snapRec.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        
+        const snapPat = await patrimonioRef.get();
+        patrimonio = snapPat.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         
         document.getElementById('syncStatus').innerHTML = '✅ Sincronizado na nuvem';
         atualizarTudo();
     } catch (error) {
-        console.error('Erro ao carregar:', error);
-        document.getElementById('syncStatus').innerHTML = '⚠️ Erro de conexão — verifique o Firebase';
+        console.error('Erro:', error);
+        document.getElementById('syncStatus').innerHTML = '⚠️ Erro — verifique as regras do Firestore';
     }
 }
 
@@ -284,15 +361,12 @@ async function adicionarBoleto() {
     const novo = { nome, codigo, valor, data, status: ehAtrasado(data) ? 'atrasado' : 'a vencer' };
     await boletosRef.add(novo);
     
-    limparCamposBoletos();
-    await carregarDados();
-}
-
-function limparCamposBoletos() {
     document.getElementById('boletoNome').value = '';
     document.getElementById('boletoCodigo').value = '';
     document.getElementById('boletoValor').value = '';
     document.getElementById('boletoData').value = '';
+    
+    await carregarDados();
 }
 
 async function mudarStatusBoleto(id, atual) {
@@ -303,14 +377,14 @@ async function mudarStatusBoleto(id, atual) {
 }
 
 async function excluirBoleto(id) {
-    if (confirm('Tem certeza que quer excluir este boleto?')) {
+    if (confirm('Excluir este boleto?')) {
         await boletosRef.doc(id).delete();
         await carregarDados();
     }
 }
 
 function filtrarBoletos(filtro) {
-    filtroAtual = filtro;
+    filtroBoletos = filtro;
     renderizarBoletos();
 }
 
@@ -318,8 +392,8 @@ function renderizarBoletos() {
     const lista = document.getElementById('listaBoletos');
     let filtrados = boletos;
     
-    if (filtroAtual !== 'todos') {
-        filtrados = boletos.filter(b => b.status === filtroAtual);
+    if (filtroBoletos !== 'todos') {
+        filtrados = boletos.filter(b => b.status === filtroBoletos);
     }
 
     if (filtrados.length === 0) {
@@ -328,8 +402,7 @@ function renderizarBoletos() {
     }
 
     lista.innerHTML = filtrados.map(b => {
-        let classeStatus = '';
-        let textoStatus = b.status;
+        let classeStatus = '', textoStatus = b.status;
         if (b.status === 'a vencer') { classeStatus = 'status-vencer'; textoStatus = '📅 A Vencer'; }
         else if (b.status === 'atrasado') { classeStatus = 'status-atrasado'; textoStatus = '⚠️ Atrasado'; }
         else if (b.status === 'pago') { classeStatus = 'status-pago'; textoStatus = '✅ Pago'; }
@@ -362,18 +435,16 @@ async function adicionarCheque() {
     const valor = parseFloat(document.getElementById('chequeValor').value || 0);
     const data = document.getElementById('chequeData').value;
 
-    if (!nome || !valor || !data) { alert('Preencha nome, valor e data!'); return; }
+    if (!nome || !valor || !data) { alert('Preencha os campos!'); return; }
 
     await chequesRef.add({ nome, numero, valor, data });
-    limparCamposCheques();
-    await carregarDados();
-}
-
-function limparCamposCheques() {
+    
     document.getElementById('chequeNome').value = '';
     document.getElementById('chequeNumero').value = '';
     document.getElementById('chequeValor').value = '';
     document.getElementById('chequeData').value = '';
+    
+    await carregarDados();
 }
 
 async function excluirCheque(id) {
@@ -403,50 +474,150 @@ function renderizarCheques() {
 }
 
 // ==========================================
-// RENDAS
+// EMPRÉSTIMOS
 // ==========================================
-async function adicionarRenda() {
-    const nome = document.getElementById('rendaNome').value.trim();
-    const valor = parseFloat(document.getElementById('rendaValor').value || 0);
-    const data = document.getElementById('rendaData').value;
-    const tipo = document.getElementById('rendaTipo').value;
+async function adicionarEmprestimo() {
+    const nome = document.getElementById('emprestimoNome').value.trim();
+    const valor = parseFloat(document.getElementById('emprestimoValor').value || 0);
+    const juros = parseFloat(document.getElementById('emprestimoJuros').value || 0);
+    const data = document.getElementById('emprestimoData').value;
+    const parcelas = parseInt(document.getElementById('emprestimoParcelas').value || 1);
+    const primeira = document.getElementById('emprestimoPrimeira').value;
 
-    if (!nome || !valor || !data) { alert('Preencha todos os campos!'); return; }
+    if (!nome || !valor || !data) { alert('Preencha nome, valor e data!'); return; }
 
-    await rendasRef.add({ nome, valor, data, tipo });
-    limparCamposRendas();
+    const calculo = calcularValorComJuros(valor, juros, parcelas);
+    
+    await emprestimosRef.add({ 
+        nome, valor, juros, data, parcelas, primeira,
+        valorTotal: calculo.valorTotal,
+        valorParcela: calculo.valorParcela,
+        status: 'ativo'
+    });
+    
+    document.getElementById('emprestimoNome').value = '';
+    document.getElementById('emprestimoValor').value = '';
+    document.getElementById('emprestimoJuros').value = '';
+    document.getElementById('emprestimoData').value = '';
+    document.getElementById('emprestimoParcelas').value = '';
+    document.getElementById('emprestimoPrimeira').value = '';
+    
     await carregarDados();
 }
 
-function limparCamposRendas() {
-    document.getElementById('rendaNome').value = '';
-    document.getElementById('rendaValor').value = '';
-    document.getElementById('rendaData').value = '';
-}
-
-async function excluirRenda(id) {
-    if (confirm('Excluir esta renda?')) {
-        await rendasRef.doc(id).delete();
+async function excluirEmprestimo(id) {
+    if (confirm('Excluir este empréstimo?')) {
+        await emprestimosRef.doc(id).delete();
         await carregarDados();
     }
 }
 
-function renderizarRendas() {
-    const lista = document.getElementById('listaRendas');
-    if (rendas.length === 0) {
-        lista.innerHTML = '<p class="text-gray-400 text-center py-4">Nenhuma renda cadastrada.</p>';
+async function marcarPagoEmprestimo(id) {
+    await emprestimosRef.doc(id).update({ status: 'pago' });
+    await carregarDados();
+}
+
+function renderizarEmprestimos() {
+    const lista = document.getElementById('listaEmprestimos');
+    if (emprestimos.length === 0) {
+        lista.innerHTML = '<p class="text-gray-400 text-center py-4">Nenhum empréstimo cadastrado.</p>';
         return;
     }
 
-    lista.innerHTML = rendas.map(r => `
-    <div class="item-row">
+    lista.innerHTML = emprestimos.map(e => `
+    <div class="item-row ${e.status === 'pago' ? 'opacity-60' : ''}">
         <div class="flex-1">
-            <strong>${r.nome}</strong>
-            <br><small class="text-gray-400">Data: ${formatarData(r.data)} | Tipo: ${r.tipo}</small>
+            <strong>${e.nome}</strong>
+            <br><small class="text-gray-400">Empréstimo: R$ ${formatarValor(e.valor)} | Juros: ${e.juros || 0}% a.m.</small>
+            <br><small class="text-green-400">Total a receber: R$ ${formatarValor(e.valorTotal || e.valor)}</small>
+            <br><small class="text-blue-300">${e.parcelas || 1}x de R$ ${formatarValor(e.valorParcela || e.valor)}</small>
         </div>
-        <p class="font-bold text-lg text-green-400">+ R$ ${formatarValor(r.valor)}</p>
-        <button class="btn btn-danger text-sm py-1 px-2" onclick="excluirRenda('${r.id}')">🗑️</button>
+        <div class="text-right">
+            <p class="text-sm ${e.status === 'pago' ? 'text-green-400' : 'text-yellow-400'}">
+                ${e.status === 'pago' ? '✅ Pago' : '🔄 Ativo'}
+            </p>
+        </div>
+        <div class="flex gap-1 mt-2 w-full md:w-auto">
+            ${e.status !== 'pago' ? `<button class="btn btn-success text-sm py-1 px-2" onclick="marcarPagoEmprestimo('${e.id}')">✓ Pago</button>` : ''}
+            <button class="btn btn-danger text-sm py-1 px-2" onclick="excluirEmprestimo('${e.id}')">🗑️</button>
+        </div>
     </div>`).join('');
+}
+
+// ==========================================
+// CONTAS A RECEBER
+// ==========================================
+async function adicionarReceber() {
+    const nome = document.getElementById('receberNome').value.trim();
+    const valor = parseFloat(document.getElementById('receberValor').value || 0);
+    const data = document.getElementById('receberData').value;
+    const status = document.getElementById('receberStatus').value;
+
+    if (!nome || !valor || !data) { alert('Preencha os campos!'); return; }
+
+    await receberRef.add({ nome, valor, data, status });
+    
+    document.getElementById('receberNome').value = '';
+    document.getElementById('receberValor').value = '';
+    document.getElementById('receberData').value = '';
+    
+    await carregarDados();
+}
+
+async function mudarStatusReceber(id, atual) {
+    const proximos = { 'a receber': 'recebido', 'atrasado': 'recebido', 'recebido': 'a receber' };
+    const novo = proximos[atual];
+    await receberRef.doc(id).update({ status: novo });
+    await carregarDados();
+}
+
+async function excluirReceber(id) {
+    if (confirm('Excluir esta conta?')) {
+        await receberRef.doc(id).delete();
+        await carregarDados();
+    }
+}
+
+function filtrarReceber(filtro) {
+    filtroReceber = filtro;
+    renderizarReceber();
+}
+
+function renderizarReceber() {
+    const lista = document.getElementById('listaReceber');
+    let filtrados = receber;
+    
+    if (filtroReceber !== 'todos') {
+        filtrados = receber.filter(r => r.status === filtroReceber);
+    }
+
+    if (filtrados.length === 0) {
+        lista.innerHTML = '<p class="text-gray-400 text-center py-4">Nenhuma conta a receber encontrada.</p>';
+        return;
+    }
+
+    lista.innerHTML = filtrados.map(r => {
+        let classeStatus = '', textoStatus = r.status;
+        if (r.status === 'a receber') { classeStatus = 'status-vencer'; textoStatus = '📅 A Receber'; }
+        else if (r.status === 'atrasado') { classeStatus = 'status-atrasado'; textoStatus = '⚠️ Atrasado'; }
+        else if (r.status === 'recebido') { classeStatus = 'status-pago'; textoStatus = '✅ Recebido'; }
+
+        return `
+        <div class="item-row">
+            <div class="flex-1 min-w-[200px]">
+                <strong>${r.nome}</strong>
+                <br><small class="text-gray-400">Previsão: ${formatarData(r.data)}</small>
+            </div>
+            <div class="text-right">
+                <p class="font-bold text-lg text-green-400">+ R$ ${formatarValor(r.valor)}</p>
+                <span class="${classeStatus} text-sm">${textoStatus}</span>
+            </div>
+            <div class="flex gap-1 mt-2 w-full md:w-auto">
+                <button class="btn btn-success text-sm py-1 px-2" onclick="mudarStatusReceber('${r.id}', '${r.status}')">✓</button>
+                <button class="btn btn-danger text-sm py-1 px-2" onclick="excluirReceber('${r.id}')">🗑️</button>
+            </div>
+        </div>`;
+    }).join('');
 }
 
 // ==========================================
@@ -461,18 +632,16 @@ async function adicionarPatrimonio() {
     if (!nome || !valor) { alert('Preencha nome e valor!'); return; }
 
     await patrimonioRef.add({ nome, valor, obs, tipo });
-    limparCamposPatrimonio();
-    await carregarDados();
-}
-
-function limparCamposPatrimonio() {
+    
     document.getElementById('patrimonioNome').value = '';
     document.getElementById('patrimonioValor').value = '';
     document.getElementById('patrimonioObs').value = '';
+    
+    await carregarDados();
 }
 
 async function excluirPatrimonio(id) {
-    if (confirm('Excluir este item do patrimônio?')) {
+    if (confirm('Excluir este item?')) {
         await patrimonioRef.doc(id).delete();
         await carregarDados();
     }
@@ -504,7 +673,100 @@ function renderizarPatrimonio() {
 }
 
 // ==========================================
-// ABA E RESUMO
+// RESUMO MENSAL
+// ==========================================
+function calcularResumoMensal() {
+    const mesAtualStr = mesAtual();
+    const mesSeguinteStr = mesSeguinte();
+
+    // BOLETOS A PAGAR
+    const boletosNaoPagos = boletos.filter(b => b.status !== 'pago');
+    const devoMesAtual = boletosNaoPagos.filter(b => getMes(b.data) === mesAtualStr).reduce((s, b) => s + Number(b.valor), 0);
+    const devoMesSeguinte = boletosNaoPagos.filter(b => getMes(b.data) === mesSeguinteStr).reduce((s, b) => s + Number(b.valor), 0);
+    const devoMesFuturo = boletosNaoPagos.filter(b => getMes(b.data) !== mesAtualStr && getMes(b.data) !== mesSeguinteStr).reduce((s, b) => s + Number(b.valor), 0);
+
+    // CONTAS A RECEBER
+    const receberNaoRecebido = receber.filter(r => r.status !== 'recebido');
+    const receboMesAtual = receberNaoRecebido.filter(r => getMes(r.data) === mesAtualStr).reduce((s, r) => s + Number(r.valor), 0);
+    const receboMesSeguinte = receberNaoRecebido.filter(r => getMes(r.data) === mesSeguinteStr).reduce((s, r) => s + Number(r.valor), 0);
+    const receboMesFuturo = receberNaoRecebido.filter(r => getMes(r.data) !== mesAtualStr && getMes(r.data) !== mesSeguinteStr).reduce((s, r) => s + Number(r.valor), 0);
+
+    // TOTAIS GERAIS
+    const totalVencer = boletos.filter(b => b.status === 'a vencer').reduce((s, b) => s + Number(b.valor), 0);
+    const totalAtrasado = boletos.filter(b => b.status === 'atrasado').reduce((s, b) => s + Number(b.valor), 0);
+    const totalPago = boletos.filter(b => b.status === 'pago').reduce((s, b) => s + Number(b.valor), 0);
+    const totalReceber = receberNaoRecebido.reduce((s, r) => s + Number(r.valor), 0);
+
+    return {
+        devoMesAtual, devoMesSeguinte, devoMesFuturo,
+        receboMesAtual, receboMesSeguinte, receboMesFuturo,
+        saldoAtual: receboMesAtual - devoMesAtual,
+        saldoSeguinte: receboMesSeguinte - devoMesSeguinte,
+        saldoFuturo: receboMesFuturo - devoMesFuturo,
+        totalVencer, totalAtrasado, totalPago, totalReceber
+    };
+}
+
+function atualizarResumo() {
+    const resumo = calcularResumoMensal();
+    
+    document.getElementById('mesAtualDevo').textContent = `R$ ${formatarValor(resumo.devoMesAtual)}`;
+    document.getElementById('mesAtualRecebo').textContent = `Receber: R$ ${formatarValor(resumo.receboMesAtual)}`;
+    document.getElementById('mesAtualSaldo').textContent = `Saldo: R$ ${formatarValor(resumo.saldoAtual)}`;
+    
+    document.getElementById('mesSeguinteDevo').textContent = `R$ ${formatarValor(resumo.devoMesSeguinte)}`;
+    document.getElementById('mesSeguinteRecebo').textContent = `Receber: R$ ${formatarValor(resumo.receboMesSeguinte)}`;
+    document.getElementById('mesSeguinteSaldo').textContent = `Saldo: R$ ${formatarValor(resumo.saldoSeguinte)}`;
+    
+    document.getElementById('mesFuturoDevo').textContent = `R$ ${formatarValor(resumo.devoMesFuturo)}`;
+    document.getElementById('mesFuturoRecebo').textContent = `Receber: R$ ${formatarValor(resumo.receboMesFuturo)}`;
+    document.getElementById('mesFuturoSaldo').textContent = `Saldo: R$ ${formatarValor(resumo.saldoFuturo)}`;
+
+    document.getElementById('resumoVencer').textContent = `R$ ${formatarValor(resumo.totalVencer)}`;
+    document.getElementById('resumoAtrasado').textContent = `R$ ${formatarValor(resumo.totalAtrasado)}`;
+    document.getElementById('resumoReceber').textContent = `R$ ${formatarValor(resumo.totalReceber)}`;
+    document.getElementById('resumoPago').textContent = `R$ ${formatarValor(resumo.totalPago)}`;
+
+    atualizarGrafico(resumo);
+}
+
+function atualizarGrafico(resumo) {
+    const ctx = document.getElementById('graficoResumo').getContext('2d');
+    if (grafico) grafico.destroy();
+    
+    grafico = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['Este Mês', 'Próximo Mês', 'Demais Meses'],
+            datasets: [
+                {
+                    label: 'A Pagar',
+                    data: [resumo.devoMesAtual, resumo.devoMesSeguinte, resumo.devoMesFuturo],
+                    backgroundColor: '#ef4444'
+                },
+                {
+                    label: 'A Receber',
+                    data: [resumo.receboMesAtual, resumo.receboMesSeguinte, resumo.receboMesFuturo],
+                    backgroundColor: '#10b981'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: { ticks: { color: '#f1f5f9' }, grid: { color: '#334155' } },
+                y: { ticks: { color: '#f1f5f9' }, grid: { color: '#334155' } }
+            },
+            plugins: {
+                legend: { labels: { color: '#f1f5f9' } }
+            }
+        }
+    });
+}
+
+// ==========================================
+// NAVEGAÇÃO DE ABAS
 // ==========================================
 function showTab(nome) {
     document.querySelectorAll('[id^="tab-"]').forEach(tab => tab.classList.add('hidden-tab'));
@@ -515,53 +777,17 @@ function showTab(nome) {
     
     if (nome === 'boletos') renderizarBoletos();
     if (nome === 'cheques') renderizarCheques();
-    if (nome === 'rendas') renderizarRendas();
+    if (nome === 'emprestimos') renderizarEmprestimos();
+    if (nome === 'receber') renderizarReceber();
     if (nome === 'patrimonio') renderizarPatrimonio();
     if (nome === 'resumo') atualizarResumo();
-}
-
-function atualizarResumo() {
-    const vencer = boletos.filter(b => b.status === 'a vencer').reduce((s, b) => s + Number(b.valor), 0);
-    const proximos = boletos.filter(b => b.status === 'a vencer' && ehProximos30Dias(b.data)).reduce((s, b) => s + Number(b.valor), 0);
-    const atrasado = boletos.filter(b => b.status === 'atrasado').reduce((s, b) => s + Number(b.valor), 0);
-    const pago = boletos.filter(b => b.status === 'pago').reduce((s, b) => s + Number(b.valor), 0);
-
-    document.getElementById('resumoVencer').textContent = `R$ ${formatarValor(vencer)}`;
-    document.getElementById('resumoProximos').textContent = `R$ ${formatarValor(proximos)}`;
-    document.getElementById('resumoAtrasado').textContent = `R$ ${formatarValor(atrasado)}`;
-    document.getElementById('resumoPago').textContent = `R$ ${formatarValor(pago)}`;
-
-    atualizarGrafico(vencer, proximos, atrasado, pago);
-}
-
-function atualizarGrafico(vencer, proximos, atrasado, pago) {
-    const ctx = document.getElementById('graficoResumo').getContext('2d');
-    if (grafico) grafico.destroy();
-    
-    grafico = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-            labels: ['A Vencer', 'Próximos 30d', 'Atrasados', 'Pagos'],
-            datasets: [{
-                data: [vencer, proximos, atrasado, pago],
-                backgroundColor: ['#3b82f6', '#f59e0b', '#ef4444', '#10b981'],
-                borderWidth: 0
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { position: 'bottom', labels: { color: '#f1f5f9', font: { size: 12 } } }
-            }
-        }
-    });
 }
 
 function atualizarTudo() {
     renderizarBoletos();
     renderizarCheques();
-    renderizarRendas();
+    renderizarEmprestimos();
+    renderizarReceber();
     renderizarPatrimonio();
     atualizarResumo();
 }
