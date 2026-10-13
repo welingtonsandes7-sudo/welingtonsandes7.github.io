@@ -3,1755 +3,572 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Controle Financeiro & Patrimonial Premium 💼</title>
-    <!-- Tailwind CSS -->
+    <title>Controle de Finanças 💼</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Chart.js v4 -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
-    <!-- SheetJS Excel -->
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <!-- Google Font Inter -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #0f172a; }
-        .tab-ativa { border-bottom: 3px solid #2563eb; color: #2563eb; background-color: #eff6ff; font-weight: 700; }
-        .hide-scroll::-webkit-scrollbar { display: none; }
-        .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
-        .card-glow { box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05); }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #0f172a; color: #f1f5f9; min-height: 100vh; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .tab-btn { transition: all 0.3s ease; }
+        .tab-btn.active { background: #3b82f6; color: white; }
+        .card { background: #1e293b; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+        .btn { padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; transition: 0.2s; }
+        .btn:hover { transform: translateY(-2px); }
+        .btn-primary { background: #3b82f6; color: white; }
+        .btn-success { background: #10b981; color: white; }
+        .btn-danger { background: #ef4444; color: white; }
+        .btn-warning { background: #f59e0b; color: #1e293b; }
+        input, select { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #475569; background: #334155; color: white; margin-bottom: 10px; }
+        .status-pago { color: #10b981; font-weight: 600; }
+        .status-vencer { color: #f59e0b; font-weight: 600; }
+        .status-atrasado { color: #ef4444; font-weight: 600; }
+        .item-row { display: flex; align-items: center; justify-content: space-between; padding: 12px; border-bottom: 1px solid #334155; flex-wrap: wrap; gap: 8px; }
+        .hidden-tab { display: none; }
+        .sync-indicator { font-size: 12px; color: #94a3b8; }
     </style>
 </head>
-<body class="min-h-screen flex flex-col">
+<body>
 
-<!-- AVISO TOAST -->
-<div id="aviso" class="fixed bottom-5 right-5 bg-emerald-600 text-white px-5 py-3 rounded-xl shadow-2xl font-semibold hidden z-50 transition-all flex items-center gap-2">
-    <span>✅</span> <span id="aviso-texto">Salvo com sucesso!</span>
+<div class="container">
+    <h1 class="text-2xl font-bold text-center mb-6">💼 Controle de Finanças</h1>
+    <p class="text-center sync-indicator" id="syncStatus">🔄 Conectando...</p>
+
+    <!-- Abas -->
+    <div class="flex flex-wrap gap-2 mb-6 justify-center">
+        <button class="tab-btn active btn" onclick="showTab('resumo')">📊 Resumo</button>
+        <button class="tab-btn btn" onclick="showTab('boletos')">📄 Boletos</button>
+        <button class="tab-btn btn" onclick="showTab('cheques')">✍️ Cheques</button>
+        <button class="tab-btn btn" onclick="showTab('rendas')">💰 Rendas</button>
+        <button class="tab-btn btn" onclick="showTab('patrimonio')">🚗 Patrimônio</button>
+    </div>
+
+    <!-- ABA RESUMO -->
+    <div id="tab-resumo" class="card">
+        <h2 class="text-xl font-semibold mb-4">📊 Visão Geral</h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div class="text-center p-4 bg-blue-900/30 rounded-lg">
+                <p class="text-sm text-gray-400">A Vencer</p>
+                <p class="text-xl font-bold text-blue-400" id="resumoVencer">R$ 0,00</p>
+            </div>
+            <div class="text-center p-4 bg-yellow-900/30 rounded-lg">
+                <p class="text-sm text-gray-400">A Vencer (30d)</p>
+                <p class="text-xl font-bold text-yellow-400" id="resumoProximos">R$ 0,00</p>
+            </div>
+            <div class="text-center p-4 bg-red-900/30 rounded-lg">
+                <p class="text-sm text-gray-400">Atrasados</p>
+                <p class="text-xl font-bold text-red-400" id="resumoAtrasado">R$ 0,00</p>
+            </div>
+            <div class="text-center p-4 bg-green-900/30 rounded-lg">
+                <p class="text-sm text-gray-400">Total Pago</p>
+                <p class="text-xl font-bold text-green-400" id="resumoPago">R$ 0,00</p>
+            </div>
+        </div>
+        <div style="height: 250px;">
+            <canvas id="graficoResumo"></canvas>
+        </div>
+    </div>
+
+    <!-- ABA BOLETOS -->
+    <div id="tab-boletos" class="card hidden-tab">
+        <h2 class="text-xl font-semibold mb-4">📄 Controle de Boletos</h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div>
+                <label>Nome / Empresa</label>
+                <input type="text" id="boletoNome" placeholder="Ex: Energia, Aluguel...">
+                <label>Código de Barras</label>
+                <input type="text" id="boletoCodigo" placeholder="Digite o código de barras">
+            </div>
+            <div>
+                <label>Valor R$</label>
+                <input type="number" step="0.01" id="boletoValor" placeholder="0,00">
+                <label>Data de Vencimento</label>
+                <input type="date" id="boletoData">
+            </div>
+        </div>
+        <button class="btn btn-primary w-full mb-6" onclick="adicionarBoleto()">➕ Adicionar Boleto</button>
+
+        <h3 class="font-semibold mb-2">🔍 Filtrar por Status:</h3>
+        <div class="flex gap-2 mb-4 flex-wrap">
+            <button class="btn btn-primary" onclick="filtrarBoletos('todos')">Todos</button>
+            <button class="btn btn-warning" onclick="filtrarBoletos('a vencer')">A Vencer</button>
+            <button class="btn btn-danger" onclick="filtrarBoletos('atrasado')">Atrasados</button>
+            <button class="btn btn-success" onclick="filtrarBoletos('pago')">Pagos</button>
+        </div>
+
+        <div id="listaBoletos"></div>
+    </div>
+
+    <!-- ABA CHEQUES -->
+    <div id="tab-cheques" class="card hidden-tab">
+        <h2 class="text-xl font-semibold mb-4">✍️ Controle de Cheques</h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div>
+                <label>Nome / Destinatário</label>
+                <input type="text" id="chequeNome" placeholder="Ex: Fornecedor X">
+                <label>Número do Cheque</label>
+                <input type="text" id="chequeNumero" placeholder="000.000.000">
+            </div>
+            <div>
+                <label>Valor R$</label>
+                <input type="number" step="0.01" id="chequeValor" placeholder="0,00">
+                <label>Data de Emissão</label>
+                <input type="date" id="chequeData">
+            </div>
+        </div>
+        <button class="btn btn-primary w-full mb-6" onclick="adicionarCheque()">➕ Adicionar Cheque</button>
+        <div id="listaCheques"></div>
+    </div>
+
+    <!-- ABA RENDAS -->
+    <div id="tab-rendas" class="card hidden-tab">
+        <h2 class="text-xl font-semibold mb-4">💰 Rendas e Recebíveis</h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div>
+                <label>Origem / Descrição</label>
+                <input type="text" id="rendaNome" placeholder="Ex: Aluguel da casa, Royalties...">
+                <label>Valor R$</label>
+                <input type="number" step="0.01" id="rendaValor" placeholder="0,00">
+            </div>
+            <div>
+                <label>Data Prevista</label>
+                <input type="date" id="rendaData">
+                <label>Tipo</label>
+                <select id="rendaTipo">
+                    <option value="mensal">Mensal</option>
+                    <option value="unica">Receita Única</option>
+                    <option value="anual">Anual</option>
+                </select>
+            </div>
+        </div>
+        <button class="btn btn-primary w-full mb-6" onclick="adicionarRenda()">➕ Adicionar Renda</button>
+        <div id="listaRendas"></div>
+    </div>
+
+    <!-- ABA PATRIMÔNIO -->
+    <div id="tab-patrimonio" class="card hidden-tab">
+        <h2 class="text-xl font-semibold mb-4">🚗 Meu Patrimônio</h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div>
+                <label>Item / Descrição</label>
+                <input type="text" id="patrimonioNome" placeholder="Ex: Casa, Carro, Terreno...">
+                <label>Valor Estimado R$</label>
+                <input type="number" step="0.01" id="patrimonioValor" placeholder="0,00">
+            </div>
+            <div>
+                <label>Localização / Observação</label>
+                <input type="text" id="patrimonioObs" placeholder="Ex: Brasília - DF">
+                <label>Tipo</label>
+                <select id="patrimonioTipo">
+                    <option value="imovel">Imóvel</option>
+                    <option value="veiculo">Veículo</option>
+                    <option value="investimento">Investimento</option>
+                    <option value="outro">Outro</option>
+                </select>
+            </div>
+        </div>
+        <button class="btn btn-primary w-full mb-6" onclick="adicionarPatrimonio()">➕ Adicionar Item</button>
+        <div id="listaPatrimonio"></div>
+    </div>
+
 </div>
 
-<!-- CABEÇALHO PRINCIPAL -->
-<header class="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white px-6 py-6 shadow-xl border-b border-slate-800">
-    <div class="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-blue-600/30 border border-blue-400/30 flex items-center justify-center text-xl">💼</div>
-                <div>
-                    <h1 class="text-2xl font-extrabold tracking-tight">Gestão Financeira & Patrimonial</h1>
-                    <p class="text-xs text-slate-400 font-medium mt-0.5">Visão consolidada de caixa, contas, ativos e liquidez</p>
-                </div>
-            </div>
-        </div>
-        <div class="flex flex-wrap items-center gap-2">
-            <button onclick="exportarExcel()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition shadow-lg shadow-emerald-900/20 flex items-center gap-1.5">
-                📊 Exportar Excel
-            </button>
-            <button onclick="baixarBackup()" class="bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition shadow-lg shadow-amber-900/20 flex items-center gap-1.5">
-                💾 Baixar Backup
-            </button>
-            <label class="bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold px-4 py-2.5 rounded-xl cursor-pointer transition flex items-center gap-1.5 border border-slate-600">
-                📂 Restaurar Arquivo
-                <input type="file" id="arquivoBackup" accept=".json" class="hidden" onchange="restaurarBackup(event)">
-            </label>
-        </div>
-    </div>
-</header>
-
-<!-- BARRA DE ABAS DA NAVEGAÇÃO -->
-<nav class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-sm">
-    <div class="max-w-7xl mx-auto flex overflow-x-auto hide-scroll text-sm font-semibold text-slate-500" id="abas">
-        <button class="tab-btn tab-ativa px-5 py-4 whitespace-nowrap transition flex items-center gap-2" data-painel="resumo">📈 Visão Geral</button>
-        <button class="tab-btn px-5 py-4 whitespace-nowrap transition flex items-center gap-2 hover:text-slate-800" data-painel="dividas">💳 Contas a Pagar</button>
-        <button class="tab-btn px-5 py-4 whitespace-nowrap transition flex items-center gap-2 hover:text-slate-800" data-painel="receber">💰 Contas a Receber</button>
-        <button class="tab-btn px-5 py-4 whitespace-nowrap transition flex items-center gap-2 hover:text-slate-800" data-painel="rendas">💵 Minhas Rendas</button>
-        <button class="tab-btn px-5 py-4 whitespace-nowrap transition flex items-center gap-2 hover:text-slate-800" data-painel="emprestimos">🤝 Empréstimos / Juros</button>
-        <button class="tab-btn px-5 py-4 whitespace-nowrap transition flex items-center gap-2 hover:text-slate-800" data-painel="patrimonio">🏆 Meu Patrimônio</button>
-        <button class="tab-btn px-5 py-4 whitespace-nowrap transition flex items-center gap-2 hover:text-slate-800" data-painel="boletos">🧾 Boletos</button>
-        <button class="tab-btn px-5 py-4 whitespace-nowrap transition flex items-center gap-2 hover:text-slate-800" data-painel="cheques">📑 Cheques</button>
-    </div>
-</nav>
-
-<!-- CONTEÚDO PRINCIPAL -->
-<main class="max-w-7xl mx-auto w-full p-4 md:p-6 flex-1">
-
-    <!-- ABA 1: VISÃO GERAL -->
-    <section id="painel-resumo" class="painel-conteudo space-y-6">
-        <div class="flex items-center justify-between">
-            <h2 class="text-xl font-bold text-slate-800">📈 Resumo Financeiro Geral</h2>
-            <span class="text-xs bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full font-semibold border border-emerald-200 flex items-center gap-1.5">
-                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Atualização em tempo real
-            </span>
-        </div>
-
-        <!-- CARDS KPIS -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-            <div class="bg-gradient-to-br from-rose-500 to-red-600 text-white p-4 rounded-2xl shadow-sm card-glow">
-                <div class="text-xs font-medium opacity-80 uppercase tracking-wider">Total a Pagar</div>
-                <div class="text-2xl font-extrabold mt-2" id="r-total-pagar">R$ 0,00</div>
-            </div>
-            <div class="bg-gradient-to-br from-blue-600 to-indigo-700 text-white p-4 rounded-2xl shadow-sm card-glow">
-                <div class="text-xs font-medium opacity-80 uppercase tracking-wider">Total a Receber</div>
-                <div class="text-2xl font-extrabold mt-2" id="r-total-receber">R$ 0,00</div>
-            </div>
-            <div class="bg-gradient-to-br from-emerald-600 to-teal-700 text-white p-4 rounded-2xl shadow-sm card-glow">
-                <div class="text-xs font-medium opacity-80 uppercase tracking-wider">Rendas Mensais</div>
-                <div class="text-2xl font-extrabold mt-2" id="r-rendas">R$ 0,00</div>
-            </div>
-            <div class="bg-gradient-to-br from-purple-600 to-violet-700 text-white p-4 rounded-2xl shadow-sm card-glow">
-                <div class="text-xs font-medium opacity-80 uppercase tracking-wider">Patrimônio Total</div>
-                <div class="text-2xl font-extrabold mt-2" id="r-patrimonio">R$ 0,00</div>
-            </div>
-            <div class="bg-gradient-to-br from-teal-500 to-emerald-600 text-white p-4 rounded-2xl shadow-sm card-glow">
-                <div class="text-xs font-medium opacity-80 uppercase tracking-wider">Já Pago</div>
-                <div class="text-2xl font-extrabold mt-2" id="r-pago">R$ 0,00</div>
-            </div>
-            <div class="bg-gradient-to-br from-amber-500 to-orange-600 text-white p-4 rounded-2xl shadow-sm card-glow">
-                <div class="text-xs font-medium opacity-80 uppercase tracking-wider">Já Recebido</div>
-                <div class="text-2xl font-extrabold mt-2" id="r-recebido">R$ 0,00</div>
-            </div>
-        </div>
-
-        <!-- GRÁFICOS REFORMULADOS -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm hover:shadow-md transition">
-                <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
-                    <div>
-                        <h3 class="font-bold text-slate-800 text-base flex items-center gap-2">
-                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Entradas vs Saídas
-                        </h3>
-                        <p class="text-xs text-slate-400 font-medium">Comparativo entre receitas totais e compromissos</p>
-                    </div>
-                    <span class="text-xs font-semibold bg-slate-100 text-slate-600 px-2.5 py-1 rounded-lg">Projeção</span>
-                </div>
-                <div class="relative h-72 w-full flex items-center justify-center p-2">
-                    <canvas id="chartBalanco"></canvas>
-                </div>
-            </div>
-
-            <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm hover:shadow-md transition">
-                <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
-                    <div>
-                        <h3 class="font-bold text-slate-800 text-base flex items-center gap-2">
-                            <span class="w-2.5 h-2.5 rounded-full bg-indigo-500"></span> Distribuição do Patrimônio
-                        </h3>
-                        <p class="text-xs text-slate-400 font-medium">Alocação de bens e ativos por categoria</p>
-                    </div>
-                    <span class="text-xs font-semibold bg-slate-100 text-slate-600 px-2.5 py-1 rounded-lg">Composição</span>
-                </div>
-                <div class="relative h-72 w-full flex items-center justify-center p-2">
-                    <canvas id="chartPatrimonio"></canvas>
-                </div>
-            </div>
-        </div>
-
-        <!-- SALDO PROJETADO -->
-        <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm">
-            <h3 class="font-bold text-slate-800 text-base pb-3 border-b border-slate-100 mb-4">📊 Resumo de Balanço Projetado</h3>
-            <div id="lista-resumo"></div>
-        </div>
-    </section>
-
-    <!-- ABA 2: CONTAS A PAGAR -->
-    <section id="painel-dividas" class="painel-conteudo hidden space-y-6">
-        <h2 class="text-xl font-bold text-slate-800">💳 Contas a Pagar</h2>
-
-        <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm">
-            <h3 class="font-bold text-slate-800 text-base pb-3 border-b border-slate-100 mb-4">➕ Cadastrar Nova Conta</h3>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">Descrição</label>
-                    <input type="text" id="d-nome" placeholder="Ex: Financiamento, Aluguel" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">Valor R$</label>
-                    <input type="text" id="d-valor" placeholder="Ex: 850,00" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">Data do Vencimento</label>
-                    <input type="date" id="d-data" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">Parcelas</label>
-                    <input type="number" id="d-parcelas" value="1" min="1" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
-                </div>
-            </div>
-            <button onclick="adicionarDivida()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm px-5 py-2.5 rounded-xl transition shadow-md shadow-emerald-900/10 flex items-center gap-2">
-                ✅ Salvar Conta
-            </button>
-        </div>
-
-        <!-- FILTROS E RESUMO -->
-        <div class="flex flex-col sm:flex-row gap-3 items-center justify-between bg-slate-100 p-3 rounded-2xl">
-            <div class="flex gap-2 w-full sm:w-auto">
-                <input type="text" id="d-busca" placeholder="🔍 Buscar conta..." oninput="atualizarListaDividas()" class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm w-full sm:w-64 focus:outline-none">
-                <select id="d-filtro" onchange="atualizarListaDividas()" class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none">
-                    <option value="todos">Todas</option>
-                    <option value="pago">✅ Pagas</option>
-                    <option value="vencer">⏳ A Vencer</option>
-                    <option value="atrasado">🔴 Atrasadas</option>
-                </select>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <div class="bg-emerald-50 border border-emerald-200/60 p-4 rounded-xl">
-                <span class="text-xs font-bold text-emerald-700 uppercase">Pagas</span>
-                <div class="text-xl font-extrabold text-emerald-800 mt-1" id="d-t-pago">R$ 0,00</div>
-            </div>
-            <div class="bg-amber-50 border border-amber-200/60 p-4 rounded-xl">
-                <span class="text-xs font-bold text-amber-700 uppercase">A Vencer</span>
-                <div class="text-xl font-extrabold text-amber-800 mt-1" id="d-t-vencer">R$ 0,00</div>
-            </div>
-            <div class="bg-rose-50 border border-rose-200/60 p-4 rounded-xl">
-                <span class="text-xs font-bold text-rose-700 uppercase">Atrasadas</span>
-                <div class="text-xl font-extrabold text-rose-800 mt-1" id="d-t-atrasado">R$ 0,00</div>
-            </div>
-            <div class="bg-slate-100 border border-slate-200 p-4 rounded-xl">
-                <span class="text-xs font-bold text-slate-600 uppercase">Total Geral</span>
-                <div class="text-xl font-extrabold text-slate-800 mt-1" id="d-t-total">R$ 0,00</div>
-            </div>
-        </div>
-
-        <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm">
-            <h3 class="font-bold text-slate-800 text-base pb-3 border-b border-slate-100 mb-4">📋 Lista de Contas</h3>
-            <div id="d-lista" class="space-y-3"></div>
-        </div>
-    </section>
-
-    <!-- ABA 3: CONTAS A RECEBER -->
-    <section id="painel-receber" class="painel-conteudo hidden space-y-6">
-        <h2 class="text-xl font-bold text-slate-800">💰 Contas a Receber</h2>
-
-        <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm">
-            <h3 class="font-bold text-slate-800 text-base pb-3 border-b border-slate-100 mb-4">➕ Registrar Valor a Receber</h3>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">De quem? (Pagador)</label>
-                    <input type="text" id="rec-nome" placeholder="Ex: Cliente X, Inquilino" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">Descrição</label>
-                    <input type="text" id="rec-descricao" placeholder="Ex: Venda de Peças, Aluguel" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">Valor R$</label>
-                    <input type="text" id="rec-valor" placeholder="Ex: 1.200,00" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">Data Prevista</label>
-                    <input type="date" id="rec-data" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">Recorrência</label>
-                    <select id="rec-tipo" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none">
-                        <option value="unico">Uma vez</option>
-                        <option value="mensal">Mensal</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">Parcelas</label>
-                    <input type="number" id="rec-parcelas" value="1" min="1" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none">
-                </div>
-            </div>
-            <button onclick="adicionarReceber()" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm px-5 py-2.5 rounded-xl transition shadow-md shadow-blue-900/10 flex items-center gap-2">
-                💾 Salvar Recebível
-            </button>
-        </div>
-
-        <div class="flex flex-col sm:flex-row gap-3 items-center justify-between bg-slate-100 p-3 rounded-2xl">
-            <div class="flex gap-2 w-full sm:w-auto">
-                <input type="text" id="rec-busca" placeholder="🔍 Buscar..." oninput="atualizarListaReceber()" class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm w-full sm:w-64 focus:outline-none">
-                <select id="rec-filtro" onchange="atualizarListaReceber()" class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none">
-                    <option value="todos">Todos</option>
-                    <option value="receber">⏳ A Receber</option>
-                    <option value="recebido">✅ Recebidos</option>
-                    <option value="atrasado">🔴 Atrasados</option>
-                </select>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <div class="bg-blue-50 border border-blue-200/60 p-4 rounded-xl">
-                <span class="text-xs font-bold text-blue-700 uppercase">A Receber</span>
-                <div class="text-xl font-extrabold text-blue-800 mt-1" id="rec-t-receber">R$ 0,00</div>
-            </div>
-            <div class="bg-emerald-50 border border-emerald-200/60 p-4 rounded-xl">
-                <span class="text-xs font-bold text-emerald-700 uppercase">Já Recebido</span>
-                <div class="text-xl font-extrabold text-emerald-800 mt-1" id="rec-t-recebido">R$ 0,00</div>
-            </div>
-            <div class="bg-rose-50 border border-rose-200/60 p-4 rounded-xl">
-                <span class="text-xs font-bold text-rose-700 uppercase">Atrasado</span>
-                <div class="text-xl font-extrabold text-rose-800 mt-1" id="rec-t-atrasado">R$ 0,00</div>
-            </div>
-            <div class="bg-purple-50 border border-purple-200/60 p-4 rounded-xl">
-                <span class="text-xs font-bold text-purple-700 uppercase">Total</span>
-                <div class="text-xl font-extrabold text-purple-800 mt-1" id="rec-t-total">R$ 0,00</div>
-            </div>
-        </div>
-
-        <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm">
-            <h3 class="font-bold text-slate-800 text-base pb-3 border-b border-slate-100 mb-4">📋 Lista de Recebíveis</h3>
-            <div id="rec-lista" class="space-y-3"></div>
-        </div>
-    </section>
-
-    <!-- ABA 4: MINHAS RENDAS -->
-    <section id="painel-rendas" class="painel-conteudo hidden space-y-6">
-        <h2 class="text-xl font-bold text-slate-800">💵 Fontes de Renda</h2>
-
-        <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm">
-            <h3 class="font-bold text-slate-800 text-base pb-3 border-b border-slate-100 mb-4" id="renda-form-titulo">➕ Adicionar Fonte de Renda</h3>
-            <input type="hidden" id="renda-id-edicao" value="">
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">Origem (Ex: Salário, Pró-labore)</label>
-                    <input type="text" id="renda-nome" placeholder="Ex: Faturamento Loja" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">Valor Mensal R$</label>
-                    <input type="text" id="renda-valor" placeholder="Ex: 5.000,00" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">Frequência</label>
-                    <select id="renda-tipo" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none">
-                        <option value="mensal">📅 Mensal (Fixo)</option>
-                        <option value="ocasional">✨ Ocasional (Variável)</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">Observação</label>
-                    <input type="text" id="renda-obs" placeholder="Ex: Todo dia 5" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none">
-                </div>
-            </div>
-            <div class="flex gap-2">
-                <button onclick="adicionarOuAtualizarRenda()" id="btn-salvar-renda" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm px-5 py-2.5 rounded-xl transition shadow-md shadow-emerald-900/10">
-                    💾 Salvar Renda
-                </button>
-                <button onclick="cancelarEdicaoRenda()" id="btn-cancelar-renda" class="hidden bg-slate-500 hover:bg-slate-400 text-white font-semibold text-sm px-5 py-2.5 rounded-xl transition">
-                    ❌ Cancelar
-                </button>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <div class="bg-emerald-50 border border-emerald-200/60 p-4 rounded-xl">
-                <span class="text-xs font-bold text-emerald-700 uppercase">Mensal Fixo</span>
-                <div class="text-xl font-extrabold text-emerald-800 mt-1" id="r-t-mensal">R$ 0,00</div>
-            </div>
-            <div class="bg-amber-50 border border-amber-200/60 p-4 rounded-xl">
-                <span class="text-xs font-bold text-amber-700 uppercase">Ocasional</span>
-                <div class="text-xl font-extrabold text-amber-800 mt-1" id="r-t-ocasional">R$ 0,00</div>
-            </div>
-            <div class="bg-purple-50 border border-purple-200/60 p-4 rounded-xl">
-                <span class="text-xs font-bold text-purple-700 uppercase">Estimativa Anual</span>
-                <div class="text-xl font-extrabold text-purple-800 mt-1" id="r-t-anual">R$ 0,00</div>
-            </div>
-            <div class="bg-blue-50 border border-blue-200/60 p-4 rounded-xl">
-                <span class="text-xs font-bold text-blue-700 uppercase">Total Mensal</span>
-                <div class="text-xl font-extrabold text-blue-800 mt-1" id="r-t-total">R$ 0,00</div>
-            </div>
-        </div>
-
-        <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm">
-            <h3 class="font-bold text-slate-800 text-base pb-3 border-b border-slate-100 mb-4">📋 Fontes Registradas</h3>
-            <div id="r-lista" class="space-y-3"></div>
-        </div>
-    </section>
-
-    <!-- ABA 5: EMPRÉSTIMOS E JUROS -->
-    <section id="painel-emprestimos" class="painel-conteudo hidden space-y-6">
-        <h2 class="text-xl font-bold text-slate-800">🤝 Empréstimos e Financiamentos</h2>
-
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div class="bg-blue-50 border border-blue-200/60 p-4 rounded-2xl">
-                <span class="text-xs font-bold text-blue-700 uppercase">Emprestei (A Receber)</span>
-                <div class="text-2xl font-extrabold text-blue-900 mt-1" id="emp-t-concedido">R$ 0,00</div>
-            </div>
-            <div class="bg-rose-50 border border-rose-200/60 p-4 rounded-2xl">
-                <span class="text-xs font-bold text-rose-700 uppercase">Tomei Emprestado (A Pagar)</span>
-                <div class="text-2xl font-extrabold text-rose-900 mt-1" id="emp-t-tomado">R$ 0,00</div>
-            </div>
-            <div class="bg-emerald-50 border border-emerald-200/60 p-4 rounded-2xl">
-                <span class="text-xs font-bold text-emerald-700 uppercase">Total de Juros Previstos</span>
-                <div class="text-2xl font-extrabold text-emerald-900 mt-1" id="emp-t-juros">R$ 0,00</div>
-            </div>
-        </div>
-
-        <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm">
-            <h3 class="font-bold text-slate-800 text-base pb-3 border-b border-slate-100 mb-4" id="emp-form-titulo">➕ Cadastrar Operação</h3>
-            <input type="hidden" id="emp-id-edicao" value="">
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">Tipo de Operação</label>
-                    <select id="emp-tipo" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none">
-                        <option value="concedido">📤 Emprestei (A Receber)</option>
-                        <option value="tomado">📥 Peguei Emprestado (A Pagar)</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">Pessoa / Instituição</label>
-                    <input type="text" id="emp-nome" placeholder="Ex: João Silva ou Banco" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">Valor Principal R$</label>
-                    <input type="text" id="emp-valor" placeholder="Ex: 5.000,00" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">Taxa de Juros Mensal (%)</label>
-                    <input type="number" step="0.1" id="emp-juros" placeholder="Ex: 2.5" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">Prazo (Meses)</label>
-                    <input type="number" id="emp-meses" value="1" min="1" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">Data de Início</label>
-                    <input type="date" id="emp-data" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none">
-                </div>
-            </div>
-            <div class="flex gap-2">
-                <button onclick="adicionarOuAtualizarEmprestimo()" id="btn-salvar-emp" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm px-5 py-2.5 rounded-xl transition">
-                    💾 Salvar Empréstimo
-                </button>
-                <button onclick="cancelarEdicaoEmprestimo()" id="btn-cancelar-emp" class="hidden bg-slate-500 hover:bg-slate-400 text-white font-semibold text-sm px-5 py-2.5 rounded-xl transition">
-                    ❌ Cancelar
-                </button>
-            </div>
-        </div>
-
-        <div class="flex flex-col sm:flex-row gap-3 items-center justify-between bg-slate-100 p-3 rounded-2xl">
-            <div class="flex gap-2 w-full sm:w-auto">
-                <input type="text" id="emp-busca" placeholder="🔍 Buscar nome..." oninput="atualizarListaEmprestimos()" class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm w-full sm:w-64 focus:outline-none">
-                <select id="emp-filtro" onchange="atualizarListaEmprestimos()" class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none">
-                    <option value="todos">Todos</option>
-                    <option value="concedido">📤 Emprestei</option>
-                    <option value="tomado">📥 Peguei Emprestado</option>
-                    <option value="ativo">⏳ Em Aberto</option>
-                    <option value="quitado">✅ Quitados</option>
-                </select>
-            </div>
-        </div>
-
-        <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm">
-            <h3 class="font-bold text-slate-800 text-base pb-3 border-b border-slate-100 mb-4">📋 Lista de Empréstimos</h3>
-            <div id="emp-lista" class="space-y-3"></div>
-        </div>
-    </section>
-
-    <!-- ABA 6: MEU PATRIMÔNIO -->
-    <section id="painel-patrimonio" class="painel-conteudo hidden space-y-6">
-        <h2 class="text-xl font-bold text-slate-800">🏆 Meu Patrimônio</h2>
-
-        <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm">
-            <h3 class="font-bold text-slate-800 text-base pb-3 border-b border-slate-100 mb-4">➕ Cadastrar Bem ou Ativo</h3>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">Categoria do Bem</label>
-                    <select id="pat-tipo" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none">
-                        <option value="imovel">🏠 Imóvel / Terreno</option>
-                        <option value="veiculo">🚗 Veículo</option>
-                        <option value="investimento">📈 Investimento / Aplicação</option>
-                        <option value="outro">📦 Outros Bens</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">Descrição</label>
-                    <input type="text" id="pat-nome" placeholder="Ex: Terreno Lote 12, Carro" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">Valor Avaliado R$</label>
-                    <input type="text" id="pat-valor" placeholder="Ex: 120.000,00" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">Observações / Detalhes</label>
-                    <input type="text" id="pat-obs" placeholder="Ex: Escriturado, Placa XXX" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none">
-                </div>
-            </div>
-            <button onclick="adicionarPatrimonio()" class="bg-purple-600 hover:bg-purple-500 text-white font-semibold text-sm px-5 py-2.5 rounded-xl transition shadow-md shadow-purple-900/10">
-                💾 Salvar Patrimônio
-            </button>
-        </div>
-
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <div class="bg-purple-50 border border-purple-200/60 p-4 rounded-xl">
-                <span class="text-xs font-bold text-purple-700 uppercase">Veículos</span>
-                <div class="text-xl font-extrabold text-purple-800 mt-1" id="pat-t-veiculo">R$ 0,00</div>
-            </div>
-            <div class="bg-blue-50 border border-blue-200/60 p-4 rounded-xl">
-                <span class="text-xs font-bold text-blue-700 uppercase">Imóveis / Terrenos</span>
-                <div class="text-xl font-extrabold text-blue-800 mt-1" id="pat-t-imovel">R$ 0,00</div>
-            </div>
-            <div class="bg-emerald-50 border border-emerald-200/60 p-4 rounded-xl">
-                <span class="text-xs font-bold text-emerald-700 uppercase">Investimentos</span>
-                <div class="text-xl font-extrabold text-emerald-800 mt-1" id="pat-t-investimento">R$ 0,00</div>
-            </div>
-            <div class="bg-amber-50 border border-amber-200/60 p-4 rounded-xl">
-                <span class="text-xs font-bold text-amber-700 uppercase">Patrimônio Total</span>
-                <div class="text-xl font-extrabold text-amber-800 mt-1" id="pat-t-total">R$ 0,00</div>
-            </div>
-        </div>
-
-        <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm">
-            <h3 class="font-bold text-slate-800 text-base pb-3 border-b border-slate-100 mb-4">📋 Ativos Cadastrados</h3>
-            <div id="pat-lista" class="space-y-3"></div>
-        </div>
-    </section>
-
-    <!-- ABA 7: BOLETOS -->
-    <section id="painel-boletos" class="painel-conteudo hidden space-y-6">
-        <h2 class="text-xl font-bold text-slate-800">🧾 Gestão de Boletos</h2>
-
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <div class="bg-amber-50 border border-amber-200/60 p-4 rounded-xl text-center">
-                <span class="text-xs font-bold text-amber-700 uppercase">A Vencer</span>
-                <div class="text-2xl font-extrabold text-amber-800 mt-1" id="b-qtd-vencer">0</div>
-            </div>
-            <div class="bg-purple-50 border border-purple-200/60 p-4 rounded-xl text-center">
-                <span class="text-xs font-bold text-purple-700 uppercase">⚠️ Vence em 3d</span>
-                <div class="text-2xl font-extrabold text-purple-800 mt-1" id="b-qtd-3d">0</div>
-            </div>
-            <div class="bg-rose-50 border border-rose-200/60 p-4 rounded-xl text-center">
-                <span class="text-xs font-bold text-rose-700 uppercase">Atrasados</span>
-                <div class="text-2xl font-extrabold text-rose-800 mt-1" id="b-qtd-atrasado">0</div>
-            </div>
-            <div class="bg-emerald-50 border border-emerald-200/60 p-4 rounded-xl text-center">
-                <span class="text-xs font-bold text-emerald-700 uppercase">Pagos</span>
-                <div class="text-2xl font-extrabold text-emerald-800 mt-1" id="b-qtd-pago">0</div>
-            </div>
-        </div>
-
-        <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm">
-            <h3 class="font-bold text-slate-800 text-base pb-3 border-b border-slate-100 mb-4">➕ Novo Boleto</h3>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">Beneficiário / Empresa</label>
-                    <input type="text" id="b-nome" placeholder="Ex: Enel, Internet" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">Valor R$</label>
-                    <input type="text" id="b-valor" placeholder="Ex: 150,00" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">Vencimento</label>
-                    <input type="date" id="b-data" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">Código de Barras (Opcional)</label>
-                    <input type="text" id="b-codigo" placeholder="Digitação da linha digitável" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none">
-                </div>
-            </div>
-            <button onclick="adicionarBoleto()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm px-5 py-2.5 rounded-xl transition">
-                💾 Salvar Boleto
-            </button>
-        </div>
-
-        <div class="flex flex-col sm:flex-row gap-3 items-center justify-between bg-slate-100 p-3 rounded-2xl">
-            <div class="flex gap-2 w-full sm:w-auto">
-                <input type="text" id="b-busca" placeholder="🔍 Buscar..." oninput="atualizarListaBoletos()" class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm w-full sm:w-64 focus:outline-none">
-                <select id="b-filtro" onchange="atualizarListaBoletos()" class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none">
-                    <option value="todos">Todos</option>
-                    <option value="avencer">A vencer</option>
-                    <option value="atrasado">Atrasados</option>
-                    <option value="pago">Pagos</option>
-                </select>
-            </div>
-        </div>
-
-        <div id="b-lista" class="space-y-3"></div>
-    </section>
-
-    <!-- ABA 8: CHEQUES -->
-    <section id="painel-cheques" class="painel-conteudo hidden space-y-6">
-        <h2 class="text-xl font-bold text-slate-800">📑 Gestão de Cheques</h2>
-
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div class="bg-blue-50 border border-blue-200/60 p-4 rounded-xl text-center">
-                <span class="text-xs font-bold text-blue-700 uppercase">Em Aberto</span>
-                <div class="text-2xl font-extrabold text-blue-800 mt-1" id="ch-qtd-aberto">0</div>
-            </div>
-            <div class="bg-emerald-50 border border-emerald-200/60 p-4 rounded-xl text-center">
-                <span class="text-xs font-bold text-emerald-700 uppercase">Compensados</span>
-                <div class="text-2xl font-extrabold text-emerald-800 mt-1" id="ch-qtd-pago">0</div>
-            </div>
-            <div class="bg-rose-50 border border-rose-200/60 p-4 rounded-xl text-center">
-                <span class="text-xs font-bold text-rose-700 uppercase">Devolvidos</span>
-                <div class="text-2xl font-extrabold text-rose-800 mt-1" id="ch-qtd-dev">0</div>
-            </div>
-        </div>
-
-        <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm">
-            <h3 class="font-bold text-slate-800 text-base pb-3 border-b border-slate-100 mb-4">➕ Registrar Cheque</h3>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">Favorecido / Emissor</label>
-                    <input type="text" id="ch-nome" placeholder="Ex: Fornecedor X" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">Nº do Cheque</label>
-                    <input type="text" id="ch-numero" placeholder="Ex: 000123" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">Valor R$</label>
-                    <input type="text" id="ch-valor" placeholder="Ex: 500,00" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">Bom para (Data)</label>
-                    <input type="date" id="ch-data" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none">
-                </div>
-            </div>
-            <button onclick="adicionarCheque()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm px-5 py-2.5 rounded-xl transition">
-                💾 Salvar Cheque
-            </button>
-        </div>
-
-        <div class="flex flex-col sm:flex-row gap-3 items-center justify-between bg-slate-100 p-3 rounded-2xl">
-            <div class="flex gap-2 w-full sm:w-auto">
-                <input type="text" id="ch-busca" placeholder="🔍 Buscar..." oninput="atualizarListaCheques()" class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm w-full sm:w-64 focus:outline-none">
-                <select id="ch-filtro" onchange="atualizarListaCheques()" class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none">
-                    <option value="todos">Todos</option>
-                    <option value="aberto">Em Aberto</option>
-                    <option value="pago">Compensados</option>
-                    <option value="dev">Devolvidos</option>
-                </select>
-            </div>
-        </div>
-
-        <div id="ch-lista" class="space-y-3"></div>
-    </section>
-
-</main>
-
 <script>
-'use strict';
-const CHAVE_SALVAMENTO = 'CONTROLE_DADOS_02';
-let dados = {
-    dividas: [],
-    boletos: [],
-    cheques: [],
-    receber: [],
-    rendas: [],
-    patrimonio: [],
-    emprestimos: []
+// ==========================================
+// FIREBASE CONFIGURAÇÃO — JÁ PREENCHIDO ✅
+// ==========================================
+const firebaseConfig = {
+  apiKey: "AIzaSyCPd_aIQVDEP-UK-N2twGzci8sRLgJTRmI",
+  authDomain: "controle-59fff.firebaseapp.com",
+  projectId: "controle-59fff",
+  storageBucket: "controle-59fff.appspot.com",
+  messagingSenderId: "597330115962",
+  appId: "1:597330115962:web:0d01a891a5745f809e6ac3",
+  measurementId: "G-WZ3C45QL6H"
 };
 
-let chartBalancoInstancia = null;
-let chartPatrimonioInstancia = null;
+// Inicializar Firebase
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 
-// PLUGIN PERSONALIZADO DE TEXTO NO CENTRO DO DONUT
-const pluginTextoCentro = {
-    id: 'textoCentroDonut',
-    beforeDraw(chart) {
-        if (!chart.config.options.plugins.textoCentroDonut?.ativo) return;
-        
-        const { ctx, chartArea: { top, bottom, left, right, width, height } } = chart;
-        ctx.save();
-        
-        const label = chart.config.options.plugins.textoCentroDonut.label || '';
-        const valor = chart.config.options.plugins.textoCentroDonut.valor || '';
-        const cor = chart.config.options.plugins.textoCentroDonut.cor || '#0f172a';
+// Coleções
+const boletosRef = db.collection('boletos');
+const chequesRef = db.collection('cheques');
+const rendasRef = db.collection('rendas');
+const patrimonioRef = db.collection('patrimonio');
 
-        const centerX = (left + right) / 2;
-        const centerY = (top + bottom) / 2;
+// Estado
+let boletos = [];
+let cheques = [];
+let rendas = [];
+let patrimonio = [];
+let filtroAtual = 'todos';
+let grafico = null;
 
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-
-        // Título pequeno acima do valor
-        ctx.font = '600 11px Inter, sans-serif';
-        ctx.fillStyle = '#64748b';
-        ctx.fillText(label.toUpperCase(), centerX, centerY - 10);
-
-        // Valor principal no centro
-        ctx.font = '800 15px Inter, sans-serif';
-        ctx.fillStyle = cor;
-        ctx.fillText(valor, centerX, centerY + 10);
-
-        ctx.restore();
-    }
-};
-
-// Registrar plugin customizado no Chart.js
-if (typeof Chart !== 'undefined') {
-    Chart.register(pluginTextoCentro);
+// Formatar moeda
+function formatarValor(valor) {
+    return Number(valor).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-// AUXILIARES DE FORMATAÇÃO E CÁLCULO
-function formatarDinheiro(valor) {
-    return Number(valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
-
-function limparValor(valorTexto) {
-    if (typeof valorTexto === 'number') return valorTexto;
-    if (!valorTexto) return 0;
-    let str = String(valorTexto).trim().replace('R$', '').trim();
-    if (str.includes(',') && str.includes('.')) {
-        str = str.replace(/\./g, '').replace(',', '.');
-    } else if (str.includes(',')) {
-        str = str.replace(',', '.');
-    }
-    return parseFloat(str) || 0;
-}
-
-function formatarData(data) {
-    if (!data) return '';
-    const [ano, mes, dia] = String(data).split('-');
+// Formatar data
+function formatarData(dataStr) {
+    if (!dataStr) return '--';
+    const [ano, mes, dia] = dataStr.split('-');
     return `${dia}/${mes}/${ano}`;
 }
 
-function diasAteVencimento(dataIso) {
-    if (!dataIso) return 9999;
-    const alvo = new Date(dataIso + 'T00:00:00');
-    const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0);
-    return Math.ceil((alvo - hoje) / (1000 * 60 * 60 * 24));
+// Hoje
+function hoje() {
+    return new Date().toISOString().split('T')[0];
 }
 
-function mostrarAviso(msg = 'Salvo com sucesso!') {
-    const aviso = document.getElementById('aviso');
-    document.getElementById('aviso-texto').textContent = msg;
-    aviso.classList.remove('hidden');
-    setTimeout(() => aviso.classList.add('hidden'), 2500);
+function ehAtrasado(dataStr) {
+    return dataStr < hoje();
 }
 
-function salvarDados() {
-    localStorage.setItem(CHAVE_SALVAMENTO, JSON.stringify(dados));
-    mostrarAviso();
-    atualizarTudo();
+function ehProximos30Dias(dataStr) {
+    const data = new Date(dataStr);
+    const agora = new Date();
+    const trintaDias = new Date();
+    trintaDias.setDate(trintaDias.getDate() + 30);
+    return data >= agora && data <= trintaDias;
 }
 
-function carregarDados() {
+// ==========================================
+// CARREGAR DADOS DO FIREBASE
+// ==========================================
+async function carregarDados() {
     try {
-        const salvo = localStorage.getItem(CHAVE_SALVAMENTO);
-        if (salvo) dados = JSON.parse(salvo);
-        if (!dados.dividas) dados.dividas = [];
-        if (!dados.receber) dados.receber = [];
-        if (!dados.rendas) dados.rendas = [];
-        if (!dados.patrimonio) dados.patrimonio = [];
-        if (!dados.boletos) dados.boletos = [];
-        if (!dados.cheques) dados.cheques = [];
-        if (!dados.emprestimos) dados.emprestimos = [];
-    } catch (e) {
-        console.error('Erro ao carregar dados:', e);
-    }
-    atualizarTudo();
-}
-
-// TROCA DE ABAS
-function configurarAbas() {
-    const abas = document.querySelectorAll('.tab-btn');
-    abas.forEach(aba => {
-        aba.addEventListener('click', function() {
-            abas.forEach(a => a.classList.remove('tab-ativa'));
-            this.classList.add('tab-ativa');
-            
-            document.querySelectorAll('.painel-conteudo').forEach(p => p.classList.add('hidden'));
-            
-            const idPainel = 'painel-' + this.getAttribute('data-painel');
-            const painelAlvo = document.getElementById(idPainel);
-            if (painelAlvo) painelAlvo.classList.remove('hidden');
-
-            atualizarTudo();
-        });
-    });
-}
-
-// CONTAS A PAGAR
-function adicionarDivida() {
-    const nome = document.getElementById('d-nome').value.trim();
-    const valor = limparValor(document.getElementById('d-valor').value);
-    const data = document.getElementById('d-data').value;
-    const parcelas = parseInt(document.getElementById('d-parcelas').value) || 1;
-
-    if (!nome) return alert('⚠️ Digite o nome da conta!');
-    if (!valor || valor <= 0) return alert('⚠️ Digite um valor válido!');
-    if (!data) return alert('⚠️ Escolha a data de vencimento!');
-
-    let [ano, mes, dia] = data.split('-').map(Number);
-    for (let i = 0; i < parcelas; i++) {
-        let novaData = new Date(ano, mes - 1 + i, dia);
-        if (novaData.getDate() !== dia) {
-            novaData = new Date(novaData.getFullYear(), novaData.getMonth() + 1, 0);
-        }
-        dados.dividas.push({
-            id: Date.now() + i,
-            nome: nome,
-            valor: valor,
-            data: novaData.toISOString().split('T')[0],
-            parcela: i + 1,
-            totalParcelas: parcelas,
-            paga: false
-        });
-    }
-
-    document.getElementById('d-nome').value = '';
-    document.getElementById('d-valor').value = '';
-    document.getElementById('d-data').value = '';
-    document.getElementById('d-parcelas').value = '1';
-    salvarDados();
-}
-
-function marcarComoPaga(id) {
-    const item = dados.dividas.find(d => d.id === id);
-    if (item) { item.paga = !item.paga; salvarDados(); }
-}
-
-function excluirDivida(id) {
-    if (confirm('Excluir esta conta?')) {
-        dados.dividas = dados.dividas.filter(d => d.id !== id);
-        salvarDados();
+        document.getElementById('syncStatus').textContent = '🔄 Carregando...';
+        
+        const snapBoletos = await boletosRef.orderBy('data', 'asc').get();
+        boletos = snapBoletos.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        
+        const snapCheques = await chequesRef.orderBy('data', 'asc').get();
+        cheques = snapCheques.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        
+        const snapRendas = await rendasRef.orderBy('data', 'asc').get();
+        rendas = snapRendas.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        
+        const snapPatrimonio = await patrimonioRef.get();
+        patrimonio = snapPatrimonio.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        
+        document.getElementById('syncStatus').innerHTML = '✅ Sincronizado na nuvem';
+        atualizarTudo();
+    } catch (error) {
+        console.error('Erro ao carregar:', error);
+        document.getElementById('syncStatus').innerHTML = '⚠️ Erro de conexão — verifique o Firebase';
     }
 }
 
-function atualizarListaDividas() {
-    const lista = document.getElementById('d-lista');
-    if (!lista) return;
-
-    const busca = (document.getElementById('d-busca')?.value || '').toLowerCase();
-    const filtro = document.getElementById('d-filtro')?.value || 'todos';
-    
-    let totalPago = 0, totalVencer = 0, totalAtrasado = 0;
-    lista.innerHTML = '';
-    const ordenado = [...dados.dividas].sort((a, b) => new Date(a.data) - new Date(b.data));
-
-    ordenado.forEach(item => {
-        const dias = diasAteVencimento(item.data);
-        let classeBorda = '', statusBadge = '', mostrar = true;
-
-        if (item.paga) {
-            classeBorda = 'border-l-4 border-l-emerald-500 bg-emerald-50/40'; 
-            statusBadge = '<span class="text-xs bg-emerald-100 text-emerald-800 font-bold px-2.5 py-1 rounded-full border border-emerald-200">✅ Pago</span>'; 
-            totalPago += item.valor;
-        } else if (dias < 0) {
-            classeBorda = 'border-l-4 border-l-rose-500 bg-rose-50/40'; 
-            statusBadge = `<span class="text-xs bg-rose-100 text-rose-800 font-bold px-2.5 py-1 rounded-full border border-rose-200">🔴 Atrasado ${Math.abs(dias)}d</span>`; 
-            totalAtrasado += item.valor;
-        } else {
-            classeBorda = 'border-l-4 border-l-amber-500 bg-amber-50/40'; 
-            statusBadge = `<span class="text-xs bg-amber-100 text-amber-800 font-bold px-2.5 py-1 rounded-full border border-amber-200">⏳ Vence em ${dias}d</span>`; 
-            totalVencer += item.valor;
-        }
-
-        if (busca && !item.nome.toLowerCase().includes(busca)) mostrar = false;
-        if (filtro === 'pago' && !item.paga) mostrar = false;
-        if (filtro === 'vencer' && (item.paga || dias < 0)) mostrar = false;
-        if (filtro === 'atrasado' && (item.paga || dias >= 0)) mostrar = false;
-
-        if (mostrar) {
-            lista.innerHTML += `
-                <div class="p-4 rounded-xl border border-slate-200 ${classeBorda} flex flex-col sm:flex-row justify-between sm:items-center gap-3 transition hover:shadow-sm">
-                    <div>
-                        <div class="font-bold text-slate-800 text-base">${item.nome}</div>
-                        <div class="text-xs text-slate-500 mt-0.5">Parcela ${item.parcela}/${item.totalParcelas} • Vence: ${formatarData(item.data)}</div>
-                        <div class="font-black text-slate-900 text-lg mt-1">R$ ${formatarDinheiro(item.valor)}</div>
-                    </div>
-                    <div class="flex items-center gap-2 self-end sm:self-center">
-                        <div class="mr-2">${statusBadge}</div>
-                        <button class="px-3 py-1.5 text-xs font-semibold rounded-lg transition ${item.paga ? 'bg-slate-200 text-slate-700 hover:bg-slate-300' : 'bg-emerald-600 text-white hover:bg-emerald-500'}" onclick="marcarComoPaga(${item.id})">
-                            ${item.paga ? '↩️ Desmarcar' : '✓ Pagar'}
-                        </button>
-                        <button class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-rose-100 text-rose-700 hover:bg-rose-200 transition" onclick="excluirDivida(${item.id})">🗑️</button>
-                    </div>
-                </div>`;
-        }
-    });
-
-    document.getElementById('d-t-pago').textContent = 'R$ ' + formatarDinheiro(totalPago);
-    document.getElementById('d-t-vencer').textContent = 'R$ ' + formatarDinheiro(totalVencer);
-    document.getElementById('d-t-atrasado').textContent = 'R$ ' + formatarDinheiro(totalAtrasado);
-    document.getElementById('d-t-total').textContent = 'R$ ' + formatarDinheiro(totalPago + totalVencer + totalAtrasado);
-    if (lista.innerHTML === '') lista.innerHTML = '<div class="text-center py-8 text-slate-400 font-medium">Nenhuma conta encontrada.</div>';
-}
-
-// CONTAS A RECEBER
-function adicionarReceber() {
-    const nome = document.getElementById('rec-nome').value.trim();
-    const descricao = document.getElementById('rec-descricao').value.trim();
-    const valor = limparValor(document.getElementById('rec-valor').value);
-    const data = document.getElementById('rec-data').value;
-    const tipo = document.getElementById('rec-tipo').value;
-    const parcelas = parseInt(document.getElementById('rec-parcelas').value) || 1;
-
-    if (!nome) return alert('⚠️ Digite quem vai pagar!');
-    if (!valor || valor <= 0) return alert('⚠️ Digite um valor válido!');
-    if (!data) return alert('⚠️ Escolha a data!');
-
-    let [ano, mes, dia] = data.split('-').map(Number);
-    for (let i = 0; i < parcelas; i++) {
-        let novaData = new Date(ano, mes - 1 + i, dia);
-        if (novaData.getDate() !== dia) {
-            novaData = new Date(novaData.getFullYear(), novaData.getMonth() + 1, 0);
-        }
-        dados.receber.push({
-            id: Date.now() + i,
-            nome: nome,
-            descricao: descricao,
-            valor: valor,
-            data: novaData.toISOString().split('T')[0],
-            tipo: tipo,
-            parcela: i + 1,
-            totalParcelas: parcelas,
-            recebido: false
-        });
-    }
-
-    document.getElementById('rec-nome').value = '';
-    document.getElementById('rec-descricao').value = '';
-    document.getElementById('rec-valor').value = '';
-    document.getElementById('rec-data').value = '';
-    document.getElementById('rec-tipo').value = 'unico';
-    document.getElementById('rec-parcelas').value = '1';
-    salvarDados();
-}
-
-function marcarComoRecebido(id) {
-    const item = dados.receber.find(r => r.id === id);
-    if (item) { item.recebido = !item.recebido; salvarDados(); }
-}
-
-function excluirReceber(id) {
-    if (confirm('Excluir este registro?')) {
-        dados.receber = dados.receber.filter(r => r.id !== id);
-        salvarDados();
-    }
-}
-
-function atualizarListaReceber() {
-    const lista = document.getElementById('rec-lista');
-    if (!lista) return;
-
-    const busca = (document.getElementById('rec-busca')?.value || '').toLowerCase();
-    const filtro = document.getElementById('rec-filtro')?.value || 'todos';
-    
-    let receber = 0, recebido = 0, atrasado = 0;
-    lista.innerHTML = '';
-    const ordenado = [...dados.receber].sort((a, b) => new Date(a.data) - new Date(b.data));
-
-    ordenado.forEach(item => {
-        const dias = diasAteVencimento(item.data);
-        let classeBorda = '', statusBadge = '', mostrar = true;
-
-        if (item.recebido) {
-            classeBorda = 'border-l-4 border-l-emerald-500 bg-emerald-50/40'; 
-            statusBadge = '<span class="text-xs bg-emerald-100 text-emerald-800 font-bold px-2.5 py-1 rounded-full border border-emerald-200">✅ Recebido</span>'; 
-            recebido += item.valor;
-        } else if (dias < 0) {
-            classeBorda = 'border-l-4 border-l-rose-500 bg-rose-50/40'; 
-            statusBadge = `<span class="text-xs bg-rose-100 text-rose-800 font-bold px-2.5 py-1 rounded-full border border-rose-200">🔴 Atrasado ${Math.abs(dias)}d</span>`; 
-            atrasado += item.valor;
-        } else {
-            classeBorda = 'border-l-4 border-l-blue-500 bg-blue-50/40'; 
-            statusBadge = `<span class="text-xs bg-blue-100 text-blue-800 font-bold px-2.5 py-1 rounded-full border border-blue-200">⏳ Receber em ${dias}d</span>`; 
-            receber += item.valor;
-        }
-
-        if (busca && !item.nome.toLowerCase().includes(busca) && !item.descricao?.toLowerCase().includes(busca)) mostrar = false;
-        if (filtro === 'recebido' && !item.recebido) mostrar = false;
-        if (filtro === 'receber' && (item.recebido || dias < 0)) mostrar = false;
-        if (filtro === 'atrasado' && (item.recebido || dias >= 0)) mostrar = false;
-
-        if (mostrar) {
-            lista.innerHTML += `
-                <div class="p-4 rounded-xl border border-slate-200 ${classeBorda} flex flex-col sm:flex-row justify-between sm:items-center gap-3 transition hover:shadow-sm">
-                    <div>
-                        <div class="font-bold text-slate-800 text-base">${item.nome}</div>
-                        <div class="text-xs text-slate-500 mt-0.5">${item.descricao || 'Sem descrição'}${item.totalParcelas > 1 ? ` • Parcela ${item.parcela}/${item.totalParcelas}` : ''} • Previsão: ${formatarData(item.data)}</div>
-                        <div class="font-black text-slate-900 text-lg mt-1">R$ ${formatarDinheiro(item.valor)}</div>
-                    </div>
-                    <div class="flex items-center gap-2 self-end sm:self-center">
-                        <div class="mr-2">${statusBadge}</div>
-                        <button class="px-3 py-1.5 text-xs font-semibold rounded-lg transition ${item.recebido ? 'bg-slate-200 text-slate-700 hover:bg-slate-300' : 'bg-emerald-600 text-white hover:bg-emerald-500'}" onclick="marcarComoRecebido(${item.id})">
-                            ${item.recebido ? '↩️ Desmarcar' : '✓ Recebido'}
-                        </button>
-                        <button class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-rose-100 text-rose-700 hover:bg-rose-200 transition" onclick="excluirReceber(${item.id})">🗑️</button>
-                    </div>
-                </div>`;
-        }
-    });
-
-    document.getElementById('rec-t-receber').textContent = 'R$ ' + formatarDinheiro(receber);
-    document.getElementById('rec-t-recebido').textContent = 'R$ ' + formatarDinheiro(recebido);
-    document.getElementById('rec-t-atrasado').textContent = 'R$ ' + formatarDinheiro(atrasado);
-    document.getElementById('rec-t-total').textContent = 'R$ ' + formatarDinheiro(receber + recebido + atrasado);
-    if (lista.innerHTML === '') lista.innerHTML = '<div class="text-center py-8 text-slate-400 font-medium">Nenhum valor a receber cadastrado.</div>';
-}
-
-// RENDAS
-function adicionarOuAtualizarRenda() {
-    const idEdicao = document.getElementById('renda-id-edicao').value;
-    const nome = document.getElementById('renda-nome').value.trim();
-    const valor = limparValor(document.getElementById('renda-valor').value);
-    const tipo = document.getElementById('renda-tipo').value;
-    const obs = document.getElementById('renda-obs').value.trim();
-
-    if (!nome) return alert('⚠️ Digite a origem da renda!');
-    if (!valor || valor <= 0) return alert('⚠️ Digite um valor válido!');
-
-    if (idEdicao) {
-        const item = dados.rendas.find(r => r.id === parseInt(idEdicao));
-        if (item) {
-            item.nome = nome;
-            item.valor = valor;
-            item.tipo = tipo;
-            item.obs = obs;
-        }
-    } else {
-        dados.rendas.push({ id: Date.now(), nome, valor, tipo, obs });
-    }
-
-    cancelarEdicaoRenda();
-    salvarDados();
-}
-
-function editarRenda(id) {
-    const item = dados.rendas.find(r => r.id === id);
-    if (!item) return;
-
-    document.getElementById('renda-id-edicao').value = item.id;
-    document.getElementById('renda-nome').value = item.nome;
-    document.getElementById('renda-valor').value = formatarDinheiro(item.valor);
-    document.getElementById('renda-tipo').value = item.tipo;
-    document.getElementById('renda-obs').value = item.obs || '';
-
-    document.getElementById('renda-form-titulo').textContent = '✏️ Editar Renda';
-    document.getElementById('btn-salvar-renda').textContent = '🔄 Atualizar';
-    document.getElementById('btn-cancelar-renda').classList.remove('hidden');
-}
-
-function cancelarEdicaoRenda() {
-    document.getElementById('renda-id-edicao').value = '';
-    document.getElementById('renda-nome').value = '';
-    document.getElementById('renda-valor').value = '';
-    document.getElementById('renda-tipo').value = 'mensal';
-    document.getElementById('renda-obs').value = '';
-
-    document.getElementById('renda-form-titulo').textContent = '➕ Adicionar Fonte de Renda';
-    document.getElementById('btn-salvar-renda').textContent = '💾 Salvar Renda';
-    document.getElementById('btn-cancelar-renda').classList.add('hidden');
-}
-
-function excluirRenda(id) {
-    if (confirm('Excluir esta renda?')) {
-        dados.rendas = dados.rendas.filter(r => r.id !== id);
-        cancelarEdicaoRenda();
-        salvarDados();
-    }
-}
-
-function atualizarListaRendas() {
-    const lista = document.getElementById('r-lista');
-    if (!lista) return;
-
-    let mensal = 0, ocasional = 0;
-    lista.innerHTML = '';
-
-    dados.rendas.forEach(item => {
-        if (item.tipo === 'mensal') mensal += item.valor;
-        else ocasional += item.valor;
-
-        const badge = item.tipo === 'mensal' 
-            ? '<span class="text-xs bg-emerald-100 text-emerald-800 font-bold px-2.5 py-1 rounded-full border border-emerald-200">📅 Mensal</span>' 
-            : '<span class="text-xs bg-amber-100 text-amber-800 font-bold px-2.5 py-1 rounded-full border border-amber-200">✨ Ocasional</span>';
-
-        lista.innerHTML += `
-            <div class="p-4 rounded-xl border border-slate-200 border-l-4 border-l-emerald-500 bg-white flex flex-col sm:flex-row justify-between sm:items-center gap-3">
-                <div>
-                    <div class="font-bold text-slate-800 text-base">${item.nome}</div>
-                    <div class="text-xs text-slate-500 mt-0.5">${item.obs || 'Sem observações'}</div>
-                    <div class="font-black text-slate-900 text-lg mt-1">R$ ${formatarDinheiro(item.valor)}</div>
-                </div>
-                <div class="flex items-center gap-2 self-end sm:self-center">
-                    <div class="mr-2">${badge}</div>
-                    <button class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-100 text-blue-700 hover:bg-blue-200 transition" onclick="editarRenda(${item.id})">✏️ Editar</button>
-                    <button class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-rose-100 text-rose-700 hover:bg-rose-200 transition" onclick="excluirRenda(${item.id})">🗑️ Excluir</button>
-                </div>
-            </div>`;
-    });
-
-    document.getElementById('r-t-mensal').textContent = 'R$ ' + formatarDinheiro(mensal);
-    document.getElementById('r-t-ocasional').textContent = 'R$ ' + formatarDinheiro(ocasional);
-    document.getElementById('r-t-anual').textContent = 'R$ ' + formatarDinheiro((mensal * 12) + ocasional);
-    document.getElementById('r-t-total').textContent = 'R$ ' + formatarDinheiro(mensal + ocasional);
-    if (lista.innerHTML === '') lista.innerHTML = '<div class="text-center py-8 text-slate-400 font-medium">Nenhuma renda cadastrada.</div>';
-}
-
-// EMPRÉSTIMOS
-function calcularMontanteEmprestimo(principal, taxaMensalPct, meses) {
-    const jurosTotal = principal * (taxaMensalPct / 100) * meses;
-    const montanteTotal = principal + jurosTotal;
-    const parcelaMensal = montanteTotal / (meses || 1);
-    return { jurosTotal, montanteTotal, parcelaMensal };
-}
-
-function adicionarOuAtualizarEmprestimo() {
-    const idEdicao = document.getElementById('emp-id-edicao').value;
-    const tipo = document.getElementById('emp-tipo').value;
-    const nome = document.getElementById('emp-nome').value.trim();
-    const valor = limparValor(document.getElementById('emp-valor').value);
-    const juros = parseFloat(document.getElementById('emp-juros').value) || 0;
-    const meses = parseInt(document.getElementById('emp-meses').value) || 1;
-    const data = document.getElementById('emp-data').value;
-
-    if (!nome) return alert('⚠️ Digite o nome!');
-    if (!valor || valor <= 0) return alert('⚠️ Digite um valor válido!');
-    if (!data) return alert('⚠️ Digite a data!');
-
-    if (idEdicao) {
-        const item = dados.emprestimos.find(e => e.id === parseInt(idEdicao));
-        if (item) {
-            item.tipo = tipo; item.nome = nome; item.valor = valor; item.juros = juros; item.meses = meses; item.data = data;
-        }
-    } else {
-        dados.emprestimos.push({ id: Date.now(), tipo, nome, valor, juros, meses, data, quitado: false });
-    }
-
-    cancelarEdicaoEmprestimo();
-    salvarDados();
-}
-
-function editarEmprestimo(id) {
-    const item = dados.emprestimos.find(e => e.id === id);
-    if (!item) return;
-
-    document.getElementById('emp-id-edicao').value = item.id;
-    document.getElementById('emp-tipo').value = item.tipo;
-    document.getElementById('emp-nome').value = item.nome;
-    document.getElementById('emp-valor').value = formatarDinheiro(item.valor);
-    document.getElementById('emp-juros').value = item.juros;
-    document.getElementById('emp-meses').value = item.meses;
-    document.getElementById('emp-data').value = item.data;
-
-    document.getElementById('emp-form-titulo').textContent = '✏️ Editar Operação';
-    document.getElementById('btn-salvar-emp').textContent = '🔄 Atualizar';
-    document.getElementById('btn-cancelar-emp').classList.remove('hidden');
-}
-
-function cancelarEdicaoEmprestimo() {
-    document.getElementById('emp-id-edicao').value = '';
-    document.getElementById('emp-tipo').value = 'concedido';
-    document.getElementById('emp-nome').value = '';
-    document.getElementById('emp-valor').value = '';
-    document.getElementById('emp-juros').value = '';
-    document.getElementById('emp-meses').value = '1';
-    document.getElementById('emp-data').value = '';
-
-    document.getElementById('emp-form-titulo').textContent = '➕ Cadastrar Operação';
-    document.getElementById('btn-salvar-emp').textContent = '💾 Salvar Empréstimo';
-    document.getElementById('btn-cancelar-emp').classList.add('hidden');
-}
-
-function alternarQuitacaoEmprestimo(id) {
-    const item = dados.emprestimos.find(e => e.id === id);
-    if (item) { item.quitado = !item.quitado; salvarDados(); }
-}
-
-function excluirEmprestimo(id) {
-    if (confirm('Excluir este empréstimo?')) {
-        dados.emprestimos = dados.emprestimos.filter(e => e.id !== id);
-        cancelarEdicaoEmprestimo();
-        salvarDados();
-    }
-}
-
-function atualizarListaEmprestimos() {
-    const lista = document.getElementById('emp-lista');
-    if (!lista) return;
-
-    const busca = (document.getElementById('emp-busca')?.value || '').toLowerCase();
-    const filtro = document.getElementById('emp-filtro')?.value || 'todos';
-
-    let totalConcedido = 0, totalTomado = 0, totalJurosGeral = 0;
-    lista.innerHTML = '';
-
-    const ordenado = [...dados.emprestimos].sort((a, b) => new Date(a.data) - new Date(b.data));
-
-    ordenado.forEach(item => {
-        const { jurosTotal, montanteTotal, parcelaMensal } = calcularMontanteEmprestimo(item.valor, item.juros, item.meses);
-
-        if (!item.quitado) {
-            if (item.tipo === 'concedido') totalConcedido += montanteTotal;
-            else totalTomado += montanteTotal;
-            totalJurosGeral += jurosTotal;
-        }
-
-        let mostrar = true;
-        if (busca && !item.nome.toLowerCase().includes(busca)) mostrar = false;
-        if (filtro === 'concedido' && item.tipo !== 'concedido') mostrar = false;
-        if (filtro === 'tomado' && item.tipo !== 'tomado') mostrar = false;
-        if (filtro === 'ativo' && item.quitado) mostrar = false;
-        if (filtro === 'quitado' && !item.quitado) mostrar = false;
-
-        if (mostrar) {
-            const badgeTipo = item.tipo === 'concedido' 
-                ? '<span class="text-xs bg-blue-100 text-blue-800 font-bold px-2 py-0.5 rounded-full">📤 Emprestei</span>' 
-                : '<span class="text-xs bg-rose-100 text-rose-800 font-bold px-2 py-0.5 rounded-full">📥 Tomei</span>';
-
-            const badgeStatus = item.quitado 
-                ? '<span class="text-xs bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">✅ Quitado</span>' 
-                : '<span class="text-xs bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded-full">⏳ Em Aberto</span>';
-
-            lista.innerHTML += `
-                <div class="p-4 rounded-xl border border-slate-200 ${item.quitado ? 'bg-emerald-50/20 border-emerald-200' : 'bg-white'} flex flex-col sm:flex-row justify-between sm:items-center gap-3">
-                    <div>
-                        <div class="flex items-center gap-2">
-                            <span class="font-bold text-slate-800 text-base">${item.nome}</span>
-                            ${badgeTipo} ${badgeStatus}
-                        </div>
-                        <div class="text-xs text-slate-500 mt-1">Início: ${formatarData(item.data)} • ${item.meses}x de R$ ${formatarDinheiro(parcelaMensal)} (${item.juros}% a.m.)</div>
-                        <div class="font-black text-slate-900 text-lg mt-1">
-                            Principal: R$ ${formatarDinheiro(item.valor)} | Total com Juros: R$ ${formatarDinheiro(montanteTotal)}
-                            <span class="text-xs font-normal text-slate-500">(+ R$ ${formatarDinheiro(jurosTotal)} em juros)</span>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-2 self-end sm:self-center">
-                        <button class="px-3 py-1.5 text-xs font-semibold rounded-lg transition ${item.quitado ? 'bg-slate-200 text-slate-700' : 'bg-emerald-600 text-white hover:bg-emerald-500'}" onclick="alternarQuitacaoEmprestimo(${item.id})">
-                            ${item.quitado ? '↩️ Reabrir' : '✓ Quitar'}
-                        </button>
-                        <button class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-100 text-blue-700 hover:bg-blue-200 transition" onclick="editarEmprestimo(${item.id})">✏️ Editar</button>
-                        <button class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-rose-100 text-rose-700 hover:bg-rose-200 transition" onclick="excluirEmprestimo(${item.id})">🗑️</button>
-                    </div>
-                </div>`;
-        }
-    });
-
-    document.getElementById('emp-t-concedido').textContent = 'R$ ' + formatarDinheiro(totalConcedido);
-    document.getElementById('emp-t-tomado').textContent = 'R$ ' + formatarDinheiro(totalTomado);
-    document.getElementById('emp-t-juros').textContent = 'R$ ' + formatarDinheiro(totalJurosGeral);
-    if (lista.innerHTML === '') lista.innerHTML = '<div class="text-center py-8 text-slate-400 font-medium">Nenhum empréstimo cadastrado.</div>';
-}
-
-// PATRIMÔNIO
-function adicionarPatrimonio() {
-    const tipo = document.getElementById('pat-tipo').value;
-    const nome = document.getElementById('pat-nome').value.trim();
-    const valor = limparValor(document.getElementById('pat-valor').value);
-    const obs = document.getElementById('pat-obs').value.trim();
-
-    if (!nome) return alert('⚠️ Digite o nome ou descrição do bem!');
-    if (!valor || valor <= 0) return alert('⚠️ Digite um valor válido!');
-
-    dados.patrimonio.push({ id: Date.now(), tipo, nome, valor, obs });
-
-    document.getElementById('pat-nome').value = '';
-    document.getElementById('pat-valor').value = '';
-    document.getElementById('pat-obs').value = '';
-    salvarDados();
-}
-
-function excluirPatrimonio(id) {
-    if (confirm('Excluir este item do patrimônio?')) {
-        dados.patrimonio = dados.patrimonio.filter(p => p.id !== id);
-        salvarDados();
-    }
-}
-
-function atualizarListaPatrimonio() {
-    const lista = document.getElementById('pat-lista');
-    if (!lista) return;
-
-    let veiculos = 0, imoveis = 0, investimentos = 0, outros = 0;
-    lista.innerHTML = '';
-
-    dados.patrimonio.forEach(item => {
-        if (item.tipo === 'veiculo') veiculos += item.valor;
-        else if (item.tipo === 'imovel') imoveis += item.valor;
-        else if (item.tipo === 'investimento') investimentos += item.valor;
-        else outros += item.valor;
-
-        const icones = { veiculo: '🚗', imovel: '🏠', investimento: '📈', outro: '📦' };
-
-        lista.innerHTML += `
-            <div class="p-4 rounded-xl border border-slate-200 border-l-4 border-l-purple-500 bg-white flex justify-between items-center gap-3">
-                <div>
-                    <div class="font-bold text-slate-800 text-base">${icones[item.tipo] || '📦'} ${item.nome}</div>
-                    <div class="text-xs text-slate-500 mt-0.5">${item.obs || 'Sem observações'}</div>
-                    <div class="font-black text-slate-900 text-lg mt-1">R$ ${formatarDinheiro(item.valor)}</div>
-                </div>
-                <button class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-rose-100 text-rose-700 hover:bg-rose-200 transition" onclick="excluirPatrimonio(${item.id})">🗑️ Excluir</button>
-            </div>`;
-    });
-
-    const total = veiculos + imoveis + investimentos + outros;
-    document.getElementById('pat-t-veiculo').textContent = 'R$ ' + formatarDinheiro(veiculos);
-    document.getElementById('pat-t-imovel').textContent = 'R$ ' + formatarDinheiro(imoveis);
-    document.getElementById('pat-t-investimento').textContent = 'R$ ' + formatarDinheiro(investimentos);
-    document.getElementById('pat-t-total').textContent = 'R$ ' + formatarDinheiro(total);
-    if (lista.innerHTML === '') lista.innerHTML = '<div class="text-center py-8 text-slate-400 font-medium">Nenhum bem cadastrado.</div>';
-}
-
+// ==========================================
 // BOLETOS
-function adicionarBoleto() {
-    const nome = document.getElementById('b-nome').value.trim();
-    const valor = limparValor(document.getElementById('b-valor').value);
-    const data = document.getElementById('b-data').value;
-    const codigo = document.getElementById('b-codigo').value.trim();
+// ==========================================
+async function adicionarBoleto() {
+    const nome = document.getElementById('boletoNome').value.trim();
+    const codigo = document.getElementById('boletoCodigo').value.trim();
+    const valor = parseFloat(document.getElementById('boletoValor').value || 0);
+    const data = document.getElementById('boletoData').value;
 
-    if (!nome) return alert('⚠️ Digite o nome da empresa!');
-    if (!valor || valor <= 0) return alert('⚠️ Digite um valor válido!');
-    if (!data) return alert('⚠️ Escolha a data de vencimento!');
+    if (!nome || !valor || !data) { alert('Preencha nome, valor e data!'); return; }
 
-    dados.boletos.push({ id: Date.now(), nome, valor, data, codigo, pago: false });
-
-    document.getElementById('b-nome').value = '';
-    document.getElementById('b-valor').value = '';
-    document.getElementById('b-data').value = '';
-    document.getElementById('b-codigo').value = '';
-    salvarDados();
+    const novo = { nome, codigo, valor, data, status: ehAtrasado(data) ? 'atrasado' : 'a vencer' };
+    await boletosRef.add(novo);
+    
+    limparCamposBoletos();
+    await carregarDados();
 }
 
-function marcarBoletoPago(id) {
-    const item = dados.boletos.find(b => b.id === id);
-    if (item) { item.pago = !item.pago; salvarDados(); }
+function limparCamposBoletos() {
+    document.getElementById('boletoNome').value = '';
+    document.getElementById('boletoCodigo').value = '';
+    document.getElementById('boletoValor').value = '';
+    document.getElementById('boletoData').value = '';
 }
 
-function excluirBoleto(id) {
-    if (confirm('Excluir este boleto?')) {
-        dados.boletos = dados.boletos.filter(b => b.id !== id);
-        salvarDados();
+async function mudarStatusBoleto(id, atual) {
+    const proximos = { 'a vencer': 'pago', 'atrasado': 'pago', 'pago': 'a vencer' };
+    const novo = proximos[atual];
+    await boletosRef.doc(id).update({ status: novo });
+    await carregarDados();
+}
+
+async function excluirBoleto(id) {
+    if (confirm('Tem certeza que quer excluir este boleto?')) {
+        await boletosRef.doc(id).delete();
+        await carregarDados();
     }
 }
 
-function atualizarListaBoletos() {
-    const lista = document.getElementById('b-lista');
-    if (!lista) return;
-
-    const busca = (document.getElementById('b-busca')?.value || '').toLowerCase();
-    const filtro = document.getElementById('b-filtro')?.value || 'todos';
-
-    let qtdVencer = 0, qtd3d = 0, qtdAtrasado = 0, qtdPago = 0;
-    lista.innerHTML = '';
-    const ordenado = [...dados.boletos].sort((a, b) => new Date(a.data) - new Date(b.data));
-
-    ordenado.forEach(item => {
-        const dias = diasAteVencimento(item.data);
-        let classeBorda = '', statusBadge = '', mostrar = true;
-
-        if (item.pago) {
-            classeBorda = 'border-l-4 border-l-emerald-500 bg-emerald-50/20'; 
-            statusBadge = '<span class="text-xs bg-emerald-100 text-emerald-800 font-bold px-2.5 py-1 rounded-full">✅ Pago</span>'; 
-            qtdPago++;
-        } else if (dias < 0) {
-            classeBorda = 'border-l-4 border-l-rose-500 bg-rose-50/20'; 
-            statusBadge = `<span class="text-xs bg-rose-100 text-rose-800 font-bold px-2.5 py-1 rounded-full">🔴 Atrasado ${Math.abs(dias)}d</span>`; 
-            qtdAtrasado++;
-        } else if (dias <= 3) {
-            classeBorda = 'border-l-4 border-l-purple-500 bg-purple-50/20'; 
-            statusBadge = `<span class="text-xs bg-purple-100 text-purple-800 font-bold px-2.5 py-1 rounded-full">⚠️ Vence em ${dias}d</span>`; 
-            qtd3d++; qtdVencer++;
-        } else {
-            classeBorda = 'border-l-4 border-l-amber-500 bg-amber-50/20'; 
-            statusBadge = `<span class="text-xs bg-amber-100 text-amber-800 font-bold px-2.5 py-1 rounded-full">⏳ Vence em ${dias}d</span>`; 
-            qtdVencer++;
-        }
-
-        if (busca && !item.nome.toLowerCase().includes(busca) && !item.codigo?.toLowerCase().includes(busca)) mostrar = false;
-        if (filtro === 'pago' && !item.pago) mostrar = false;
-        if (filtro === 'avencer' && (item.pago || dias < 0)) mostrar = false;
-        if (filtro === 'atrasado' && (item.pago || dias >= 0)) mostrar = false;
-
-        if (mostrar) {
-            lista.innerHTML += `
-                <div class="p-4 rounded-xl border border-slate-200 ${classeBorda} flex flex-col sm:flex-row justify-between sm:items-center gap-3">
-                    <div>
-                        <div class="font-bold text-slate-800 text-base">${item.nome}</div>
-                        <div class="text-xs text-slate-500 mt-0.5">Vencimento: ${formatarData(item.data)} ${item.codigo ? '• Cód: ' + item.codigo : ''}</div>
-                        <div class="font-black text-slate-900 text-lg mt-1">R$ ${formatarDinheiro(item.valor)}</div>
-                    </div>
-                    <div class="flex items-center gap-2 self-end sm:self-center">
-                        <div class="mr-2">${statusBadge}</div>
-                        <button class="px-3 py-1.5 text-xs font-semibold rounded-lg transition ${item.pago ? 'bg-slate-200 text-slate-700' : 'bg-emerald-600 text-white hover:bg-emerald-500'}" onclick="marcarBoletoPago(${item.id})">
-                            ${item.pago ? '↩️ Desmarcar' : '✓ Pago'}
-                        </button>
-                        <button class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-rose-100 text-rose-700 hover:bg-rose-200 transition" onclick="excluirBoleto(${item.id})">🗑️</button>
-                    </div>
-                </div>`;
-        }
-    });
-
-    document.getElementById('b-qtd-vencer').textContent = qtdVencer;
-    document.getElementById('b-qtd-3d').textContent = qtd3d;
-    document.getElementById('b-qtd-atrasado').textContent = qtdAtrasado;
-    document.getElementById('b-qtd-pago').textContent = qtdPago;
-    if (lista.innerHTML === '') lista.innerHTML = '<div class="text-center py-8 text-slate-400 font-medium">Nenhum boleto cadastrado.</div>';
+function filtrarBoletos(filtro) {
+    filtroAtual = filtro;
+    renderizarBoletos();
 }
 
-// CHEQUES
-function adicionarCheque() {
-    const nome = document.getElementById('ch-nome').value.trim();
-    const numero = document.getElementById('ch-numero').value.trim();
-    const valor = limparValor(document.getElementById('ch-valor').value);
-    const data = document.getElementById('ch-data').value;
-
-    if (!nome) return alert('⚠️ Digite o favorecido/emissor!');
-    if (!valor || valor <= 0) return alert('⚠️ Digite um valor válido!');
-    if (!data) return alert('⚠️ Escolha a data!');
-
-    dados.cheques.push({ id: Date.now(), nome, numero, valor, data, status: 'aberto' });
-
-    document.getElementById('ch-nome').value = '';
-    document.getElementById('ch-numero').value = '';
-    document.getElementById('ch-valor').value = '';
-    document.getElementById('ch-data').value = '';
-    salvarDados();
-}
-
-function alterarStatusCheque(id, novoStatus) {
-    const item = dados.cheques.find(ch => ch.id === id);
-    if (item) { item.status = novoStatus; salvarDados(); }
-}
-
-function excluirCheque(id) {
-    if (confirm('Excluir este cheque?')) {
-        dados.cheques = dados.cheques.filter(ch => ch.id !== id);
-        salvarDados();
-    }
-}
-
-function atualizarListaCheques() {
-    const lista = document.getElementById('ch-lista');
-    if (!lista) return;
-
-    const busca = (document.getElementById('ch-busca')?.value || '').toLowerCase();
-    const filtro = document.getElementById('ch-filtro')?.value || 'todos';
-
-    let qtdAberto = 0, qtdPago = 0, qtdDev = 0;
-    lista.innerHTML = '';
-    const ordenado = [...dados.cheques].sort((a, b) => new Date(a.data) - new Date(b.data));
-
-    ordenado.forEach(item => {
-        let classeBorda = '', statusBadge = '', mostrar = true;
-
-        if (item.status === 'pago') {
-            classeBorda = 'border-l-4 border-l-emerald-500 bg-emerald-50/20'; 
-            statusBadge = '<span class="text-xs bg-emerald-100 text-emerald-800 font-bold px-2.5 py-1 rounded-full">✅ Compensado</span>'; 
-            qtdPago++;
-        } else if (item.status === 'dev') {
-            classeBorda = 'border-l-4 border-l-rose-500 bg-rose-50/20'; 
-            statusBadge = '<span class="text-xs bg-rose-100 text-rose-800 font-bold px-2.5 py-1 rounded-full">🔴 Devolvido</span>'; 
-            qtdDev++;
-        } else {
-            classeBorda = 'border-l-4 border-l-blue-500 bg-blue-50/20'; 
-            statusBadge = '<span class="text-xs bg-blue-100 text-blue-800 font-bold px-2.5 py-1 rounded-full">⏳ Em Aberto</span>'; 
-            qtdAberto++;
-        }
-
-        if (busca && !item.nome.toLowerCase().includes(busca) && !item.numero?.toLowerCase().includes(busca)) mostrar = false;
-        if (filtro === 'aberto' && item.status !== 'aberto') mostrar = false;
-        if (filtro === 'pago' && item.status !== 'pago') mostrar = false;
-        if (filtro === 'dev' && item.status !== 'dev') mostrar = false;
-
-        if (mostrar) {
-            lista.innerHTML += `
-                <div class="p-4 rounded-xl border border-slate-200 ${classeBorda} flex flex-col sm:flex-row justify-between sm:items-center gap-3">
-                    <div>
-                        <div class="font-bold text-slate-800 text-base">${item.nome} ${item.numero ? '(Nº ' + item.numero + ')' : ''}</div>
-                        <div class="text-xs text-slate-500 mt-0.5">Bom para: ${formatarData(item.data)}</div>
-                        <div class="font-black text-slate-900 text-lg mt-1">R$ ${formatarDinheiro(item.valor)}</div>
-                    </div>
-                    <div class="flex items-center gap-2 self-end sm:self-center">
-                        <div class="mr-2">${statusBadge}</div>
-                        <select onchange="alterarStatusCheque(${item.id}, this.value)" class="bg-white border border-slate-200 rounded-lg text-xs font-semibold p-1.5 focus:outline-none">
-                            <option value="aberto" ${item.status === 'aberto' ? 'selected' : ''}>Em Aberto</option>
-                            <option value="pago" ${item.status === 'pago' ? 'selected' : ''}>Compensado</option>
-                            <option value="dev" ${item.status === 'dev' ? 'selected' : ''}>Devolvido</option>
-                        </select>
-                        <button class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-rose-100 text-rose-700 hover:bg-rose-200 transition" onclick="excluirCheque(${item.id})">🗑️</button>
-                    </div>
-                </div>`;
-        }
-    });
-
-    document.getElementById('ch-qtd-aberto').textContent = qtdAberto;
-    document.getElementById('ch-qtd-pago').textContent = qtdPago;
-    document.getElementById('ch-qtd-dev').textContent = qtdDev;
-    if (lista.innerHTML === '') lista.innerHTML = '<div class="text-center py-8 text-slate-400 font-medium">Nenhum cheque cadastrado.</div>';
-}
-
-// RESUMO GERAL & GRÁFICOS REFORMULADOS
-function atualizarResumo() {
-    let totalPagar = 0, jaPago = 0;
-    dados.dividas.forEach(d => {
-        if (d.paga) jaPago += d.valor;
-        else totalPagar += d.valor;
-    });
-
-    let totalReceber = 0, jaRecebido = 0;
-    dados.receber.forEach(r => {
-        if (r.recebido) jaRecebido += r.valor;
-        else totalReceber += r.valor;
-    });
-
-    if (dados.emprestimos) {
-        dados.emprestimos.forEach(e => {
-            if (!e.quitado) {
-                const { montanteTotal } = calcularMontanteEmprestimo(e.valor, e.juros, e.meses);
-                if (e.tipo === 'concedido') totalReceber += montanteTotal;
-                else totalPagar += montanteTotal;
-            }
-        });
+function renderizarBoletos() {
+    const lista = document.getElementById('listaBoletos');
+    let filtrados = boletos;
+    
+    if (filtroAtual !== 'todos') {
+        filtrados = boletos.filter(b => b.status === filtroAtual);
     }
 
-    let totalRendasMensal = 0;
-    dados.rendas.forEach(r => {
-        if (r.tipo === 'mensal') totalRendasMensal += r.valor;
-    });
+    if (filtrados.length === 0) {
+        lista.innerHTML = '<p class="text-gray-400 text-center py-4">Nenhum boleto encontrado.</p>';
+        return;
+    }
 
-    let totalPatrimonio = 0;
-    let patVeiculos = 0, patImoveis = 0, patInvest = 0, patOutros = 0;
-    dados.patrimonio.forEach(p => {
-        totalPatrimonio += p.valor;
-        if (p.tipo === 'veiculo') patVeiculos += p.valor;
-        else if (p.tipo === 'imovel') patImoveis += p.valor;
-        else if (p.tipo === 'investimento') patInvest += p.valor;
-        else patOutros += p.valor;
-    });
+    lista.innerHTML = filtrados.map(b => {
+        let classeStatus = '';
+        let textoStatus = b.status;
+        if (b.status === 'a vencer') { classeStatus = 'status-vencer'; textoStatus = '📅 A Vencer'; }
+        else if (b.status === 'atrasado') { classeStatus = 'status-atrasado'; textoStatus = '⚠️ Atrasado'; }
+        else if (b.status === 'pago') { classeStatus = 'status-pago'; textoStatus = '✅ Pago'; }
 
-    document.getElementById('r-total-pagar').textContent = 'R$ ' + formatarDinheiro(totalPagar);
-    document.getElementById('r-total-receber').textContent = 'R$ ' + formatarDinheiro(totalReceber);
-    document.getElementById('r-rendas').textContent = 'R$ ' + formatarDinheiro(totalRendasMensal);
-    document.getElementById('r-patrimonio').textContent = 'R$ ' + formatarDinheiro(totalPatrimonio);
-    document.getElementById('r-pago').textContent = 'R$ ' + formatarDinheiro(jaPago);
-    document.getElementById('r-recebido').textContent = 'R$ ' + formatarDinheiro(jaRecebido);
-
-    const lista = document.getElementById('lista-resumo');
-    const saldoProjetado = (totalRendasMensal + totalReceber) - totalPagar;
-
-    if (lista) {
-        lista.innerHTML = `
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="p-4 rounded-xl border ${saldoProjetado >= 0 ? 'bg-emerald-50/50 border-emerald-200' : 'bg-rose-50/50 border-rose-200'}">
-                    <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">💡 Saldo Projetado Líquido</span>
-                    <div class="text-2xl font-black mt-1 ${saldoProjetado >= 0 ? 'text-emerald-700' : 'text-rose-700'}">
-                        R$ ${formatarDinheiro(saldoProjetado)}
-                    </div>
-                    <span class="text-xs text-slate-500 mt-1 block">(Rendas + Recebíveis/Empréstimos - Contas a Pagar/Dívidas)</span>
-                </div>
-                <div class="p-4 rounded-xl border bg-slate-50 border-slate-200">
-                    <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">📊 Volume de Registros</span>
-                    <div class="text-2xl font-black text-slate-800 mt-1">
-                        ${dados.dividas.length + dados.receber.length + dados.rendas.length + dados.patrimonio.length + dados.boletos.length + dados.cheques.length + (dados.emprestimos ? dados.emprestimos.length : 0)} itens
-                    </div>
-                    <span class="text-xs text-slate-500 mt-1 block">Registros ativos cadastrados na base</span>
-                </div>
+        return `
+        <div class="item-row">
+            <div class="flex-1 min-w-[200px]">
+                <strong>${b.nome}</strong>
+                ${b.codigo ? `<br><small class="text-gray-400">Cód: ${b.codigo}</small>` : ''}
+                <br><small class="text-gray-400">Venc: ${formatarData(b.data)}</small>
             </div>
-        `;
-    }
-
-    renderizarGraficos(totalRendasMensal + totalReceber, totalPagar, { patVeiculos, patImoveis, patInvest, patOutros, totalPatrimonio });
+            <div class="text-right">
+                <p class="font-bold text-lg">R$ ${formatarValor(b.valor)}</p>
+                <span class="${classeStatus} text-sm">${textoStatus}</span>
+            </div>
+            <div class="flex gap-1 mt-2 w-full md:w-auto">
+                <button class="btn btn-success text-sm py-1 px-2" onclick="mudarStatusBoleto('${b.id}', '${b.status}')">✓</button>
+                <button class="btn btn-danger text-sm py-1 px-2" onclick="excluirBoleto('${b.id}')">🗑️</button>
+            </div>
+        </div>`;
+    }).join('');
 }
 
-function renderizarGraficos(entradas, saidas, patCategorias) {
-    if (typeof Chart === 'undefined') return;
+// ==========================================
+// CHEQUES
+// ==========================================
+async function adicionarCheque() {
+    const nome = document.getElementById('chequeNome').value.trim();
+    const numero = document.getElementById('chequeNumero').value.trim();
+    const valor = parseFloat(document.getElementById('chequeValor').value || 0);
+    const data = document.getElementById('chequeData').value;
 
-    // CONFIGURAÇÃO GLOBAL DO CHART.JS
-    Chart.defaults.font.family = 'Inter, sans-serif';
-    Chart.defaults.color = '#64748b';
+    if (!nome || !valor || !data) { alert('Preencha nome, valor e data!'); return; }
 
-    // 1. GRÁFICO DE ENTRADAS VS SAÍDAS
-    const ctxBalanco = document.getElementById('chartBalanco')?.getContext('2d');
-    if (ctxBalanco) {
-        if (chartBalancoInstancia) chartBalancoInstancia.destroy();
+    await chequesRef.add({ nome, numero, valor, data });
+    limparCamposCheques();
+    await carregarDados();
+}
 
-        const temDados = entradas > 0 || saidas > 0;
-        const dataValores = temDados ? [entradas, saidas] : [1, 1];
-        const cores = temDados ? ['#10b981', '#f43f5e'] : ['#e2e8f0', '#cbd5e1'];
-        const saldoTotal = entradas - saidas;
+function limparCamposCheques() {
+    document.getElementById('chequeNome').value = '';
+    document.getElementById('chequeNumero').value = '';
+    document.getElementById('chequeValor').value = '';
+    document.getElementById('chequeData').value = '';
+}
 
-        chartBalancoInstancia = new Chart(ctxBalanco, {
-            type: 'doughnut',
-            data: {
-                labels: temDados ? ['Entradas (Rendas + Recebíveis)', 'Saídas (Contas a Pagar)'] : ['Sem Entradas', 'Sem Saídas'],
-                datasets: [{
-                    data: dataValores,
-                    backgroundColor: cores,
-                    borderWidth: 3,
-                    borderColor: '#ffffff',
-                    hoverOffset: 8,
-                    borderRadius: 4
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                cutout: '76%',
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: { 
-                            boxWidth: 8, 
-                            boxHeight: 8,
-                            padding: 20, 
-                            usePointStyle: true,
-                            pointStyle: 'circle',
-                            font: { size: 12, weight: '600' } 
-                        }
-                    },
-                    tooltip: {
-                        enabled: temDados,
-                        backgroundColor: '#0f172a',
-                        titleFont: { size: 13, weight: '700' },
-                        bodyFont: { size: 12 },
-                        padding: 12,
-                        cornerRadius: 10,
-                        callbacks: {
-                            label: function(c) {
-                                const val = c.raw;
-                                const total = entradas + saidas;
-                                const pct = total > 0 ? ((val / total) * 100).toFixed(1) : '0.0';
-                                return ` ${c.label}: R$ ${formatarDinheiro(val)} (${pct}%)`;
-                            }
-                        }
-                    },
-                    textoCentroDonut: {
-                        ativo: temDados,
-                        label: 'Saldo Líquido',
-                        valor: `R$ ${formatarDinheiro(saldoTotal)}`,
-                        cor: saldoTotal >= 0 ? '#059669' : '#e11d48'
-                    }
-                }
-            }
-        });
+async function excluirCheque(id) {
+    if (confirm('Excluir este cheque?')) {
+        await chequesRef.doc(id).delete();
+        await carregarDados();
+    }
+}
+
+function renderizarCheques() {
+    const lista = document.getElementById('listaCheques');
+    if (cheques.length === 0) {
+        lista.innerHTML = '<p class="text-gray-400 text-center py-4">Nenhum cheque cadastrado.</p>';
+        return;
     }
 
-    // 2. GRÁFICO DE DISTRIBUIÇÃO DO PATRIMÔNIO
-    const ctxPatrimonio = document.getElementById('chartPatrimonio')?.getContext('2d');
-    if (ctxPatrimonio) {
-        if (chartPatrimonioInstancia) chartPatrimonioInstancia.destroy();
+    lista.innerHTML = cheques.map(c => `
+    <div class="item-row">
+        <div class="flex-1">
+            <strong>${c.nome}</strong>
+            ${c.numero ? `<br><small class="text-gray-400">Nº: ${c.numero}</small>` : ''}
+            <br><small class="text-gray-400">Emissão: ${formatarData(c.data)}</small>
+        </div>
+        <p class="font-bold text-lg">R$ ${formatarValor(c.valor)}</p>
+        <button class="btn btn-danger text-sm py-1 px-2" onclick="excluirCheque('${c.id}')">🗑️</button>
+    </div>`).join('');
+}
 
-        const totalPat = patCategorias.totalPatrimonio || (patCategorias.patVeiculos + patCategorias.patImoveis + patCategorias.patInvest + patCategorias.patOutros);
-        const temPatrimonio = totalPat > 0;
+// ==========================================
+// RENDAS
+// ==========================================
+async function adicionarRenda() {
+    const nome = document.getElementById('rendaNome').value.trim();
+    const valor = parseFloat(document.getElementById('rendaValor').value || 0);
+    const data = document.getElementById('rendaData').value;
+    const tipo = document.getElementById('rendaTipo').value;
 
-        const dataPat = temPatrimonio 
-            ? [patCategorias.patVeiculos, patCategorias.patImoveis, patCategorias.patInvest, patCategorias.patOutros]
-            : [1];
+    if (!nome || !valor || !data) { alert('Preencha todos os campos!'); return; }
 
-        const coresPat = temPatrimonio 
-            ? ['#8b5cf6', '#3b82f6', '#10b981', '#f59e0b'] 
-            : ['#e2e8f0'];
+    await rendasRef.add({ nome, valor, data, tipo });
+    limparCamposRendas();
+    await carregarDados();
+}
 
-        const labelsPat = temPatrimonio 
-            ? ['Veículos', 'Imóveis / Terrenos', 'Investimentos', 'Outros Bens'] 
-            : ['Nenhum bem cadastrado'];
+function limparCamposRendas() {
+    document.getElementById('rendaNome').value = '';
+    document.getElementById('rendaValor').value = '';
+    document.getElementById('rendaData').value = '';
+}
 
-        chartPatrimonioInstancia = new Chart(ctxPatrimonio, {
-            type: 'doughnut',
-            data: {
-                labels: labelsPat,
-                datasets: [{
-                    data: dataPat,
-                    backgroundColor: coresPat,
-                    borderWidth: 3,
-                    borderColor: '#ffffff',
-                    hoverOffset: 8,
-                    borderRadius: 4
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                cutout: '76%',
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: { 
-                            boxWidth: 8, 
-                            boxHeight: 8,
-                            padding: 20, 
-                            usePointStyle: true,
-                            pointStyle: 'circle',
-                            font: { size: 12, weight: '600' } 
-                        }
-                    },
-                    tooltip: {
-                        enabled: temPatrimonio,
-                        backgroundColor: '#0f172a',
-                        titleFont: { size: 13, weight: '700' },
-                        bodyFont: { size: 12 },
-                        padding: 12,
-                        cornerRadius: 10,
-                        callbacks: {
-                            label: function(c) {
-                                const val = c.raw;
-                                const pct = totalPat > 0 ? ((val / totalPat) * 100).toFixed(1) : '0.0';
-                                return ` ${c.label}: R$ ${formatarDinheiro(val)} (${pct}%)`;
-                            }
-                        }
-                    },
-                    textoCentroDonut: {
-                        ativo: temPatrimonio,
-                        label: 'Total Ativos',
-                        valor: `R$ ${formatarDinheiro(totalPat)}`,
-                        cor: '#4f46e5'
-                    }
-                }
-            }
-        });
+async function excluirRenda(id) {
+    if (confirm('Excluir esta renda?')) {
+        await rendasRef.doc(id).delete();
+        await carregarDados();
     }
+}
+
+function renderizarRendas() {
+    const lista = document.getElementById('listaRendas');
+    if (rendas.length === 0) {
+        lista.innerHTML = '<p class="text-gray-400 text-center py-4">Nenhuma renda cadastrada.</p>';
+        return;
+    }
+
+    lista.innerHTML = rendas.map(r => `
+    <div class="item-row">
+        <div class="flex-1">
+            <strong>${r.nome}</strong>
+            <br><small class="text-gray-400">Data: ${formatarData(r.data)} | Tipo: ${r.tipo}</small>
+        </div>
+        <p class="font-bold text-lg text-green-400">+ R$ ${formatarValor(r.valor)}</p>
+        <button class="btn btn-danger text-sm py-1 px-2" onclick="excluirRenda('${r.id}')">🗑️</button>
+    </div>`).join('');
+}
+
+// ==========================================
+// PATRIMÔNIO
+// ==========================================
+async function adicionarPatrimonio() {
+    const nome = document.getElementById('patrimonioNome').value.trim();
+    const valor = parseFloat(document.getElementById('patrimonioValor').value || 0);
+    const obs = document.getElementById('patrimonioObs').value.trim();
+    const tipo = document.getElementById('patrimonioTipo').value;
+
+    if (!nome || !valor) { alert('Preencha nome e valor!'); return; }
+
+    await patrimonioRef.add({ nome, valor, obs, tipo });
+    limparCamposPatrimonio();
+    await carregarDados();
+}
+
+function limparCamposPatrimonio() {
+    document.getElementById('patrimonioNome').value = '';
+    document.getElementById('patrimonioValor').value = '';
+    document.getElementById('patrimonioObs').value = '';
+}
+
+async function excluirPatrimonio(id) {
+    if (confirm('Excluir este item do patrimônio?')) {
+        await patrimonioRef.doc(id).delete();
+        await carregarDados();
+    }
+}
+
+function renderizarPatrimonio() {
+    const lista = document.getElementById('listaPatrimonio');
+    if (patrimonio.length === 0) {
+        lista.innerHTML = '<p class="text-gray-400 text-center py-4">Nenhum item cadastrado.</p>';
+        return;
+    }
+
+    const total = patrimonio.reduce((s, p) => s + Number(p.valor), 0);
+
+    lista.innerHTML = `
+    <div class="mb-4 p-3 bg-green-900/30 rounded-lg text-center">
+        <strong>💰 Valor Total do Patrimônio:</strong>
+        <span class="text-xl font-bold text-green-400"> R$ ${formatarValor(total)}</span>
+    </div>
+    ${patrimonio.map(p => `
+    <div class="item-row">
+        <div class="flex-1">
+            <strong>${p.nome}</strong>
+            <br><small class="text-gray-400">${p.tipo}${p.obs ? ` | ${p.obs}` : ''}</small>
+        </div>
+        <p class="font-bold text-lg">R$ ${formatarValor(p.valor)}</p>
+        <button class="btn btn-danger text-sm py-1 px-2" onclick="excluirPatrimonio('${p.id}')">🗑️</button>
+    </div>`).join('')}`;
+}
+
+// ==========================================
+// ABA E RESUMO
+// ==========================================
+function showTab(nome) {
+    document.querySelectorAll('[id^="tab-"]').forEach(tab => tab.classList.add('hidden-tab'));
+    document.getElementById(`tab-${nome}`).classList.remove('hidden-tab');
+    
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+    
+    if (nome === 'boletos') renderizarBoletos();
+    if (nome === 'cheques') renderizarCheques();
+    if (nome === 'rendas') renderizarRendas();
+    if (nome === 'patrimonio') renderizarPatrimonio();
+    if (nome === 'resumo') atualizarResumo();
+}
+
+function atualizarResumo() {
+    const vencer = boletos.filter(b => b.status === 'a vencer').reduce((s, b) => s + Number(b.valor), 0);
+    const proximos = boletos.filter(b => b.status === 'a vencer' && ehProximos30Dias(b.data)).reduce((s, b) => s + Number(b.valor), 0);
+    const atrasado = boletos.filter(b => b.status === 'atrasado').reduce((s, b) => s + Number(b.valor), 0);
+    const pago = boletos.filter(b => b.status === 'pago').reduce((s, b) => s + Number(b.valor), 0);
+
+    document.getElementById('resumoVencer').textContent = `R$ ${formatarValor(vencer)}`;
+    document.getElementById('resumoProximos').textContent = `R$ ${formatarValor(proximos)}`;
+    document.getElementById('resumoAtrasado').textContent = `R$ ${formatarValor(atrasado)}`;
+    document.getElementById('resumoPago').textContent = `R$ ${formatarValor(pago)}`;
+
+    atualizarGrafico(vencer, proximos, atrasado, pago);
+}
+
+function atualizarGrafico(vencer, proximos, atrasado, pago) {
+    const ctx = document.getElementById('graficoResumo').getContext('2d');
+    if (grafico) grafico.destroy();
+    
+    grafico = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['A Vencer', 'Próximos 30d', 'Atrasados', 'Pagos'],
+            datasets: [{
+                data: [vencer, proximos, atrasado, pago],
+                backgroundColor: ['#3b82f6', '#f59e0b', '#ef4444', '#10b981'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom', labels: { color: '#f1f5f9', font: { size: 12 } } }
+            }
+        }
+    });
 }
 
 function atualizarTudo() {
+    renderizarBoletos();
+    renderizarCheques();
+    renderizarRendas();
+    renderizarPatrimonio();
     atualizarResumo();
-    atualizarListaDividas();
-    atualizarListaReceber();
-    atualizarListaRendas();
-    atualizarListaEmprestimos();
-    atualizarListaPatrimonio();
-    atualizarListaBoletos();
-    atualizarListaCheques();
 }
 
-// FERRAMENTAS DE BACKUP E EXCEL
-function baixarBackup() {
-    const jsonStr = JSON.stringify(dados, null, 2);
-    const blob = new Blob([jsonStr], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `backup_financas_${new Date().toISOString().split('T')[0]}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-}
-
-function restaurarBackup(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        try {
-            const parsed = JSON.parse(e.target.result);
-            if (parsed && typeof parsed === 'object') {
-                dados = Object.assign({ dividas: [], boletos: [], cheques: [], receber: [], rendas: [], patrimonio: [], emprestimos: [] }, parsed);
-                salvarDados();
-                alert('✅ Backup restaurado com sucesso!');
-            } else {
-                alert('⚠️ Arquivo de backup inválido.');
-            }
-        } catch (err) {
-            alert('⚠️ Erro ao ler o arquivo JSON.');
-        }
-    };
-    reader.readAsText(file);
-}
-
-function exportarExcel() {
-    if (typeof XLSX === 'undefined') {
-        return alert('⚠️ Biblioteca Excel ainda está carregando.');
-    }
-    const wb = XLSX.utils.book_new();
-
-    if (dados.dividas.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(dados.dividas), "Contas a Pagar");
-    if (dados.receber.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(dados.receber), "Contas a Receber");
-    if (dados.rendas.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(dados.rendas), "Minhas Rendas");
-    if (dados.emprestimos && dados.emprestimos.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(dados.emprestimos), "Empréstimos e Juros");
-    if (dados.patrimonio.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(dados.patrimonio), "Patrimônio");
-    if (dados.boletos.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(dados.boletos), "Boletos");
-    if (dados.cheques.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(dados.cheques), "Cheques");
-
-    XLSX.writeFile(wb, `relatorio_financeiro_${new Date().toISOString().split('T')[0]}.xlsx`);
-}
-
-// INICIALIZAÇÃO
-window.addEventListener('DOMContentLoaded', () => {
-    configurarAbas();
-    carregarDados();
-});
+// Iniciar
+carregarDados();
 </script>
+
 </body>
 </html>
-
