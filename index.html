@@ -150,20 +150,20 @@
             <input type="text" id="buscaGlobal" placeholder="Buscar...">
         </div>
         <div class="filtros">
-            <button class="filtro-btn ativo" onclick="aplicarFiltro('todos')">Todos</button>
-            <button class="filtro-btn" onclick="aplicarFiltro('a_vencer')">A Vencer</button>
-            <button class="filtro-btn" onclick="aplicarFiltro('atrasado')">Atrasados</button>
-            <button class="filtro-btn" onclick="aplicarFiltro('pago')">Pagos</button>
+            <button class="filtro-btn ativo" data-filtro="todos">Todos</button>
+            <button class="filtro-btn" data-filtro="a_vencer">A Vencer</button>
+            <button class="filtro-btn" data-filtro="atrasado">Atrasados</button>
+            <button class="filtro-btn" data-filtro="pago">Pagos</button>
         </div>
     </div>
 
     <div class="navegacao">
-        <button class="nav-btn ativo" onclick="abrirPainel('resumo')"><i class="fa fa-bar-chart"></i> Resumo</button>
-        <button class="nav-btn" onclick="abrirPainel('boletos')"><i class="fa fa-barcode"></i> Boletos</button>
-        <button class="nav-btn" onclick="abrirPainel('cheques')"><i class="fa fa-file-text-o"></i> Cheques</button>
-        <button class="nav-btn" onclick="abrirPainel('eu-devo')"><i class="fa fa-arrow-up"></i> O Que Devo</button>
-        <button class="nav-btn" onclick="abrirPainel('me-devem')"><i class="fa fa-arrow-down"></i> Quem Me Deve</button>
-        <button class="nav-btn" onclick="abrirPainel('contas')"><i class="fa fa-list-ul"></i> Contas</button>
+        <button class="nav-btn ativo" data-painel="resumo"><i class="fa fa-bar-chart"></i> Resumo</button>
+        <button class="nav-btn" data-painel="boletos"><i class="fa fa-barcode"></i> Boletos</button>
+        <button class="nav-btn" data-painel="cheques"><i class="fa fa-file-text-o"></i> Cheques</button>
+        <button class="nav-btn" data-painel="eu-devo"><i class="fa fa-arrow-up"></i> O Que Devo</button>
+        <button class="nav-btn" data-painel="me-devem"><i class="fa fa-arrow-down"></i> Quem Me Deve</button>
+        <button class="nav-btn" data-painel="contas"><i class="fa fa-list-ul"></i> Contas</button>
     </div>
 
     <!-- RESUMO -->
@@ -228,7 +228,7 @@
                     <option value="atrasado">⚠️ Atrasado</option>
                 </select>
             </div>
-            <button class="btn-primario" onclick="adicionarBoleto()">
+            <button class="btn-primario" id="btnAdicionarBoleto">
                 <i class="fa fa-plus"></i> Adicionar Boleto
             </button>
         </div>
@@ -272,7 +272,7 @@
                     <option value="atrasado">⚠️ Atrasado</option>
                 </select>
             </div>
-            <button class="btn-primario" onclick="adicionarCheque()">
+            <button class="btn-primario" id="btnAdicionarCheque">
                 <i class="fa fa-plus"></i> Adicionar Cheque
             </button>
         </div>
@@ -303,7 +303,7 @@
                 </div>
                 <div class="grupo">
                     <label>Nº Parcelas</label>
-                    <input type="number" id="devEuParcelas" placeholder="1" min="1" oninput="calcularParcelaEuDevo()">
+                    <input type="number" id="devEuParcelas" placeholder="1" min="1">
                 </div>
                 <div class="grupo">
                     <label>Valor Parcela</label>
@@ -322,7 +322,7 @@
                     <option value="atrasado">⚠️ Atrasado</option>
                 </select>
             </div>
-            <button class="btn-primario" onclick="adicionarDevo()">
+            <button class="btn-primario" id="btnAdicionarDevo">
                 <i class="fa fa-plus"></i> Adicionar
             </button>
         </div>
@@ -349,11 +349,11 @@
             <div class="grid-3">
                 <div class="grupo">
                     <label>Valor Total (R$) *</label>
-                    <input type="number" step="0.01" id="devTotal" placeholder="0,00" oninput="calcularParcelaMeDevem()">
+                    <input type="number" step="0.01" id="devTotal" placeholder="0,00">
                 </div>
                 <div class="grupo">
                     <label>Nº Parcelas</label>
-                    <input type="number" id="devParcelas" placeholder="1" min="1" oninput="calcularParcelaMeDevem()">
+                    <input type="number" id="devParcelas" placeholder="1" min="1">
                 </div>
                 <div class="grupo">
                     <label>Valor Parcela</label>
@@ -372,7 +372,7 @@
                     <option value="atrasado">⚠️ Atrasado</option>
                 </select>
             </div>
-            <button class="btn-primario" onclick="adicionarMeDevem()">
+            <button class="btn-primario" id="btnAdicionarMeDevem">
                 <i class="fa fa-plus"></i> Adicionar
             </button>
         </div>
@@ -409,7 +409,7 @@
                     <option value="receita">💵 Entrada / Renda</option>
                 </select>
             </div>
-            <button class="btn-primario" onclick="adicionarConta()">
+            <button class="btn-primario" id="btnAdicionarConta">
                 <i class="fa fa-plus"></i> Adicionar Conta
             </button>
         </div>
@@ -423,13 +423,13 @@
 </div>
 
 <!-- MODAL DE CONFIRMAÇÃO -->
-<div id="modalConfirma" class="modal-fundo" onclick="fecharModal(event)">
-    <div class="modal" onclick="event.stopPropagation()">
+<div id="modalConfirma" class="modal-fundo">
+    <div class="modal">
         <h3 id="modalTitulo">Confirmação</h3>
         <p id="modalTexto" style="color:#94a3b8; margin-bottom:20px;"></p>
         <div class="modal-botoes">
-            <button class="btn-aviso" onclick="fecharModal()">Cancelar</button>
-            <button class="btn-perigo" id="modalBtnOk">Excluir</button>
+            <button class="btn-aviso" id="btnCancelarModal">Cancelar</button>
+            <button class="btn-perigo" id="btnConfirmarModal">Excluir</button>
         </div>
     </div>
 </div>
@@ -448,11 +448,11 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const colecoes = {
-    boletos: db.collection('boletos_v6'),
-    cheques: db.collection('cheques_v6'),
-    euDevo: db.collection('eu_devo_v6'),
-    meDevem: db.collection('me_devem_v6'),
-    contas: db.collection('contas_v6')
+    boletos: db.collection('boletos_v7'),
+    cheques: db.collection('cheques_v7'),
+    euDevo: db.collection('eu_devo_v7'),
+    meDevem: db.collection('me_devem_v7'),
+    contas: db.collection('contas_v7')
 };
 
 // ========== ESTADO ==========
@@ -460,6 +460,7 @@ let filtroAtual = 'todos';
 let termoBusca = '';
 let grafico = null;
 let funcaoConfirmar = null;
+let dados = { boletos: [], cheques: [], euDevo: [], meDevem: [], contas: [] };
 
 // ========== UTILITÁRIOS ==========
 function moeda(valor) {
@@ -504,37 +505,67 @@ function confirmar(pergunta, acao) {
     document.getElementById('modalConfirma').classList.add('visivel');
     funcaoConfirmar = acao;
 }
-function fecharModal(event) {
-    if (!event || event.target === event.currentTarget) {
-        document.getElementById('modalConfirma').classList.remove('visivel');
-        funcaoConfirmar = null;
-    }
+function fecharModal() {
+    document.getElementById('modalConfirma').classList.remove('visivel');
+    funcaoConfirmar = null;
 }
-document.getElementById('modalBtnOk').addEventListener('click', () => {
+document.getElementById('btnCancelarModal').addEventListener('click', fecharModal);
+document.getElementById('btnConfirmarModal').addEventListener('click', () => {
     if (funcaoConfirmar) funcaoConfirmar();
     fecharModal();
 });
 
-// ========== NAVEGAÇÃO ==========
-function abrirPainel(nome) {
-    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('ativo'));
-    document.querySelectorAll('.painel').forEach(p => p.classList.remove('visivel'));
-    event.target.closest('.nav-btn').classList.add('ativo');
-    document.getElementById(nome).classList.add('visivel');
-    if (nome === 'resumo') atualizarResumoGeral();
-}
+// ========== NAVEGAÇÃO — ARRUMADO ==========
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('✅ Página carregada!');
+    
+    // Navegação entre abas
+    document.querySelectorAll('.nav-btn').forEach(botao => {
+        botao.addEventListener('click', function() {
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('ativo'));
+            document.querySelectorAll('.painel').forEach(p => p.classList.remove('visivel'));
+            this.classList.add('ativo');
+            const nomePainel = this.getAttribute('data-painel');
+            document.getElementById(nomePainel).classList.add('visivel');
+            if (nomePainel === 'resumo') atualizarResumoGeral();
+            console.log('📂 Abriu:', nomePainel);
+        });
+    });
 
-// ========== FILTROS E BUSCA ==========
-document.getElementById('buscaGlobal').addEventListener('input', (e) => {
-    termoBusca = e.target.value.toLowerCase().trim();
+    // Filtros
+    document.querySelectorAll('.filtro-btn').forEach(botao => {
+        botao.addEventListener('click', function() {
+            filtroAtual = this.getAttribute('data-filtro');
+            document.querySelectorAll('.filtro-btn').forEach(b => b.classList.remove('ativo'));
+            this.classList.add('ativo');
+            carregarTudo();
+        });
+    });
+
+    // Busca
+    document.getElementById('buscaGlobal').addEventListener('input', (e) => {
+        termoBusca = e.target.value.toLowerCase().trim();
+        carregarTudo();
+    });
+
+    // Cálculo de parcelas
+    document.getElementById('devTotal').addEventListener('input', calcularParcelaMeDevem);
+    document.getElementById('devParcelas').addEventListener('input', calcularParcelaMeDevem);
+    document.getElementById('devEuTotal').addEventListener('input', calcularParcelaEuDevo);
+    document.getElementById('devEuParcelas').addEventListener('input', calcularParcelaEuDevo);
+
+    // Botões de adicionar
+    document.getElementById('btnAdicionarBoleto').addEventListener('click', adicionarBoleto);
+    document.getElementById('btnAdicionarCheque').addEventListener('click', adicionarCheque);
+    document.getElementById('btnAdicionarDevo').addEventListener('click', adicionarDevo);
+    document.getElementById('btnAdicionarMeDevem').addEventListener('click', adicionarMeDevem);
+    document.getElementById('btnAdicionarConta').addEventListener('click', adicionarConta);
+
+    // Carregar tudo ao iniciar
     carregarTudo();
 });
-function aplicarFiltro(filtro) {
-    filtroAtual = filtro;
-    document.querySelectorAll('.filtro-btn').forEach(b => b.classList.remove('ativo'));
-    event.target.classList.add('ativo');
-    carregarTudo();
-}
+
+// ========== FILTRO DE EXIBIÇÃO ==========
 function deveExibir(textoBusca, dataVenc, statusCadastrado) {
     if (termoBusca && !textoBusca.includes(termoBusca)) return false;
     if (filtroAtual === 'todos') return true;
@@ -546,19 +577,27 @@ function deveExibir(textoBusca, dataVenc, statusCadastrado) {
 }
 
 // ========== CÁLCULO DE PARCELAS ==========
-document.getElementById('devTotal').addEventListener('input', calcularParcelaMeDevem);
-document.getElementById('devParcelas').addEventListener('input', calcularParcelaMeDevem);
 function calcularParcelaMeDevem() {
     const total = parseFloat(document.getElementById('devTotal').value) || 0;
     const qtd = parseInt(document.getElementById('devParcelas').value) || 1;
     document.getElementById('devParcelaValor').value = moeda(total / qtd);
 }
-document.getElementById('devEuTotal').addEventListener('input', calcularParcelaEuDevo);
-document.getElementById('devEuParcelas').addEventListener('input', calcularParcelaEuDevo);
 function calcularParcelaEuDevo() {
     const total = parseFloat(document.getElementById('devEuTotal').value) || 0;
     const qtd = parseInt(document.getElementById('devEuParcelas').value) || 1;
     document.getElementById('devEuParcelaValor').value = moeda(total / qtd);
+}
+
+// ========== CARREGAR TUDO ==========
+async function carregarTudo() {
+    await Promise.all([
+        carregarBoletos(),
+        carregarCheques(),
+        carregarEuDevo(),
+        carregarMeDevem(),
+        carregarContas()
+    ]);
+    atualizarResumoGeral();
 }
 
 // ========== RESUMO ==========
@@ -567,22 +606,12 @@ async function atualizarResumoGeral() {
     const proximosVencimentos = [];
     const mesAtual = new Date().toISOString().slice(0, 7);
 
-    const [bSnap, cSnap, euDevoSnap, meDevemSnap, contSnap] = await Promise.all([
-        colecoes.boletos.get(),
-        colecoes.cheques.get(),
-        colecoes.euDevo.get(),
-        colecoes.meDevem.get(),
-        colecoes.contas.get()
-    ]);
-
-    contSnap.forEach(d => {
-        const c = d.data();
+    dados.contas.forEach(c => {
         if (c.tipo === 'receita') receberMes += parseFloat(c.valor || 0);
         else pagarMes += parseFloat(c.valor || 0);
     });
 
-    bSnap.forEach(d => {
-        const b = d.data();
+    dados.boletos.forEach(b => {
         const status = getStatus(b.vencimento, b.status);
         if (b.status !== 'pago') {
             if (getMes(b.vencimento) === mesAtual) pagarMes += parseFloat(b.valor || 0);
@@ -594,8 +623,7 @@ async function atualizarResumoGeral() {
         }
     });
 
-    cSnap.forEach(d => {
-        const c = d.data();
+    dados.cheques.forEach(c => {
         const status = getStatus(c.vencimento, c.status);
         if (c.status !== 'pago') {
             if (getMes(c.vencimento) === mesAtual) pagarMes += parseFloat(c.valor || 0);
@@ -607,8 +635,7 @@ async function atualizarResumoGeral() {
         }
     });
 
-    euDevoSnap.forEach(d => {
-        const dv = d.data();
+    dados.euDevo.forEach(dv => {
         if (dv.status !== 'pago') {
             pagarMes += parseFloat(dv.valorTotal || 0);
             const dias = diasParaVencer(dv.data);
@@ -619,8 +646,7 @@ async function atualizarResumoGeral() {
         }
     });
 
-    meDevemSnap.forEach(d => {
-        const md = d.data();
+    dados.meDevem.forEach(md => {
         if (md.status !== 'recebido') {
             receberMes += parseFloat(md.valorTotal || 0);
         }
@@ -671,32 +697,34 @@ async function atualizarResumoGeral() {
 async function carregarBoletos() {
     const lista = document.getElementById('listaBoletos');
     const snap = await colecoes.boletos.orderBy('vencimento', 'asc').get();
+    dados.boletos = snap.docs.map(d => ({id: d.id, ...d.data()}));
     lista.innerHTML = '';
-    if (snap.empty) { lista.innerHTML = '<div class="vazio"><i class="fa fa-barcode"></i><br>Nenhum boleto cadastrado</div>'; return; }
-    snap.forEach(doc => {
-        const b = doc.data();
-        const id = doc.id;
-        const status = getStatus(b.vencimento, b.status);
-        if (!deveExibir((b.nome+' '+(b.codigo||'')).toLowerCase(), b.vencimento, b.status)) return;
-        lista.innerHTML += `
-        <div class="linha">
-            <div class="linha-corpo">
-                <div>
-                    <div style="font-weight:600;">${b.nome}</div>
-                    <div style="font-size:12px; color:#94a3b8;">Venc: ${formatarData(b.vencimento)}</div>
-                    ${b.codigo ? `<div style="font-size:11px; color:#64748b; margin-top:4px;">📎 ${b.codigo}</div>` : ''}
+    if (dados.boletos.length === 0) {
+        lista.innerHTML = '<div class="vazio"><i class="fa fa-barcode"></i><br>Nenhum boleto cadastrado</div>';
+        return;
+    }
+    dados.boletos.filter(b => deveExibir((b.nome+' '+(b.codigo||'')).toLowerCase(), b.vencimento, b.status))
+        .forEach(b => {
+            const status = getStatus(b.vencimento, b.status);
+            lista.innerHTML += `
+            <div class="linha">
+                <div class="linha-corpo">
+                    <div>
+                        <div style="font-weight:600;">${b.nome}</div>
+                        <div style="font-size:12px; color:#94a3b8;">Venc: ${formatarData(b.vencimento)}</div>
+                        ${b.codigo ? `<div style="font-size:11px; color:#64748b; margin-top:4px;">📎 ${b.codigo}</div>` : ''}
+                    </div>
+                    <div style="text-align:right;">
+                        <div style="font-weight:700; font-size:16px;">${moeda(b.valor)}</div>
+                        <span class="status status-${status === 'pago' ? 'pago' : status === 'atrasado' ? 'atrasado' : 'vencer'}">${getStatusTexto(status)}</span>
+                    </div>
                 </div>
-                <div style="text-align:right;">
-                    <div style="font-weight:700; font-size:16px;">${moeda(b.valor)}</div>
-                    <span class="status status-${status === 'pago' ? 'pago' : status === 'atrasado' ? 'atrasado' : 'vencer'}">${getStatusTexto(status)}</span>
+                <div class="linha-acoes">
+                    <button class="btn-sucesso" onclick="marcarBoletoPago('${b.id}')">✓ Pago</button>
+                    <button class="btn-perigo" onclick="excluirBoleto('${b.id}')">🗑️ Excluir</button>
                 </div>
-            </div>
-            <div class="linha-acoes">
-                <button class="btn-sucesso" onclick="marcarBoletoPago('${id}')">✓ Pago</button>
-                <button class="btn-perigo" onclick="excluirBoleto('${id}')">🗑️ Excluir</button>
-            </div>
-        </div>`;
-    });
+            </div>`;
+        });
 }
 async function adicionarBoleto() {
     const nome = document.getElementById('boletoNome').value.trim();
@@ -711,50 +739,49 @@ async function adicionarBoleto() {
     document.getElementById('boletoData').value = '';
     document.getElementById('boletoValor').value = '';
     carregarBoletos();
-    atualizarResumoGeral();
 }
-async function marcarBoletoPago(id) {
+window.marcarBoletoPago = async function(id) {
     await colecoes.boletos.doc(id).update({ status: 'pago' });
     carregarBoletos();
-    atualizarResumoGeral();
-}
-async function excluirBoleto(id) {
+};
+window.excluirBoleto = async function(id) {
     confirmar('Excluir este boleto?', async () => {
         await colecoes.boletos.doc(id).delete();
         carregarBoletos();
-        atualizarResumoGeral();
     });
-}
+};
 
 // ========== CHEQUES ==========
 async function carregarCheques() {
     const lista = document.getElementById('listaCheques');
     const snap = await colecoes.cheques.orderBy('vencimento', 'asc').get();
+    dados.cheques = snap.docs.map(d => ({id: d.id, ...d.data()}));
     lista.innerHTML = '';
-    if (snap.empty) { lista.innerHTML = '<div class="vazio"><i class="fa fa-file-text-o"></i><br>Nenhum cheque cadastrado</div>'; return; }
-    snap.forEach(doc => {
-        const c = doc.data();
-        const id = doc.id;
-        const status = getStatus(c.vencimento, c.status);
-        if (!deveExibir((c.nome+' '+(c.numero||'')).toLowerCase(), c.vencimento, c.status)) return;
-        lista.innerHTML += `
-        <div class="linha">
-            <div class="linha-corpo">
-                <div>
-                    <div style="font-weight:600;">${c.nome}</div>
-                    <div style="font-size:12px; color:#94a3b8;">Nº: ${c.numero || '—'} | Venc: ${formatarData(c.vencimento)}</div>
+    if (dados.cheques.length === 0) {
+        lista.innerHTML = '<div class="vazio"><i class="fa fa-file-text-o"></i><br>Nenhum cheque cadastrado</div>';
+        return;
+    }
+    dados.cheques.filter(c => deveExibir((c.nome+' '+(c.numero||'')).toLowerCase(), c.vencimento, c.status))
+        .forEach(c => {
+            const status = getStatus(c.vencimento, c.status);
+            lista.innerHTML += `
+            <div class="linha">
+                <div class="linha-corpo">
+                    <div>
+                        <div style="font-weight:600;">${c.nome}</div>
+                        <div style="font-size:12px; color:#94a3b8;">Nº: ${c.numero || '—'} | Venc: ${formatarData(c.vencimento)}</div>
+                    </div>
+                    <div style="text-align:right;">
+                        <div style="font-weight:700; font-size:16px;">${moeda(c.valor)}</div>
+                        <span class="status status-${status === 'pago' ? 'pago' : status === 'atrasado' ? 'atrasado' : 'vencer'}">${getStatusTexto(status)}</span>
+                    </div>
                 </div>
-                <div style="text-align:right;">
-                    <div style="font-weight:700; font-size:16px;">${moeda(c.valor)}</div>
-                    <span class="status status-${status === 'pago' ? 'pago' : status === 'atrasado' ? 'atrasado' : 'vencer'}">${getStatusTexto(status)}</span>
+                <div class="linha-acoes">
+                    <button class="btn-sucesso" onclick="marcarChequePago('${c.id}')">✓ Compensado</button>
+                    <button class="btn-perigo" onclick="excluirCheque('${c.id}')">🗑️ Excluir</button>
                 </div>
-            </div>
-            <div class="linha-acoes">
-                <button class="btn-sucesso" onclick="marcarChequePago('${id}')">✓ Compensado</button>
-                <button class="btn-perigo" onclick="excluirCheque('${id}')">🗑️ Excluir</button>
-            </div>
-        </div>`;
-    });
+            </div>`;
+        });
 }
 async function adicionarCheque() {
     const nome = document.getElementById('chequeNome').value.trim();
@@ -769,44 +796,33 @@ async function adicionarCheque() {
     document.getElementById('chequeValor').value = '';
     document.getElementById('chequeVenc').value = '';
     carregarCheques();
-    atualizarResumoGeral();
 }
-async function marcarChequePago(id) {
+window.marcarChequePago = async function(id) {
     await colecoes.cheques.doc(id).update({ status: 'pago' });
     carregarCheques();
-    atualizarResumoGeral();
-}
-async function excluirCheque(id) {
+};
+window.excluirCheque = async function(id) {
     confirmar('Excluir este cheque?', async () => {
         await colecoes.cheques.doc(id).delete();
         carregarCheques();
-        atualizarResumoGeral();
     });
-}
+};
 
 // ========== EU DEVO ==========
 async function carregarEuDevo() {
     const lista = document.getElementById('listaEuDevo');
     const snap = await colecoes.euDevo.orderBy('data', 'asc').get();
+    dados.euDevo = snap.docs.map(d => ({id: d.id, ...d.data()}));
     lista.innerHTML = '';
-    if (snap.empty) { lista.innerHTML = '<div class="vazio"><i class="fa fa-arrow-up"></i><br>Nenhum registro ainda</div>'; return; }
-    snap.forEach(doc => {
-        const d = doc.data();
-        const id = doc.id;
-        const status = getStatus(d.data, d.status);
-        if (!deveExibir((d.nome+' '+(d.desc||'')).toLowerCase(), d.data, d.status)) return;
-        lista.innerHTML += `
-        <div class="linha">
-            <div class="linha-corpo">
-                <div>
-                    <div style="font-weight:600;">${d.nome}</div>
-                    <div style="font-size:12px; color:#94a3b8;">${d.desc || 'Sem descrição'} | Venc: ${formatarData(d.data)}</div>
-                    <div style="font-size:11px; color:#64748b;">${d.parcelas || 1}x de ${moeda((d.valorTotal || 0) / (d.parcelas || 1))}</div>
-                </div>
-                <div style="text-align:right;">
-                    <div style="font-weight:700; font-size:16px; color:#ef4444;">${moeda(d.valorTotal)}</div>
-                    <span class="status status-${status === 'pago' ? 'pago' : status === 'atrasado' ? 'atrasado' : 'vencer'}">${getStatusTexto(status)}</span>
-                </div>
-            </div>
-            <div class="linha-acoes">
-                <button class="btn-sucesso" onclick="
+    if (dados.euDevo.length === 0) {
+        lista.innerHTML = '<div class="vazio"><i class="fa fa-arrow-up"></i><br>Nenhum registro ainda</div>';
+        return;
+    }
+    dados.euDevo.filter(d => deveExibir((d.nome+' '+(d.desc||'')).toLowerCase(), d.data, d.status))
+        .forEach(d => {
+            const status = getStatus(d.data, d.status);
+            lista.innerHTML += `
+            <div class="linha">
+                <div class="linha-corpo">
+                    <div>
+                        <div style="font-weight:600;">${d.nome
