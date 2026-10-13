@@ -4,11 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Controle Financeiro</title>
+    <!-- FIREBASE — JÁ VEM PRONTO -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; }
         body { background: #0f172a; color: #f1f5f9; padding: 16px; min-height: 100vh; }
         .container { max-width: 1000px; margin: 0 auto; }
-        h1 { text-align: center; margin-bottom: 20px; color: #3b82f6; }
+        h1 { text-align: center; margin-bottom: 6px; color: #3b82f6; }
+        .status-nuvem { text-align: center; font-size: 12px; color: #22c55e; margin-bottom: 20px; }
 
         .abas { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
         .aba { padding: 10px 16px; background: #1e293b; border: none; color: #94a3b8; border-radius: 8px; cursor: pointer; font-size: 14px; }
@@ -37,12 +42,14 @@
         .negativo { color: #ef4444; }
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .parcela-valor { background: rgba(234, 179, 8, 0.1); color: #eab308; font-weight: bold; }
+        .salvando { font-size: 11px; color: #eab308; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <h1>💼 CONTROLE FINANCEIRO</h1>
+    <div class="status-nuvem" id="statusNuvem">🔄 Conectando à nuvem...</div>
 
     <div class="abas">
         <button class="aba ativa" onclick="abrirAba('resumo')">📊 Resumo</button>
@@ -55,10 +62,10 @@
     </div>
 
     <div class="filtros">
-        <button class="filtro ativo" onclick="filtro='todos'; atualizarTela()">Todos</button>
-        <button class="filtro" onclick="filtro='a_vencer'; atualizarTela()">A Vencer</button>
-        <button class="filtro" onclick="filtro='atrasado'; atualizarTela()">Atrasados</button>
-        <button class="filtro" onclick="filtro='pago'; atualizarTela()">Pagos</button>
+        <button class="filtro ativo" onclick="filtro='todos'; carregarTudo()">Todos</button>
+        <button class="filtro" onclick="filtro='a_vencer'; carregarTudo()">A Vencer</button>
+        <button class="filtro" onclick="filtro='atrasado'; carregarTudo()">Atrasados</button>
+        <button class="filtro" onclick="filtro='pago'; carregarTudo()">Pagos</button>
     </div>
 
     <!-- RESUMO -->
@@ -96,11 +103,11 @@
                 <option value="pago">Pago</option>
                 <option value="atrasado">Atrasado</option>
             </select>
-            <button class="salvar" onclick="adicionarBoleto()">➕ Adicionar Boleto</button>
+            <button class="salvar" onclick="adicionarBoleto()">➕ Salvar na Nuvem</button>
         </div>
         <div class="card">
             <h2>Meus Boletos</h2>
-            <div id="listaBoletos" class="vazio">Nenhum boleto cadastrado</div>
+            <div id="listaBoletos" class="vazio">Carregando...</div>
         </div>
     </div>
 
@@ -117,15 +124,15 @@
                 <option value="pago">Compensado</option>
                 <option value="atrasado">Atrasado</option>
             </select>
-            <button class="salvar" onclick="adicionarCheque()">➕ Adicionar Cheque</button>
+            <button class="salvar" onclick="adicionarCheque()">➕ Salvar na Nuvem</button>
         </div>
         <div class="card">
             <h2>Meus Cheques</h2>
-            <div id="listaCheques" class="vazio">Nenhum cheque cadastrado</div>
+            <div id="listaCheques" class="vazio">Carregando...</div>
         </div>
     </div>
 
-    <!-- 🆕 EMPRÉSTIMOS -->
+    <!-- EMPRÉSTIMOS -->
     <div id="emprestimos" class="conteudo">
         <div class="card">
             <h2>Novo Empréstimo</h2>
@@ -140,17 +147,17 @@
                 </div>
             </div>
             <input type="text" id="empParcelaValor" class="parcela-valor" placeholder="Valor da Parcela" readonly>
-            <input type="date" id="empPrimeiraParcela" placeholder="Primeira Parcela">
+            <input type="date" id="empPrimeiraParcela">
             <select id="empStatus">
                 <option value="ativo">🔄 Em Andamento</option>
                 <option value="quitado">✅ Quitado</option>
                 <option value="atrasado">⚠️ Atrasado</option>
             </select>
-            <button class="salvar" onclick="adicionarEmprestimo()">➕ Adicionar Empréstimo</button>
+            <button class="salvar" onclick="adicionarEmprestimo()">➕ Salvar na Nuvem</button>
         </div>
         <div class="card">
             <h2>Meus Empréstimos</h2>
-            <div id="listaEmprestimos" class="vazio">Nenhum empréstimo cadastrado</div>
+            <div id="listaEmprestimos" class="vazio">Carregando...</div>
         </div>
     </div>
 
@@ -167,11 +174,11 @@
                 <option value="pago">Pago</option>
                 <option value="atrasado">Atrasado</option>
             </select>
-            <button class="salvar" onclick="adicionarEuDevo()">➕ Adicionar</button>
+            <button class="salvar" onclick="adicionarEuDevo()">➕ Salvar na Nuvem</button>
         </div>
         <div class="card">
             <h2>O Que Eu Devo</h2>
-            <div id="listaEuDevo" class="vazio">Nenhum registro</div>
+            <div id="listaEuDevo" class="vazio">Carregando...</div>
         </div>
     </div>
 
@@ -188,11 +195,11 @@
                 <option value="recebido">Recebido</option>
                 <option value="atrasado">Atrasado</option>
             </select>
-            <button class="salvar" onclick="adicionarMeDevem()">➕ Adicionar</button>
+            <button class="salvar" onclick="adicionarMeDevem()">➕ Salvar na Nuvem</button>
         </div>
         <div class="card">
             <h2>Quem Me Deve</h2>
-            <div id="listaMeDevem" class="vazio">Nenhum registro</div>
+            <div id="listaMeDevem" class="vazio">Carregando...</div>
         </div>
     </div>
 
@@ -206,32 +213,44 @@
                 <option value="despesa">Despesa</option>
                 <option value="receita">Receita</option>
             </select>
-            <button class="salvar" onclick="adicionarConta()">➕ Adicionar Conta</button>
+            <button class="salvar" onclick="adicionarConta()">➕ Salvar na Nuvem</button>
         </div>
         <div class="card">
             <h2>Minhas Contas</h2>
-            <div id="listaContas" class="vazio">Nenhuma conta cadastrada</div>
+            <div id="listaContas" class="vazio">Carregando...</div>
         </div>
     </div>
 </div>
 
 <script>
-let boletos = JSON.parse(localStorage.getItem('boletos') || '[]');
-let cheques = JSON.parse(localStorage.getItem('cheques') || '[]');
-let emprestimos = JSON.parse(localStorage.getItem('emprestimos') || '[]');
-let euDevo = JSON.parse(localStorage.getItem('euDevo') || '[]');
-let meDevem = JSON.parse(localStorage.getItem('meDevem') || '[]');
-let contas = JSON.parse(localStorage.getItem('contas') || '[]');
-let filtro = 'todos';
+// ==============================================
+// 🔑 SEU FIREBASE — JÁ ESTÁ AQUI
+// ==============================================
+const firebaseConfig = {
+  apiKey: "AIzaSyCPd-aIQVDEP-UK2twGzci8sRLgjTRmI",
+  authDomain: "controle-59fff.firebaseapp.com",
+  projectId: "controle-59fff",
+  storageBucket: "controle-59fff.firebasestorage.app",
+  messagingSenderId: "597330115962",
+  appId: "1:597330115962:web:0d01a891a5745f8e6ac3"
+};
 
-function salvarDados() {
-    localStorage.setItem('boletos', JSON.stringify(boletos));
-    localStorage.setItem('cheques', JSON.stringify(cheques));
-    localStorage.setItem('emprestimos', JSON.stringify(emprestimos));
-    localStorage.setItem('euDevo', JSON.stringify(euDevo));
-    localStorage.setItem('meDevem', JSON.stringify(meDevem));
-    localStorage.setItem('contas', JSON.stringify(contas));
-}
+// INICIA FIREBASE
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// NOMES DAS COLEÇÕES NO BANCO
+const colecoes = {
+    boletos: db.collection('boletos_v1'),
+    cheques: db.collection('cheques_v1'),
+    emprestimos: db.collection('emprestimos_v1'),
+    euDevo: db.collection('eu_devo_v1'),
+    meDevem: db.collection('me_devem_v1'),
+    contas: db.collection('contas_v1')
+};
+
+let filtro = 'todos';
+let dados = { boletos: [], cheques: [], emprestimos: [], euDevo: [], meDevem: [], contas: [] };
 
 function moeda(valor) {
     return 'R$ ' + parseFloat(valor||0).toFixed(2).replace('.', ',');
@@ -246,7 +265,7 @@ function diasAte(dataStr) {
 }
 
 function statusReal(dataStr, statusCadastrado) {
-    if (statusCadastrado === 'pago' || statusCadastrado === 'recebido' || statusCadastrado === 'quitado') return statusCadastrado;
+    if (['pago','recebido','quitado'].includes(statusCadastrado)) return statusCadastrado;
     const dias = diasAte(dataStr);
     if (dias < 0) return 'atrasado';
     return 'a_vencer';
@@ -255,9 +274,9 @@ function statusReal(dataStr, statusCadastrado) {
 function deveMostrar(dataStr, statusCadastrado) {
     if (filtro === 'todos') return true;
     const s = statusReal(dataStr, statusCadastrado);
-    if (filtro === 'a_vencer') return s === 'a_vencer' || s === 'ativo';
+    if (filtro === 'a_vencer') return ['a_vencer','ativo'].includes(s);
     if (filtro === 'atrasado') return s === 'atrasado';
-    if (filtro === 'pago') return s === 'pago' || s === 'recebido' || s === 'quitado';
+    if (filtro === 'pago') return ['pago','recebido','quitado'].includes(s);
     return true;
 }
 
@@ -266,37 +285,116 @@ function abrirAba(nome) {
     document.querySelectorAll('.conteudo').forEach(c => c.classList.remove('visivel'));
     event.target.classList.add('ativa');
     document.getElementById(nome).classList.add('visivel');
-    atualizarTela();
+    if (nome === 'resumo') atualizarResumo();
 }
 
-function atualizarTela() {
-    atualizarBoletos();
-    atualizarCheques();
-    atualizarEmprestimos();
-    atualizarEuDevo();
-    atualizarMeDevem();
-    atualizarContas();
+async function carregarTudo() {
+    document.getElementById('statusNuvem').innerHTML = '🔄 Sincronizando...';
+    await Promise.all([
+        carregarBoletos(),
+        carregarCheques(),
+        carregarEmprestimos(),
+        carregarEuDevo(),
+        carregarMeDevem(),
+        carregarContas()
+    ]);
     atualizarResumo();
+    document.getElementById('statusNuvem').innerHTML = '✅ Dados salvos na nuvem!';
 }
 
 function atualizarResumo() {
-    let receber = 0, pagar = 0, totalEmprestimos = 0;
-    meDevem.forEach(i => { if (i.status !== 'recebido') receber += parseFloat(i.valor); });
-    euDevo.forEach(i => { if (i.status !== 'pago') pagar += parseFloat(i.valor); });
-    boletos.forEach(i => { if (i.status !== 'pago') pagar += parseFloat(i.valor); });
-    cheques.forEach(i => { if (i.status !== 'pago') pagar += parseFloat(i.valor); });
-    emprestimos.forEach(e => { if (e.status !== 'quitado') totalEmprestimos += parseFloat(e.valorTotal); });
-    contas.forEach(i => {
-        if (i.tipo === 'receita') receber += parseFloat(i.valor);
-        else pagar += parseFloat(i.valor);
+    let receber = 0, pagar = 0, totalEmp = 0;
+    dados.meDevem.forEach(i => { if (i.status !== 'recebido') receber += parseFloat(i.valor||0); });
+    dados.euDevo.forEach(i => { if (i.status !== 'pago') pagar += parseFloat(i.valor||0); });
+    dados.boletos.forEach(i => { if (i.status !== 'pago') pagar += parseFloat(i.valor||0); });
+    dados.cheques.forEach(i => { if (i.status !== 'pago') pagar += parseFloat(i.valor||0); });
+    dados.emprestimos.forEach(e => { if (e.status !== 'quitado') totalEmp += parseFloat(e.valorTotal||0); });
+    dados.contas.forEach(i => {
+        if (i.tipo === 'receita') receber += parseFloat(i.valor||0);
+        else pagar += parseFloat(i.valor||0);
     });
     document.getElementById('valReceber').textContent = moeda(receber);
     document.getElementById('valPagar').textContent = moeda(pagar);
-    document.getElementById('valEmprestimos').textContent = moeda(totalEmprestimos);
-    const saldo = receber - (pagar + totalEmprestimos);
+    document.getElementById('valEmprestimos').textContent = moeda(totalEmp);
+    const saldo = receber - (pagar + totalEmp);
     document.getElementById('valSaldo').textContent = moeda(saldo);
     document.getElementById('valSaldo').className = 'valor ' + (saldo >= 0 ? 'positivo' : 'negativo');
 }
+
+// ===== BOLETOS =====
+async function carregarBoletos() {
+    const snap = await colecoes.boletos.orderBy('data', 'asc').get();
+    dados.boletos = snap.docs.map(d => ({id:d.id, ...d.data()}));
+    const el = document.getElementById('listaBoletos');
+    const filtroLista = dados.boletos.filter(b => deveMostrar(b.data, b.status));
+    if (filtroLista.length === 0) { el.innerHTML = '<div class="vazio">Nenhum boleto encontrado</div>'; return; }
+    el.innerHTML = filtroLista.map(b => {
+        const s = statusReal(b.data, b.status);
+        return `<div class="item">
+            <strong>${b.nome}</strong><br>
+            Venc: ${b.data} | ${moeda(b.valor)}<br>
+            ${b.codigo ? '📎 ' + b.codigo + '<br>' : ''}
+            <small>${s==='pago'?'✅ Pago':s==='atrasado'?'⚠️ Atrasado':'📅 A Vencer'}</small>
+            <br>
+            <button class="pago" onclick="marcarBoletoPago('${b.id}')">✓ Pago</button>
+            <button class="excluir" onclick="excluirBoleto('${b.id}')">🗑️ Excluir</button>
+        </div>`;
+    }).join('');
+}
+
+async function adicionarBoleto() {
+    const nome = document.getElementById('bolNome').value.trim();
+    const codigo = document.getElementById('bolCodigo').value.trim();
+    const data = document.getElementById('bolData').value;
+    const valor = parseFloat(document.getElementById('bolValor').value);
+    const status = document.getElementById('bolStatus').value;
+    if (!nome || !data || !valor) { alert('Preencha os obrigatórios!'); return; }
+    await colecoes.boletos.add({ nome, codigo, data, valor, status, criadoEm: firebase.firestore.FieldValue.serverTimestamp() });
+    document.getElementById('bolNome').value = '';
+    document.getElementById('bolCodigo').value = '';
+    document.getElementById('bolData').value = '';
+    document.getElementById('bolValor').value = '';
+    carregarBoletos();
+}
+window.marcarBoletoPago = async function(id) { await colecoes.boletos.doc(id).update({status:'pago'}); carregarBoletos(); };
+window.excluirBoleto = async function(id) { if(confirm('Excluir?')) { await colecoes.boletos.doc(id).delete(); carregarBoletos(); }};
+
+// ===== CHEQUES =====
+async function carregarCheques() {
+    const snap = await colecoes.cheques.orderBy('data', 'asc').get();
+    dados.cheques = snap.docs.map(d => ({id:d.id, ...d.data()}));
+    const el = document.getElementById('listaCheques');
+    const filtroLista = dados.cheques.filter(c => deveMostrar(c.data, c.status));
+    if (filtroLista.length === 0) { el.innerHTML = '<div class="vazio">Nenhum cheque encontrado</div>'; return; }
+    el.innerHTML = filtroLista.map(c => {
+        const s = statusReal(c.data, c.status);
+        return `<div class="item">
+            <strong>${c.nome}</strong><br>
+            Nº: ${c.numero||'—'} | Venc: ${c.data} | ${moeda(c.valor)}<br>
+            <small>${s==='pago'?'✅ Compensado':s==='atrasado'?'⚠️ Atrasado':'📅 A Vencer'}</small>
+            <br>
+            <button class="pago" onclick="marcarChequePago('${c.id}')">✓ Pago</button>
+            <button class="excluir" onclick="excluirCheque('${c.id}')">🗑️ Excluir</button>
+        </div>`;
+    }).join('');
+}
+
+async function adicionarCheque() {
+    const nome = document.getElementById('cheqNome').value.trim();
+    const numero = document.getElementById('cheqNum').value.trim();
+    const data = document.getElementById('cheqData').value;
+    const valor = parseFloat(document.getElementById('cheqValor').value);
+    const status = document.getElementById('cheqStatus').value;
+    if (!nome || !data || !valor) { alert('Preencha os obrigatórios!'); return; }
+    await colecoes.cheques.add({ nome, numero, data, valor, status, criadoEm: firebase.firestore.FieldValue.serverTimestamp() });
+    document.getElementById('cheqNome').value = '';
+    document.getElementById('cheqNum').value = '';
+    document.getElementById('cheqData').value = '';
+    document.getElementById('cheqValor').value = '';
+    carregarCheques();
+}
+window.marcarChequePago = async function(id) { await colecoes.cheques.doc(id).update({status:'pago'}); carregarCheques(); };
+window.excluirCheque = async function(id) { if(confirm('Excluir?')) { await colecoes.cheques.doc(id).delete(); carregarCheques(); }};
 
 // ===== EMPRÉSTIMOS =====
 function calcularParcela() {
@@ -305,221 +403,155 @@ function calcularParcela() {
     document.getElementById('empParcelaValor').value = moeda(total / qtd);
 }
 
-function atualizarEmprestimos() {
+async function carregarEmprestimos() {
+    const snap = await colecoes.emprestimos.orderBy('dataInicio', 'asc').get();
+    dados.emprestimos = snap.docs.map(d => ({id:d.id, ...d.data()}));
     const el = document.getElementById('listaEmprestimos');
-    const filtroLista = emprestimos.filter(e => deveMostrar(e.dataInicio, e.status));
+    const filtroLista = dados.emprestimos.filter(e => deveMostrar(e.dataInicio, e.status));
     if (filtroLista.length === 0) { el.innerHTML = '<div class="vazio">Nenhum empréstimo encontrado</div>'; return; }
-    el.innerHTML = filtroLista.map((e, idx) => {
-        const statusFinal = e.status;
-        const indice = emprestimos.indexOf(e);
+    el.innerHTML = filtroLista.map(e => {
         return `<div class="item">
             <strong>💰 ${e.nome}</strong><br>
-            ${e.desc || ''}<br>
-            Total: <strong>${moeda(e.valorTotal)}</strong> | ${e.qtdeParcelas}x de ${moeda(e.valorTotal / e.qtdeParcelas)}<br>
-            1ª parcela: ${e.dataInicio || '—'}<br>
-            <small>${statusFinal === 'quitado' ? '✅ Quitado' : statusFinal === 'atrasado' ? '⚠️ Atrasado' : '🔄 Em Andamento'}</small>
+            ${e.desc||''}<br>
+            Total: <strong>${moeda(e.valorTotal)}</strong> | ${e.qtdeParcelas}x de ${moeda(e.valorTotal/e.qtdeParcelas)}<br>
+            1ª parcela: ${e.dataInicio||'—'}<br>
+            <small>${e.status==='quitado'?'✅ Quitado':e.status==='atrasado'?'⚠️ Atrasado':'🔄 Em Andamento'}</small>
             <br>
-            <button class="pago" onclick="marcarEmprestimoQuitado(${indice})">✅ Quitado</button>
-            <button class="excluir" onclick="excluirEmprestimo(${indice})">🗑️ Excluir</button>
+            <button class="pago" onclick="marcarEmpQuitado('${e.id}')">✅ Quitado</button>
+            <button class="excluir" onclick="excluirEmp('${e.id}')">🗑️ Excluir</button>
         </div>`;
     }).join('');
 }
 
-function adicionarEmprestimo() {
+async function adicionarEmprestimo() {
     const nome = document.getElementById('empNome').value.trim();
     const desc = document.getElementById('empDesc').value.trim();
     const valorTotal = parseFloat(document.getElementById('empTotal').value);
     const qtdeParcelas = parseInt(document.getElementById('empParcelas').value) || 1;
     const dataInicio = document.getElementById('empPrimeiraParcela').value;
     const status = document.getElementById('empStatus').value;
-    if (!nome || !valorTotal) { alert('Preencha o nome e o valor total!'); return; }
-    emprestimos.push({ nome, desc, valorTotal, qtdeParcelas, dataInicio, status });
-    salvarDados(); atualizarTela();
+    if (!nome || !valorTotal) { alert('Preencha nome e valor total!'); return; }
+    await colecoes.emprestimos.add({ nome, desc, valorTotal, qtdeParcelas, dataInicio, status, criadoEm: firebase.firestore.FieldValue.serverTimestamp() });
     document.getElementById('empNome').value = '';
     document.getElementById('empDesc').value = '';
     document.getElementById('empTotal').value = '';
     document.getElementById('empParcelas').value = '';
     document.getElementById('empParcelaValor').value = '';
     document.getElementById('empPrimeiraParcela').value = '';
+    carregarEmprestimos();
 }
-window.marcarEmprestimoQuitado = function(i) { emprestimos[i].status = 'quitado'; salvarDados(); atualizarTela(); };
-window.excluirEmprestimo = function(i) { if(confirm('Excluir este empréstimo?')) { emprestimos.splice(i,1); salvarDados(); atualizarTela(); }};
-
-// ===== BOLETOS =====
-function atualizarBoletos() {
-    const el = document.getElementById('listaBoletos');
-    const filtroBoletos = boletos.filter(b => deveMostrar(b.data, b.status));
-    if (filtroBoletos.length === 0) { el.innerHTML = '<div class="vazio">Nenhum boleto encontrado</div>'; return; }
-    el.innerHTML = filtroBoletos.map((b, idx) => {
-        const statusFinal = statusReal(b.data, b.status);
-        const indice = boletos.indexOf(b);
-        return `<div class="item">
-            <strong>${b.nome}</strong><br>
-            Venc: ${b.data} | ${moeda(b.valor)}<br>
-            ${b.codigo ? '📎 ' + b.codigo + '<br>' : ''}
-            <small>${statusFinal === 'pago' ? '✅ Pago' : statusFinal === 'atrasado' ? '⚠️ Atrasado' : '📅 A Vencer'}</small>
-            <br>
-            <button class="pago" onclick="marcarBoletoPago(${indice})">✓ Pago</button>
-            <button class="excluir" onclick="excluirBoleto(${indice})">🗑️ Excluir</button>
-        </div>`;
-    }).join('');
-}
-
-function adicionarBoleto() {
-    const nome = document.getElementById('bolNome').value.trim();
-    const codigo = document.getElementById('bolCodigo').value.trim();
-    const data = document.getElementById('bolData').value;
-    const valor = parseFloat(document.getElementById('bolValor').value);
-    const status = document.getElementById('bolStatus').value;
-    if (!nome || !data || !valor) { alert('Preencha os campos obrigatórios!'); return; }
-    boletos.push({ nome, codigo, data, valor, status });
-    salvarDados(); atualizarTela();
-    document.getElementById('bolNome').value = '';
-    document.getElementById('bolCodigo').value = '';
-    document.getElementById('bolData').value = '';
-    document.getElementById('bolValor').value = '';
-}
-window.marcarBoletoPago = function(i) { boletos[i].status = 'pago'; salvarDados(); atualizarTela(); };
-window.excluirBoleto = function(i) { if(confirm('Excluir?')) { boletos.splice(i,1); salvarDados(); atualizarTela(); }};
-
-// ===== CHEQUES =====
-function atualizarCheques() {
-    const el = document.getElementById('listaCheques');
-    const filtroCheques = cheques.filter(c => deveMostrar(c.data, c.status));
-    if (filtroCheques.length === 0) { el.innerHTML = '<div class="vazio">Nenhum cheque encontrado</div>'; return; }
-    el.innerHTML = filtroCheques.map((c, idx) => {
-        const statusFinal = statusReal(c.data, c.status);
-        const indice = cheques.indexOf(c);
-        return `<div class="item">
-            <strong>${c.nome}</strong><br>
-            Nº: ${c.numero || '—'} | Venc: ${c.data} | ${moeda(c.valor)}<br>
-            <small>${statusFinal === 'pago' ? '✅ Compensado' : statusFinal === 'atrasado' ? '⚠️ Atrasado' : '📅 A Vencer'}</small>
-            <br>
-            <button class="pago" onclick="marcarChequePago(${indice})">✓ Pago</button>
-            <button class="excluir" onclick="excluirCheque(${indice})">🗑️ Excluir</button>
-        </div>`;
-    }).join('');
-}
-
-function adicionarCheque() {
-    const nome = document.getElementById('cheqNome').value.trim();
-    const numero = document.getElementById('cheqNum').value.trim();
-    const data = document.getElementById('cheqData').value;
-    const valor = parseFloat(document.getElementById('cheqValor').value);
-    const status = document.getElementById('cheqStatus').value;
-    if (!nome || !data || !valor) { alert('Preencha os campos obrigatórios!'); return; }
-    cheques.push({ nome, numero, data, valor, status });
-    salvarDados(); atualizarTela();
-    document.getElementById('cheqNome').value = '';
-    document.getElementById('cheqNum').value = '';
-    document.getElementById('cheqData').value = '';
-    document.getElementById('cheqValor').value = '';
-}
-window.marcarChequePago = function(i) { cheques[i].status = 'pago'; salvarDados(); atualizarTela(); };
-window.excluirCheque = function(i) { if(confirm('Excluir?')) { cheques.splice(i,1); salvarDados(); atualizarTela(); }};
+window.marcarEmpQuitado = async function(id) { await colecoes.emprestimos.doc(id).update({status:'quitado'}); carregarEmprestimos(); };
+window.excluirEmp = async function(id) { if(confirm('Excluir?')) { await colecoes.emprestimos.doc(id).delete(); carregarEmprestimos(); }};
 
 // ===== EU DEVO =====
-function atualizarEuDevo() {
+async function carregarEuDevo() {
+    const snap = await colecoes.euDevo.orderBy('data', 'asc').get();
+    dados.euDevo = snap.docs.map(d => ({id:d.id, ...d.data()}));
     const el = document.getElementById('listaEuDevo');
-    const filtroItens = euDevo.filter(d => deveMostrar(d.data, d.status));
-    if (filtroItens.length === 0) { el.innerHTML = '<div class="vazio">Nenhum registro</div>'; return; }
-    el.innerHTML = filtroItens.map((d, idx) => {
-        const statusFinal = statusReal(d.data, d.status);
-        const indice = euDevo.indexOf(d);
+    const filtroLista = dados.euDevo.filter(d => deveMostrar(d.data, d.status));
+    if (filtroLista.length === 0) { el.innerHTML = '<div class="vazio">Nenhum registro</div>'; return; }
+    el.innerHTML = filtroLista.map(d => {
+        const s = statusReal(d.data, d.status);
         return `<div class="item">
             <strong>${d.nome}</strong><br>
-            ${d.desc || ''}<br>
+            ${d.desc||''}<br>
             Venc: ${d.data} | ${moeda(d.valor)}<br>
-            <small>${statusFinal === 'pago' ? '✅ Pago' : statusFinal === 'atrasado' ? '⚠️ Atrasado' : '📅 A Pagar'}</small>
+            <small>${s==='pago'?'✅ Pago':s==='atrasado'?'⚠️ Atrasado':'📅 A Pagar'}</small>
             <br>
-            <button class="pago" onclick="marcarEuDevoPago(${indice})">✓ Pago</button>
-            <button class="excluir" onclick="excluirEuDevo(${indice})">🗑️ Excluir</button>
+            <button class="pago" onclick="marcarDevoPago('${d.id}')">✓ Pago</button>
+            <button class="excluir" onclick="excluirDevo('${d.id}')">🗑️ Excluir</button>
         </div>`;
     }).join('');
 }
 
-function adicionarEuDevo() {
+async function adicionarEuDevo() {
     const nome = document.getElementById('devEuNome').value.trim();
     const desc = document.getElementById('devEuDesc').value.trim();
     const valor = parseFloat(document.getElementById('devEuValor').value);
     const data = document.getElementById('devEuData').value;
     const status = document.getElementById('devEuStatus').value;
-    if (!nome || !data || !valor) { alert('Preencha os campos obrigatórios!'); return; }
-    euDevo.push({ nome, desc, valor, data, status });
-    salvarDados(); atualizarTela();
+    if (!nome || !data || !valor) { alert('Preencha os obrigatórios!'); return; }
+    await colecoes.euDevo.add({ nome, desc, valor, data, status, criadoEm: firebase.firestore.FieldValue.serverTimestamp() });
     document.getElementById('devEuNome').value = '';
     document.getElementById('devEuDesc').value = '';
     document.getElementById('devEuValor').value = '';
     document.getElementById('devEuData').value = '';
+    carregarEuDevo();
 }
-window.marcarEuDevoPago = function(i) { euDevo[i].status = 'pago'; salvarDados(); atualizarTela(); };
-window.excluirEuDevo = function(i) { if(confirm('Excluir?')) { euDevo.splice(i,1); salvarDados(); atualizarTela(); }};
+window.marcarDevoPago = async function(id) { await colecoes.euDevo.doc(id).update({status:'pago'}); carregarEuDevo(); };
+window.excluirDevo = async function(id) { if(confirm('Excluir?')) { await colecoes.euDevo.doc(id).delete(); carregarEuDevo(); }};
 
 // ===== ME DEVEM =====
-function atualizarMeDevem() {
+async function carregarMeDevem() {
+    const snap = await colecoes.meDevem.orderBy('data', 'asc').get();
+    dados.meDevem = snap.docs.map(d => ({id:d.id, ...d.data()}));
     const el = document.getElementById('listaMeDevem');
-    const filtroItens = meDevem.filter(d => deveMostrar(d.data, d.status));
-    if (filtroItens.length === 0) { el.innerHTML = '<div class="vazio">Nenhum registro</div>'; return; }
-    el.innerHTML = filtroItens.map((d, idx) => {
-        const statusFinal = statusReal(d.data, d.status);
-        const indice = meDevem.indexOf(d);
+    const filtroLista = dados.meDevem.filter(d => deveMostrar(d.data, d.status));
+    if (filtroLista.length === 0) { el.innerHTML = '<div class="vazio">Nenhum registro</div>'; return; }
+    el.innerHTML = filtroLista.map(d => {
+        const s = statusReal(d.data, d.status);
         return `<div class="item">
             <strong>${d.nome}</strong><br>
-            ${d.desc || ''}<br>
+            ${d.desc||''}<br>
             Receb: ${d.data} | ${moeda(d.valor)}<br>
-            <small>${statusFinal === 'recebido' ? '✅ Recebido' : statusFinal === 'atrasado' ? '⚠️ Atrasado' : '📅 A Receber'}</small>
+            <small>${s==='recebido'?'✅ Recebido':s==='atrasado'?'⚠️ Atrasado':'📅 A Receber'}</small>
             <br>
-            <button class="pago" onclick="marcarMeDevemPago(${indice})">✓ Recebido</button>
-            <button class="excluir" onclick="excluirMeDevem(${indice})">🗑️ Excluir</button>
+            <button class="pago" onclick="marcarMeDevemRecebido('${d.id}')">✓ Recebido</button>
+            <button class="excluir" onclick="excluirMeDevem('${d.id}')">🗑️ Excluir</button>
         </div>`;
     }).join('');
 }
 
-function adicionarMeDevem() {
+async function adicionarMeDevem() {
     const nome = document.getElementById('devNome').value.trim();
     const desc = document.getElementById('devDesc').value.trim();
     const valor = parseFloat(document.getElementById('devValor').value);
     const data = document.getElementById('devData').value;
     const status = document.getElementById('devStatus').value;
-    if (!nome || !data || !valor) { alert('Preencha os campos obrigatórios!'); return; }
-    meDevem.push({ nome, desc, valor, data, status });
-    salvarDados(); atualizarTela();
+    if (!nome || !data || !valor) { alert('Preencha os obrigatórios!'); return; }
+    await colecoes.meDevem.add({ nome, desc, valor, data, status, criadoEm: firebase.firestore.FieldValue.serverTimestamp() });
     document.getElementById('devNome').value = '';
     document.getElementById('devDesc').value = '';
     document.getElementById('devValor').value = '';
     document.getElementById('devData').value = '';
+    carregarMeDevem();
 }
-window.marcarMeDevemPago = function(i) { meDevem[i].status = 'recebido'; salvarDados(); atualizarTela(); };
-window.excluirMeDevem = function(i) { if(confirm('Excluir?')) { meDevem.splice(i,1); salvarDados(); atualizarTela(); }};
+window.marcarMeDevemRecebido = async function(id) { await colecoes.meDevem.doc(id).update({status:'recebido'}); carregarMeDevem(); };
+window.excluirMeDevem = async function(id) { if(confirm('Excluir?')) { await colecoes.meDevem.doc(id).delete(); carregarMeDevem(); }};
 
 // ===== CONTAS =====
-function atualizarContas() {
+async function carregarContas() {
+    const snap = await colecoes.contas.get();
+    dados.contas = snap.docs.map(d => ({id:d.id, ...d.data()}));
     const el = document.getElementById('listaContas');
-    if (contas.length === 0) { el.innerHTML = '<div class="vazio">Nenhuma conta cadastrada</div>'; return; }
-    el.innerHTML = contas.map((c, idx) => {
-        const indice = contas.indexOf(c);
+    if (dados.contas.length === 0) { el.innerHTML = '<div class="vazio">Nenhuma conta cadastrada</div>'; return; }
+    el.innerHTML = dados.contas.map(c => {
         return `<div class="item">
             <strong>${c.nome}</strong> — ${moeda(c.valor)}<br>
-            <small>${c.tipo === 'receita' ? '💵 Entrada' : '💸 Saída'}</small>
+            <small>${c.tipo==='receita'?'💵 Entrada':'💸 Saída'}</small>
             <br>
-            <button class="excluir" onclick="excluirConta(${indice})">🗑️ Excluir</button>
+            <button class="excluir" onclick="excluirConta('${c.id}')">🗑️ Excluir</button>
         </div>`;
     }).join('');
 }
 
-function adicionarConta() {
+async function adicionarConta() {
     const nome = document.getElementById('contaNome').value.trim();
     const valor = parseFloat(document.getElementById('contaValor').value);
     const tipo = document.getElementById('contaTipo').value;
-    if (!nome || !valor) { alert('Preencha os campos obrigatórios!'); return; }
-    contas.push({ nome, valor, tipo });
-    salvarDados(); atualizarTela();
+    if (!nome || !valor) { alert('Preencha os obrigatórios!'); return; }
+    await colecoes.contas.add({ nome, valor, tipo, criadoEm: firebase.firestore.FieldValue.serverTimestamp() });
     document.getElementById('contaNome').value = '';
     document.getElementById('contaValor').value = '';
+    carregarContas();
 }
-window.excluirConta = function(i) { if(confirm('Excluir?')) { contas.splice(i,1); salvarDados(); atualizarTela(); }};
+window.excluirConta = async function(id) { if(confirm('Excluir?')) { await colecoes.contas.doc(id).delete(); carregarContas(); }};
 
-atualizarTela();
+// INICIAR
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('✅ Sistema conectado ao Firebase!');
+    carregarTudo();
+});
 </script>
 </body>
 </html>
