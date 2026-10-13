@@ -6,795 +6,681 @@
     <title>Controle de Finanças 💼</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
-    
-    <!-- Firebase -->
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-    
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Segoe UI', Arial, sans-serif; background: #0f172a; color: #f1f5f9; min-height: 100vh; }
-        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
-        .tab-btn { transition: all 0.3s ease; }
-        .tab-btn.active { background: #3b82f6; color: white; }
-        .card { background: #1e293b; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
-        .btn { padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; transition: 0.2s; }
-        .btn:hover { transform: translateY(-2px); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .status-pago { background: #16a34a; color: white; }
+        .status-vencer { background: #eab308; color: #1e293b; }
+        .status-atrasado { background: #dc2626; color: white; }
+        .status-recebido { background: #16a34a; color: white; }
+        .status-a-receber { background: #3b82f6; color: white; }
+        .status-em-atraso { background: #f97316; color: white; }
+        input, select, button { font-size: 16px; }
+        .card { background: #1e293b; border-radius: 12px; padding: 16px; margin-bottom: 12px; }
+        .btn { padding: 10px 16px; border-radius: 8px; font-weight: 600; border: none; cursor: pointer; transition: 0.2s; }
+        .btn:hover { transform: translateY(-1px); }
         .btn-primary { background: #3b82f6; color: white; }
-        .btn-success { background: #10b981; color: white; }
-        .btn-danger { background: #ef4444; color: white; }
-        .btn-warning { background: #f59e0b; color: #1e293b; }
-        input, select { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #475569; background: #334155; color: white; margin-bottom: 10px; }
-        .status-pago { color: #10b981; font-weight: 600; }
-        .status-vencer { color: #f59e0b; font-weight: 600; }
-        .status-atrasado { color: #ef4444; font-weight: 600; }
-        .item-row { display: flex; align-items: center; justify-content: space-between; padding: 12px; border-bottom: 1px solid #334155; flex-wrap: wrap; gap: 8px; }
-        .hidden-tab { display: none; }
-        .sync-indicator { font-size: 12px; color: #94a3b8; }
-        .mes-card { background: #334155; border-radius: 8px; padding: 15px; text-align: center; }
-        .mes-atual { border: 2px solid #3b82f6; }
+        .btn-success { background: #16a34a; color: white; }
+        .btn-danger { background: #dc2626; color: white; }
+        .btn-warning { background: #eab308; color: #1e293b; }
+        .input-field { width: 100%; padding: 10px 12px; border-radius: 6px; border: 1px solid #475569; background: #0f172a; color: white; margin-bottom: 10px; }
+        .input-field:focus { outline: none; border-color: #3b82f6; }
+        .tabs-container { position: sticky; top: 0; background: #0f172a; z-index: 100; padding: 10px 0; }
+        .tab-btn { padding: 10px 14px; background: #1e293b; color: #94a3b8; border: none; border-radius: 8px; margin: 2px; cursor: pointer; font-weight: 500; }
+        .tab-btn.active { background: #3b82f6; color: white; }
+        .item-row { padding: 12px; border-bottom: 1px solid #334155; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; }
+        .item-row:last-child { border-bottom: none; }
+        .badge { padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 16px; }
+        .grid-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 20px; }
+        .summary-card { background: linear-gradient(135deg, #1e293b, #334155); border-radius: 12px; padding: 16px; text-align: center; }
+        .summary-card h3 { font-size: 14px; color: #94a3b8; margin-bottom: 8px; }
+        .summary-card .value { font-size: 22px; font-weight: 700; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+        .chart-container { position: relative; height: 250px; margin: 20px 0; }
+        .empty-state { text-align: center; padding: 40px; color: #64748b; }
+        h2 { font-size: 18px; margin-bottom: 16px; color: #e2e8f0; border-bottom: 1px solid #334155; padding-bottom: 8px; }
+        h1 { text-align: center; margin: 20px 0; color: #f8fafc; font-size: 24px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1 class="text-2xl font-bold text-center mb-6">💼 Controle de Finanças</h1>
-    <p class="text-center sync-indicator" id="syncStatus">🔄 Conectando...</p>
+    <h1>💼 Controle de Finanças</h1>
 
-    <!-- Abas -->
-    <div class="flex flex-wrap gap-2 mb-6 justify-center">
-        <button class="tab-btn active btn" onclick="showTab('resumo')">📊 Resumo Mensal</button>
-        <button class="tab-btn btn" onclick="showTab('boletos')">📄 Boletos</button>
-        <button class="tab-btn btn" onclick="showTab('cheques')">✍️ Cheques</button>
-        <button class="tab-btn btn" onclick="showTab('emprestimos')">💵 Empréstimos</button>
-        <button class="tab-btn btn" onclick="showTab('receber')">📥 Contas a Receber</button>
-        <button class="tab-btn btn" onclick="showTab('patrimonio')">🚗 Patrimônio</button>
-    </div>
-
-    <!-- ABA RESUMO MENSAL -->
-    <div id="tab-resumo" class="card">
-        <h2 class="text-xl font-semibold mb-4">📊 Resumo Mensal</h2>
-        
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <div class="mes-card mes-atual">
-                <p class="text-sm text-gray-400">Este Mês</p>
-                <p class="text-2xl font-bold text-red-400" id="mesAtualDevo">R$ 0,00</p>
-                <p class="text-sm text-green-400" id="mesAtualRecebo">Receber: R$ 0,00</p>
-                <p class="text-sm text-blue-300" id="mesAtualSaldo">Saldo: R$ 0,00</p>
-            </div>
-            <div class="mes-card">
-                <p class="text-sm text-gray-400">Próximo Mês</p>
-                <p class="text-2xl font-bold text-orange-400" id="mesSeguinteDevo">R$ 0,00</p>
-                <p class="text-sm text-green-400" id="mesSeguinteRecebo">Receber: R$ 0,00</p>
-                <p class="text-sm text-blue-300" id="mesSeguinteSaldo">Saldo: R$ 0,00</p>
-            </div>
-            <div class="mes-card">
-                <p class="text-sm text-gray-400">Demais Meses</p>
-                <p class="text-2xl font-bold text-purple-400" id="mesFuturoDevo">R$ 0,00</p>
-                <p class="text-sm text-green-400" id="mesFuturoRecebo">Receber: R$ 0,00</p>
-                <p class="text-sm text-blue-300" id="mesFuturoSaldo">Saldo: R$ 0,00</p>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <div class="text-center p-4 bg-blue-900/30 rounded-lg">
-                <p class="text-sm text-gray-400">A Vencer Total</p>
-                <p class="text-xl font-bold text-blue-400" id="resumoVencer">R$ 0,00</p>
-            </div>
-            <div class="text-center p-4 bg-red-900/30 rounded-lg">
-                <p class="text-sm text-gray-400">Atrasados</p>
-                <p class="text-xl font-bold text-red-400" id="resumoAtrasado">R$ 0,00</p>
-            </div>
-            <div class="text-center p-4 bg-green-900/30 rounded-lg">
-                <p class="text-sm text-gray-400">Total a Receber</p>
-                <p class="text-xl font-bold text-green-400" id="resumoReceber">R$ 0,00</p>
-            </div>
-            <div class="text-center p-4 bg-emerald-900/30 rounded-lg">
-                <p class="text-sm text-gray-400">Total Pago</p>
-                <p class="text-xl font-bold text-emerald-400" id="resumoPago">R$ 0,00</p>
-            </div>
-        </div>
-        <div style="height: 250px;">
-            <canvas id="graficoResumo"></canvas>
+    <!-- TABS -->
+    <div class="tabs-container">
+        <div style="overflow-x: auto; white-space: nowrap; padding-bottom: 4px;">
+            <button class="tab-btn active" data-tab="resumo">📊 Resumo</button>
+            <button class="tab-btn" data-tab="boletos">📄 Boletos</button>
+            <button class="tab-btn" data-tab="cheques">✍️ Cheques</button>
+            <button class="tab-btn" data-tab="parcelas">📦 Contas Parceladas</button>
+            <button class="tab-btn" data-tab="receber">💰 A Receber</button>
         </div>
     </div>
 
-    <!-- ABA BOLETOS -->
-    <div id="tab-boletos" class="card hidden-tab">
-        <h2 class="text-xl font-semibold mb-4">📄 Controle de Boletos</h2>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            <div>
-                <label>Nome / Empresa</label>
-                <input type="text" id="boletoNome" placeholder="Ex: Energia, Aluguel...">
-                <label>Código de Barras</label>
-                <input type="text" id="boletoCodigo" placeholder="Digite o código de barras">
+    <!-- RESUMO -->
+    <div id="resumo" class="tab-content active">
+        <div class="grid-summary">
+            <div class="summary-card">
+                <h3>Total a Pagar</h3>
+                <div class="value" id="totalAPagar" style="color: #f97316;">R$ 0,00</div>
             </div>
-            <div>
-                <label>Valor R$</label>
-                <input type="number" step="0.01" id="boletoValor" placeholder="0,00">
-                <label>Data de Vencimento</label>
-                <input type="date" id="boletoData">
+            <div class="summary-card">
+                <h3>A Vencer</h3>
+                <div class="value" id="totalAVencer" style="color: #eab308;">R$ 0,00</div>
+            </div>
+            <div class="summary-card">
+                <h3>Atrasado</h3>
+                <div class="value" id="totalAtrasado" style="color: #dc2626;">R$ 0,00</div>
+            </div>
+            <div class="summary-card">
+                <h3>Pago</h3>
+                <div class="value" id="totalPago" style="color: #16a34a;">R$ 0,00</div>
+            </div>
+            <div class="summary-card">
+                <h3>A Receber</h3>
+                <div class="value" id="totalAReceber" style="color: #3b82f6;">R$ 0,00</div>
+            </div>
+            <div class="summary-card">
+                <h3>Recebido</h3>
+                <div class="value" id="totalRecebido" style="color: #10b981;">R$ 0,00</div>
             </div>
         </div>
-        <button class="btn btn-primary w-full mb-6" onclick="adicionarBoleto()">➕ Adicionar Boleto</button>
-
-        <h3 class="font-semibold mb-2">🔍 Filtrar por Status:</h3>
-        <div class="flex gap-2 mb-4 flex-wrap">
-            <button class="btn btn-primary" onclick="filtrarBoletos('todos')">Todos</button>
-            <button class="btn btn-warning" onclick="filtrarBoletos('a vencer')">A Vencer</button>
-            <button class="btn btn-danger" onclick="filtrarBoletos('atrasado')">Atrasados</button>
-            <button class="btn btn-success" onclick="filtrarBoletos('pago')">Pagos</button>
+        <div class="chart-container">
+            <canvas id="chartResumo"></canvas>
         </div>
-
-        <div id="listaBoletos"></div>
+        <div class="chart-container">
+            <canvas id="chartMes"></canvas>
+        </div>
     </div>
 
-    <!-- ABA CHEQUES -->
-    <div id="tab-cheques" class="card hidden-tab">
-        <h2 class="text-xl font-semibold mb-4">✍️ Controle de Cheques</h2>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            <div>
-                <label>Nome / Destinatário</label>
-                <input type="text" id="chequeNome" placeholder="Ex: Fornecedor X">
-                <label>Número do Cheque</label>
-                <input type="text" id="chequeNumero" placeholder="000.000.000">
-            </div>
-            <div>
-                <label>Valor R$</label>
-                <input type="number" step="0.01" id="chequeValor" placeholder="0,00">
-                <label>Data de Emissão</label>
-                <input type="date" id="chequeData">
-            </div>
-        </div>
-        <button class="btn btn-primary w-full mb-6" onclick="adicionarCheque()">➕ Adicionar Cheque</button>
-        <div id="listaCheques"></div>
-    </div>
-
-    <!-- ABA EMPRÉSTIMOS -->
-    <div id="tab-emprestimos" class="card hidden-tab">
-        <h2 class="text-xl font-semibold mb-4">💵 Empréstimos Concedidos</h2>
-        <p class="text-sm text-gray-400 mb-4">Controle quem te deve, com juros e parcelas</p>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            <div>
-                <label>Nome da Pessoa</label>
-                <input type="text" id="emprestimoNome" placeholder="Ex: João da Silva">
-                <label>Valor Emprestado R$</label>
-                <input type="number" step="0.01" id="emprestimoValor" placeholder="0,00">
-                <label>Taxa de Juros % ao mês</label>
-                <input type="number" step="0.01" id="emprestimoJuros" placeholder="0.00">
-            </div>
-            <div>
-                <label>Data do Empréstimo</label>
-                <input type="date" id="emprestimoData">
-                <label>Número de Parcelas</label>
-                <input type="number" id="emprestimoParcelas" placeholder="1">
-                <label>Data da Primeira Parcela</label>
-                <input type="date" id="emprestimoPrimeira">
-            </div>
-        </div>
-        <button class="btn btn-primary w-full mb-6" onclick="adicionarEmprestimo()">➕ Adicionar Empréstimo</button>
-        <div id="listaEmprestimos"></div>
-    </div>
-
-    <!-- ABA CONTAS A RECEBER -->
-    <div id="tab-receber" class="card hidden-tab">
-        <h2 class="text-xl font-semibold mb-4">📥 Contas a Receber</h2>
-        <p class="text-sm text-gray-400 mb-4">Aluguéis, pagamentos de clientes, rendas diversas</p>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            <div>
-                <label>Descrição / Origem</label>
-                <input type="text" id="receberNome" placeholder="Ex: Aluguel — Casa X">
-                <label>Valor R$</label>
-                <input type="number" step="0.01" id="receberValor" placeholder="0,00">
-            </div>
-            <div>
-                <label>Data Prevista</label>
-                <input type="date" id="receberData">
-                <label>Status</label>
-                <select id="receberStatus">
-                    <option value="a receber">A Receber</option>
-                    <option value="recebido">Recebido ✅</option>
+    <!-- BOLETOS -->
+    <div id="boletos" class="tab-content">
+        <div class="card">
+            <h2>📄 Novo Boleto</h2>
+            <div class="form-grid">
+                <input type="text" id="boletoNome" class="input-field" placeholder="Nome / Empresa">
+                <input type="text" id="boletoCodigoBarras" class="input-field" placeholder="Código de Barras">
+                <input type="date" id="boletoVencimento" class="input-field">
+                <input type="number" step="0.01" id="boletoValor" class="input-field" placeholder="Valor R$">
+                <select id="boletoStatus" class="input-field">
+                    <option value="a_vencer">A Vencer</option>
+                    <option value="pago">Pago ✅</option>
                     <option value="atrasado">Atrasado ⚠️</option>
                 </select>
             </div>
+            <button class="btn btn-primary" onclick="adicionarBoleto()">➕ Adicionar Boleto</button>
         </div>
-        <button class="btn btn-primary w-full mb-6" onclick="adicionarReceber()">➕ Adicionar Conta</button>
-        
-        <div class="flex gap-2 mb-4 flex-wrap">
-            <button class="btn btn-primary" onclick="filtrarReceber('todos')">Todos</button>
-            <button class="btn btn-warning" onclick="filtrarReceber('a receber')">A Receber</button>
-            <button class="btn btn-danger" onclick="filtrarReceber('atrasado')">Atrasados</button>
-            <button class="btn btn-success" onclick="filtrarReceber('recebido')">Recebidos</button>
-        </div>
-        
-        <div id="listaReceber"></div>
+        <h2>Lista de Boletos</h2>
+        <div id="listaBoletos"></div>
     </div>
 
-    <!-- ABA PATRIMÔNIO -->
-    <div id="tab-patrimonio" class="card hidden-tab">
-        <h2 class="text-xl font-semibold mb-4">🚗 Meu Patrimônio</h2>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            <div>
-                <label>Item / Descrição</label>
-                <input type="text" id="patrimonioNome" placeholder="Ex: Casa, Carro, Terreno...">
-                <label>Valor Estimado R$</label>
-                <input type="number" step="0.01" id="patrimonioValor" placeholder="0,00">
-            </div>
-            <div>
-                <label>Localização / Observação</label>
-                <input type="text" id="patrimonioObs" placeholder="Ex: Brasília - DF">
-                <label>Tipo</label>
-                <select id="patrimonioTipo">
-                    <option value="imovel">Imóvel</option>
-                    <option value="veiculo">Veículo</option>
-                    <option value="investimento">Investimento</option>
-                    <option value="outro">Outro</option>
+    <!-- CHEQUES -->
+    <div id="cheques" class="tab-content">
+        <div class="card">
+            <h2>✍️ Novo Cheque</h2>
+            <div class="form-grid">
+                <input type="text" id="chequeEmitente" class="input-field" placeholder="Emitente / Favorecido">
+                <input type="text" id="chequeNumero" class="input-field" placeholder="Nº do Cheque">
+                <input type="date" id="chequeVencimento" class="input-field">
+                <input type="number" step="0.01" id="chequeValor" class="input-field" placeholder="Valor R$">
+                <select id="chequeStatus" class="input-field">
+                    <option value="a_vencer">A Vencer</option>
+                    <option value="pago">Compensado ✅</option>
+                    <option value="atrasado">Atrasado ⚠️</option>
                 </select>
             </div>
+            <button class="btn btn-primary" onclick="adicionarCheque()">➕ Adicionar Cheque</button>
         </div>
-        <button class="btn btn-primary w-full mb-6" onclick="adicionarPatrimonio()">➕ Adicionar Item</button>
-        <div id="listaPatrimonio"></div>
+        <h2>Lista de Cheques</h2>
+        <div id="listaCheques"></div>
     </div>
 
+    <!-- CONTAS PARCELADAS -->
+    <div id="parcelas" class="tab-content">
+        <div class="card">
+            <h2>📦 Nova Conta Parcelada</h2>
+            <div class="form-grid">
+                <input type="text" id="parcelaDescricao" class="input-field" placeholder="Descrição (ex: Celular, Carro)">
+                <input type="number" step="0.01" id="parcelaValorTotal" class="input-field" placeholder="Valor Total R$">
+                <input type="number" id="parcelaQuantidade" class="input-field" placeholder="Nº de Parcelas" min="1">
+                <input type="date" id="parcelaPrimeiraData" class="input-field">
+            </div>
+            <button class="btn btn-primary" onclick="adicionarParcela()">➕ Adicionar Conta Parcelada</button>
+        </div>
+        <h2>Contas Parceladas</h2>
+        <div id="listaParcelas"></div>
+    </div>
+
+    <!-- A RECEBER -->
+    <div id="receber" class="tab-content">
+        <div class="card">
+            <h2>💰 Novo Valor a Receber</h2>
+            <div class="form-grid">
+                <input type="text" id="receberNome" class="input-field" placeholder="Quem te deve">
+                <input type="text" id="receberDescricao" class="input-field" placeholder="Descrição">
+                <input type="number" step="0.01" id="receberValorTotal" class="input-field" placeholder="Valor Total R$">
+                <input type="number" id="receberParcelas" class="input-field" placeholder="Nº de Parcelas" min="1">
+                <input type="date" id="receberPrimeiraData" class="input-field">
+            </div>
+            <button class="btn btn-primary" onclick="adicionarReceber()">➕ Adicionar a Receber</button>
+        </div>
+        <h2>Valores a Receber</h2>
+        <div id="listaReceber"></div>
+    </div>
 </div>
 
 <script>
-// ==========================================
-// FIREBASE CONFIG
-// ==========================================
+// ====================== FIREBASE CONFIGURAÇÃO ======================
 const firebaseConfig = {
-  apiKey: "AIzaSyCPd_aIQVDEP-UK-N2twGzci8sRLgJTRmI",
+  apiKey: "AIzaSyCPd-aIQVDEP-UK2twGzci8sRLgjTRmI",
   authDomain: "controle-59fff.firebaseapp.com",
   projectId: "controle-59fff",
-  storageBucket: "controle-59fff.appspot.com",
+  storageBucket: "controle-59fff.firebasestorage.app",
   messagingSenderId: "597330115962",
-  appId: "1:597330115962:web:0d01a891a5745f809e6ac3",
+  appId: "1:597330115962:web:0d01a891a5745f8e6ac3",
   measurementId: "G-WZ3C45QL6H"
 };
 
+// Inicializar Firebase
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
 // Coleções
-const boletosRef = db.collection('boletos');
-const chequesRef = db.collection('cheques');
-const emprestimosRef = db.collection('emprestimos');
-const receberRef = db.collection('receber');
-const patrimonioRef = db.collection('patrimonio');
+const colecoes = {
+    boletos: db.collection('boletos'),
+    cheques: db.collection('cheques'),
+    parcelas: db.collection('parcelas'),
+    receber: db.collection('receber')
+};
 
-// Estado
-let boletos = [];
-let cheques = [];
-let emprestimos = [];
-let receber = [];
-let patrimonio = [];
-let filtroBoletos = 'todos';
-let filtroReceber = 'todos';
-let grafico = null;
-
-// Utilitários
-function formatarValor(valor) {
-    return Number(valor).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+// ====================== FUNÇÕES AUXILIARES ======================
+function formatarMoeda(valor) {
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor || 0);
 }
 
 function formatarData(dataStr) {
-    if (!dataStr) return '--';
+    if (!dataStr) return '';
     const [ano, mes, dia] = dataStr.split('-');
     return `${dia}/${mes}/${ano}`;
 }
 
-function hoje() {
-    return new Date().toISOString().split('T')[0];
-}
+function hoje() { return new Date().toISOString().split('T')[0]; }
+function ehAtrasado(dataStr) { return dataStr < hoje(); }
 
-function ehAtrasado(dataStr) {
-    return dataStr < hoje();
-}
+// ====================== ABAS ======================
+document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(btn.dataset.tab).classList.add('active');
+        atualizarResumo();
+    });
+});
 
-function getMes(dataStr) {
-    return dataStr ? dataStr.substring(0, 7) : '';
-}
-
-function mesAtual() {
-    return new Date().toISOString().substring(0, 7);
-}
-
-function mesSeguinte() {
-    const d = new Date();
-    d.setMonth(d.getMonth() + 1);
-    return d.toISOString().substring(0, 7);
-}
-
-function calcularValorComJuros(valor, jurosPercent, parcelas) {
-    const taxa = jurosPercent / 100;
-    const valorTotal = valor * Math.pow(1 + taxa, parcelas);
-    const valorParcela = valorTotal / parcelas;
-    return { valorTotal, valorParcela };
-}
-
-// ==========================================
-// CARREGAR DADOS
-// ==========================================
-async function carregarDados() {
-    try {
-        document.getElementById('syncStatus').textContent = '🔄 Carregando...';
-        
-        const snapBoletos = await boletosRef.orderBy('data', 'asc').get();
-        boletos = snapBoletos.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        
-        const snapCheques = await chequesRef.orderBy('data', 'asc').get();
-        cheques = snapCheques.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        
-        const snapEmp = await emprestimosRef.orderBy('data', 'desc').get();
-        emprestimos = snapEmp.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        
-        const snapRec = await receberRef.orderBy('data', 'asc').get();
-        receber = snapRec.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        
-        const snapPat = await patrimonioRef.get();
-        patrimonio = snapPat.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        
-        document.getElementById('syncStatus').innerHTML = '✅ Sincronizado na nuvem';
-        atualizarTudo();
-    } catch (error) {
-        console.error('Erro:', error);
-        document.getElementById('syncStatus').innerHTML = '⚠️ Erro — verifique as regras do Firestore';
+// ====================== BOLETOS ======================
+async function carregarBoletos() {
+    const lista = document.getElementById('listaBoletos');
+    lista.innerHTML = '<div style="text-align:center;padding:20px">Carregando...</div>';
+    const snap = await colecoes.boletos.orderBy('vencimento', 'asc').get();
+    lista.innerHTML = '';
+    
+    if (snap.empty) {
+        lista.innerHTML = '<div class="empty-state">Nenhum boleto cadastrado</div>';
+        return;
     }
+    
+    snap.forEach(doc => {
+        const b = doc.data();
+        const id = doc.id;
+        let classeStatus = '';
+        let textoStatus = '';
+        if (b.status === 'pago') {
+            classeStatus = 'status-pago'; textoStatus = '✅ Pago';
+        } else if (b.status === 'atrasado' || ehAtrasado(b.vencimento)) {
+            classeStatus = 'status-atrasado'; textoStatus = '⚠️ Atrasado';
+        } else {
+            classeStatus = 'status-vencer'; textoStatus = '📅 A Vencer';
+        }
+        
+        lista.innerHTML += `
+        <div class="item-row">
+            <div style="flex: 1; min-width: 150px;">
+                <div style="font-weight:600">${b.nome || 'Sem nome'}</div>
+                <div style="font-size:12px; color:#94a3b8">Cód: ${b.codigoBarras || 'Não informado'}</div>
+                <div style="font-size:12px; color:#94a3b8">Venc: ${formatarData(b.vencimento)}</div>
+            </div>
+            <div style="font-weight:700; font-size:18px; min-width:100px; text-align:right">${formatarMoeda(b.valor)}</div>
+            <span class="badge ${classeStatus}">${textoStatus}</span>
+            <button class="btn btn-danger" style="padding:6px 10px; font-size:13px" onclick="excluirBoleto('${id}')">🗑️</button>
+        </div>`;
+    });
 }
 
-// ==========================================
-// BOLETOS
-// ==========================================
 async function adicionarBoleto() {
-    const nome = document.getElementById('boletoNome').value.trim();
-    const codigo = document.getElementById('boletoCodigo').value.trim();
-    const valor = parseFloat(document.getElementById('boletoValor').value || 0);
-    const data = document.getElementById('boletoData').value;
-
-    if (!nome || !valor || !data) { alert('Preencha nome, valor e data!'); return; }
-
-    const novo = { nome, codigo, valor, data, status: ehAtrasado(data) ? 'atrasado' : 'a vencer' };
-    await boletosRef.add(novo);
+    const dados = {
+        nome: document.getElementById('boletoNome').value.trim(),
+        codigoBarras: document.getElementById('boletoCodigoBarras').value.trim(),
+        vencimento: document.getElementById('boletoVencimento').value,
+        valor: parseFloat(document.getElementById('boletoValor').value) || 0,
+        status: document.getElementById('boletoStatus').value,
+        criadoEm: new Date()
+    };
     
-    document.getElementById('boletoNome').value = '';
-    document.getElementById('boletoCodigo').value = '';
-    document.getElementById('boletoValor').value = '';
-    document.getElementById('boletoData').value = '';
+    if (!dados.nome || !dados.vencimento || !dados.valor) {
+        alert('Preencha os campos principais!'); return;
+    }
     
-    await carregarDados();
-}
-
-async function mudarStatusBoleto(id, atual) {
-    const proximos = { 'a vencer': 'pago', 'atrasado': 'pago', 'pago': 'a vencer' };
-    const novo = proximos[atual];
-    await boletosRef.doc(id).update({ status: novo });
-    await carregarDados();
+    await colecoes.boletos.add(dados);
+    limparCampos('boletos');
+    await carregarBoletos();
+    await atualizarResumo();
 }
 
 async function excluirBoleto(id) {
     if (confirm('Excluir este boleto?')) {
-        await boletosRef.doc(id).delete();
-        await carregarDados();
+        await colecoes.boletos.doc(id).delete();
+        await carregarBoletos();
+        await atualizarResumo();
     }
 }
 
-function filtrarBoletos(filtro) {
-    filtroBoletos = filtro;
-    renderizarBoletos();
+function limparCampos(tipo) {
+    if (tipo === 'boletos') {
+        document.getElementById('boletoNome').value = '';
+        document.getElementById('boletoCodigoBarras').value = '';
+        document.getElementById('boletoVencimento').value = '';
+        document.getElementById('boletoValor').value = '';
+    } else if (tipo === 'cheques') {
+        document.getElementById('chequeEmitente').value = '';
+        document.getElementById('chequeNumero').value = '';
+        document.getElementById('chequeVencimento').value = '';
+        document.getElementById('chequeValor').value = '';
+    } else if (tipo === 'parcelas') {
+        document.getElementById('parcelaDescricao').value = '';
+        document.getElementById('parcelaValorTotal').value = '';
+        document.getElementById('parcelaQuantidade').value = '';
+        document.getElementById('parcelaPrimeiraData').value = '';
+    } else if (tipo === 'receber') {
+        document.getElementById('receberNome').value = '';
+        document.getElementById('receberDescricao').value = '';
+        document.getElementById('receberValorTotal').value = '';
+        document.getElementById('receberParcelas').value = '';
+        document.getElementById('receberPrimeiraData').value = '';
+    }
 }
 
-function renderizarBoletos() {
-    const lista = document.getElementById('listaBoletos');
-    let filtrados = boletos;
+// ====================== CHEQUES ======================
+async function carregarCheques() {
+    const lista = document.getElementById('listaCheques');
+    lista.innerHTML = '<div style="text-align:center;padding:20px">Carregando...</div>';
+    const snap = await colecoes.cheques.orderBy('vencimento', 'asc').get();
+    lista.innerHTML = '';
     
-    if (filtroBoletos !== 'todos') {
-        filtrados = boletos.filter(b => b.status === filtroBoletos);
-    }
-
-    if (filtrados.length === 0) {
-        lista.innerHTML = '<p class="text-gray-400 text-center py-4">Nenhum boleto encontrado.</p>';
+    if (snap.empty) {
+        lista.innerHTML = '<div class="empty-state">Nenhum cheque cadastrado</div>';
         return;
     }
-
-    lista.innerHTML = filtrados.map(b => {
-        let classeStatus = '', textoStatus = b.status;
-        if (b.status === 'a vencer') { classeStatus = 'status-vencer'; textoStatus = '📅 A Vencer'; }
-        else if (b.status === 'atrasado') { classeStatus = 'status-atrasado'; textoStatus = '⚠️ Atrasado'; }
-        else if (b.status === 'pago') { classeStatus = 'status-pago'; textoStatus = '✅ Pago'; }
-
-        return `
+    
+    snap.forEach(doc => {
+        const c = doc.data();
+        const id = doc.id;
+        let classeStatus = '';
+        let textoStatus = '';
+        if (c.status === 'pago') {
+            classeStatus = 'status-pago'; textoStatus = '✅ Compensado';
+        } else if (c.status === 'atrasado' || ehAtrasado(c.vencimento)) {
+            classeStatus = 'status-atrasado'; textoStatus = '⚠️ Atrasado';
+        } else {
+            classeStatus = 'status-vencer'; textoStatus = '📅 A Vencer';
+        }
+        
+        lista.innerHTML += `
         <div class="item-row">
-            <div class="flex-1 min-w-[200px]">
-                <strong>${b.nome}</strong>
-                ${b.codigo ? `<br><small class="text-gray-400">Cód: ${b.codigo}</small>` : ''}
-                <br><small class="text-gray-400">Venc: ${formatarData(b.data)}</small>
+            <div style="flex: 1; min-width: 150px;">
+                <div style="font-weight:600">${c.emitente || 'Sem nome'}</div>
+                <div style="font-size:12px; color:#94a3b8">Nº: ${c.numero || '—'}</div>
+                <div style="font-size:12px; color:#94a3b8">Venc: ${formatarData(c.vencimento)}</div>
             </div>
-            <div class="text-right">
-                <p class="font-bold text-lg">R$ ${formatarValor(b.valor)}</p>
-                <span class="${classeStatus} text-sm">${textoStatus}</span>
-            </div>
-            <div class="flex gap-1 mt-2 w-full md:w-auto">
-                <button class="btn btn-success text-sm py-1 px-2" onclick="mudarStatusBoleto('${b.id}', '${b.status}')">✓</button>
-                <button class="btn btn-danger text-sm py-1 px-2" onclick="excluirBoleto('${b.id}')">🗑️</button>
-            </div>
+            <div style="font-weight:700; font-size:18px; min-width:100px; text-align:right">${formatarMoeda(c.valor)}</div>
+            <span class="badge ${classeStatus}">${textoStatus}</span>
+            <button class="btn btn-danger" style="padding:6px 10px; font-size:13px" onclick="excluirCheque('${id}')">🗑️</button>
         </div>`;
-    }).join('');
+    });
 }
 
-// ==========================================
-// CHEQUES
-// ==========================================
 async function adicionarCheque() {
-    const nome = document.getElementById('chequeNome').value.trim();
-    const numero = document.getElementById('chequeNumero').value.trim();
-    const valor = parseFloat(document.getElementById('chequeValor').value || 0);
-    const data = document.getElementById('chequeData').value;
-
-    if (!nome || !valor || !data) { alert('Preencha os campos!'); return; }
-
-    await chequesRef.add({ nome, numero, valor, data });
+    const dados = {
+        emitente: document.getElementById('chequeEmitente').value.trim(),
+        numero: document.getElementById('chequeNumero').value.trim(),
+        vencimento: document.getElementById('chequeVencimento').value,
+        valor: parseFloat(document.getElementById('chequeValor').value) || 0,
+        status: document.getElementById('chequeStatus').value,
+        criadoEm: new Date()
+    };
     
-    document.getElementById('chequeNome').value = '';
-    document.getElementById('chequeNumero').value = '';
-    document.getElementById('chequeValor').value = '';
-    document.getElementById('chequeData').value = '';
+    if (!dados.emitente || !dados.vencimento || !dados.valor) {
+        alert('Preencha os campos principais!'); return;
+    }
     
-    await carregarDados();
+    await colecoes.cheques.add(dados);
+    limparCampos('cheques');
+    await carregarCheques();
+    await atualizarResumo();
 }
 
 async function excluirCheque(id) {
     if (confirm('Excluir este cheque?')) {
-        await chequesRef.doc(id).delete();
-        await carregarDados();
+        await colecoes.cheques.doc(id).delete();
+        await carregarCheques();
+        await atualizarResumo();
     }
 }
 
-function renderizarCheques() {
-    const lista = document.getElementById('listaCheques');
-    if (cheques.length === 0) {
-        lista.innerHTML = '<p class="text-gray-400 text-center py-4">Nenhum cheque cadastrado.</p>';
+// ====================== CONTAS PARCELADAS ======================
+async function carregarParcelas() {
+    const lista = document.getElementById('listaParcelas');
+    lista.innerHTML = '<div style="text-align:center;padding:20px">Carregando...</div>';
+    const snap = await colecoes.parcelas.orderBy('primeiraData', 'asc').get();
+    lista.innerHTML = '';
+    
+    if (snap.empty) {
+        lista.innerHTML = '<div class="empty-state">Nenhuma conta parcelada cadastrada</div>';
         return;
     }
-
-    lista.innerHTML = cheques.map(c => `
-    <div class="item-row">
-        <div class="flex-1">
-            <strong>${c.nome}</strong>
-            ${c.numero ? `<br><small class="text-gray-400">Nº: ${c.numero}</small>` : ''}
-            <br><small class="text-gray-400">Emissão: ${formatarData(c.data)}</small>
-        </div>
-        <p class="font-bold text-lg">R$ ${formatarValor(c.valor)}</p>
-        <button class="btn btn-danger text-sm py-1 px-2" onclick="excluirCheque('${c.id}')">🗑️</button>
-    </div>`).join('');
-}
-
-// ==========================================
-// EMPRÉSTIMOS
-// ==========================================
-async function adicionarEmprestimo() {
-    const nome = document.getElementById('emprestimoNome').value.trim();
-    const valor = parseFloat(document.getElementById('emprestimoValor').value || 0);
-    const juros = parseFloat(document.getElementById('emprestimoJuros').value || 0);
-    const data = document.getElementById('emprestimoData').value;
-    const parcelas = parseInt(document.getElementById('emprestimoParcelas').value || 1);
-    const primeira = document.getElementById('emprestimoPrimeira').value;
-
-    if (!nome || !valor || !data) { alert('Preencha nome, valor e data!'); return; }
-
-    const calculo = calcularValorComJuros(valor, juros, parcelas);
     
-    await emprestimosRef.add({ 
-        nome, valor, juros, data, parcelas, primeira,
-        valorTotal: calculo.valorTotal,
-        valorParcela: calculo.valorParcela,
-        status: 'ativo'
+    snap.forEach(doc => {
+        const p = doc.data();
+        const id = doc.id;
+        const valorParcela = p.valorTotal / p.quantidade;
+        
+        // Gerar lista de parcelas
+        let parcelasHtml = '<div style="margin-top:10px; font-size:13px">';
+        const data = new Date(p.primeiraData);
+        for (let i = 1; i <= p.quantidade; i++) {
+            const dataStr = data.toISOString().split('T')[0];
+            const status = dataStr < hoje() ? '✅ Paga' : '📅 A vencer';
+            parcelasHtml += `<div style="display:flex; justify-content:space-between; padding:4px 8px; background:#1e293b; border-radius:4px; margin-bottom:4px;">
+                <span>${i}ª parcela — ${formatarData(dataStr)}</span>
+                <span>${formatarMoeda(valorParcela)} ${status}</span>
+            </div>`;
+            data.setMonth(data.getMonth() + 1);
+        }
+        parcelasHtml += '</div>';
+        
+        lista.innerHTML += `
+        <div class="card">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                <div>
+                    <div style="font-weight:700; font-size:17px">${p.descricao}</div>
+                    <div style="color:#94a3b8; font-size:14px">${p.quantidade}x de ${formatarMoeda(valorParcela)}</div>
+                    <div style="color:#e2e8f0; font-size:14px">Total: ${formatarMoeda(p.valorTotal)}</div>
+                </div>
+                <button class="btn btn-danger" style="padding:6px 10px; font-size:13px" onclick="excluirParcela('${id}')">🗑️</button>
+            </div>
+            ${parcelasHtml}
+        </div>`;
     });
-    
-    document.getElementById('emprestimoNome').value = '';
-    document.getElementById('emprestimoValor').value = '';
-    document.getElementById('emprestimoJuros').value = '';
-    document.getElementById('emprestimoData').value = '';
-    document.getElementById('emprestimoParcelas').value = '';
-    document.getElementById('emprestimoPrimeira').value = '';
-    
-    await carregarDados();
 }
 
-async function excluirEmprestimo(id) {
-    if (confirm('Excluir este empréstimo?')) {
-        await emprestimosRef.doc(id).delete();
-        await carregarDados();
+async function adicionarParcela() {
+    const valorTotal = parseFloat(document.getElementById('parcelaValorTotal').value) || 0;
+    const quantidade = parseInt(document.getElementById('parcelaQuantidade').value) || 0;
+    const primeiraData = document.getElementById('parcelaPrimeiraData').value;
+    
+    if (!valorTotal || !quantidade || !primeiraData) {
+        alert('Preencha todos os campos!'); return;
+    }
+    
+    const dados = {
+        descricao: document.getElementById('parcelaDescricao').value.trim(),
+        valorTotal: valorTotal,
+        quantidade: quantidade,
+        primeiraData: primeiraData,
+        criadoEm: new Date()
+    };
+    
+    await colecoes.parcelas.add(dados);
+    limparCampos('parcelas');
+    await carregarParcelas();
+    await atualizarResumo();
+}
+
+async function excluirParcela(id) {
+    if (confirm('Excluir esta conta parcelada?')) {
+        await colecoes.parcelas.doc(id).delete();
+        await carregarParcelas();
+        await atualizarResumo();
     }
 }
 
-async function marcarPagoEmprestimo(id) {
-    await emprestimosRef.doc(id).update({ status: 'pago' });
-    await carregarDados();
-}
-
-function renderizarEmprestimos() {
-    const lista = document.getElementById('listaEmprestimos');
-    if (emprestimos.length === 0) {
-        lista.innerHTML = '<p class="text-gray-400 text-center py-4">Nenhum empréstimo cadastrado.</p>';
+// ====================== A RECEBER ======================
+async function carregarReceber() {
+    const lista = document.getElementById('listaReceber');
+    lista.innerHTML = '<div style="text-align:center;padding:20px">Carregando...</div>';
+    const snap = await colecoes.receber.orderBy('primeiraData', 'asc').get();
+    lista.innerHTML = '';
+    
+    if (snap.empty) {
+        lista.innerHTML = '<div class="empty-state">Nenhum valor a receber cadastrado</div>';
         return;
     }
-
-    lista.innerHTML = emprestimos.map(e => `
-    <div class="item-row ${e.status === 'pago' ? 'opacity-60' : ''}">
-        <div class="flex-1">
-            <strong>${e.nome}</strong>
-            <br><small class="text-gray-400">Empréstimo: R$ ${formatarValor(e.valor)} | Juros: ${e.juros || 0}% a.m.</small>
-            <br><small class="text-green-400">Total a receber: R$ ${formatarValor(e.valorTotal || e.valor)}</small>
-            <br><small class="text-blue-300">${e.parcelas || 1}x de R$ ${formatarValor(e.valorParcela || e.valor)}</small>
-        </div>
-        <div class="text-right">
-            <p class="text-sm ${e.status === 'pago' ? 'text-green-400' : 'text-yellow-400'}">
-                ${e.status === 'pago' ? '✅ Pago' : '🔄 Ativo'}
-            </p>
-        </div>
-        <div class="flex gap-1 mt-2 w-full md:w-auto">
-            ${e.status !== 'pago' ? `<button class="btn btn-success text-sm py-1 px-2" onclick="marcarPagoEmprestimo('${e.id}')">✓ Pago</button>` : ''}
-            <button class="btn btn-danger text-sm py-1 px-2" onclick="excluirEmprestimo('${e.id}')">🗑️</button>
-        </div>
-    </div>`).join('');
+    
+    snap.forEach(doc => {
+        const r = doc.data();
+        const id = doc.id;
+        const valorParcela = r.valorTotal / r.quantidade;
+        
+        // Gerar lista de parcelas
+        let parcelasHtml = '<div style="margin-top:10px; font-size:13px">';
+        const data = new Date(r.primeiraData);
+        for (let i = 1; i <= r.quantidade; i++) {
+            const dataStr = data.toISOString().split('T')[0];
+            let status = '📅 A receber';
+            if (dataStr < hoje()) status = '✅ Recebido';
+            parcelasHtml += `<div style="display:flex; justify-content:space-between; padding:4px 8px; background:#1e293b; border-radius:4px; margin-bottom:4px;">
+                <span>${i}ª parcela — ${formatarData(dataStr)}</span>
+                <span>${formatarMoeda(valorParcela)} ${status}</span>
+            </div>`;
+            data.setMonth(data.getMonth() + 1);
+        }
+        parcelasHtml += '</div>';
+        
+        lista.innerHTML += `
+        <div class="card">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                <div>
+                    <div style="font-weight:700; font-size:17px">👤 ${r.nome}</div>
+                    <div style="color:#94a3b8; font-size:14px">${r.descricao || ''}</div>
+                    <div style="color:#e2e8f0; font-size:14px">${r.quantidade}x de ${formatarMoeda(valorParcela)}</div>
+                    <div style="color:#10b981; font-size:14px; font-weight:600">Total a receber: ${formatarMoeda(r.valorTotal)}</div>
+                </div>
+                <button class="btn btn-danger" style="padding:6px 10px; font-size:13px" onclick="excluirReceber('${id}')">🗑️</button>
+            </div>
+            ${parcelasHtml}
+        </div>`;
+    });
 }
 
-// ==========================================
-// CONTAS A RECEBER
-// ==========================================
 async function adicionarReceber() {
-    const nome = document.getElementById('receberNome').value.trim();
-    const valor = parseFloat(document.getElementById('receberValor').value || 0);
-    const data = document.getElementById('receberData').value;
-    const status = document.getElementById('receberStatus').value;
-
-    if (!nome || !valor || !data) { alert('Preencha os campos!'); return; }
-
-    await receberRef.add({ nome, valor, data, status });
+    const valorTotal = parseFloat(document.getElementById('receberValorTotal').value) || 0;
+    const quantidade = parseInt(document.getElementById('receberParcelas').value) || 0;
+    const primeiraData = document.getElementById('receberPrimeiraData').value;
     
-    document.getElementById('receberNome').value = '';
-    document.getElementById('receberValor').value = '';
-    document.getElementById('receberData').value = '';
+    if (!valorTotal || !quantidade || !primeiraData) {
+        alert('Preencha todos os campos!'); return;
+    }
     
-    await carregarDados();
-}
-
-async function mudarStatusReceber(id, atual) {
-    const proximos = { 'a receber': 'recebido', 'atrasado': 'recebido', 'recebido': 'a receber' };
-    const novo = proximos[atual];
-    await receberRef.doc(id).update({ status: novo });
-    await carregarDados();
+    const dados = {
+        nome: document.getElementById('receberNome').value.trim(),
+        descricao: document.getElementById('receberDescricao').value.trim(),
+        valorTotal: valorTotal,
+        quantidade: quantidade,
+        primeiraData: primeiraData,
+        criadoEm: new Date()
+    };
+    
+    await colecoes.receber.add(dados);
+    limparCampos('receber');
+    await carregarReceber();
+    await atualizarResumo();
 }
 
 async function excluirReceber(id) {
-    if (confirm('Excluir esta conta?')) {
-        await receberRef.doc(id).delete();
-        await carregarDados();
+    if (confirm('Excluir este registro?')) {
+        await colecoes.receber.doc(id).delete();
+        await carregarReceber();
+        await atualizarResumo();
     }
 }
 
-function filtrarReceber(filtro) {
-    filtroReceber = filtro;
-    renderizarReceber();
+// ====================== RESUMO E GRÁFICOS ======================
+let chartResumo, chartMes;
+
+async function atualizarResumo() {
+    let totalAPagar = 0, totalAVencer = 0, totalAtrasado = 0, totalPago = 0;
+    let totalAReceber = 0, totalRecebido = 0;
+    
+    // Boletos
+    const snapBoletos = await colecoes.boletos.get();
+    snapBoletos.forEach(doc => {
+        const b = doc.data();
+        totalAPagar += b.valor || 0;
+        if (b.status === 'pago') {
+            totalPago += b.valor || 0;
+        } else if (b.status === 'atrasado' || ehAtrasado(b.vencimento)) {
+            totalAtrasado += b.valor || 0;
+        } else {
+            totalAVencer += b.valor || 0;
+        }
+    });
+    
+    // Cheques
+    const snapCheques = await colecoes.cheques.get();
+    snapCheques.forEach(doc => {
+        const c = doc.data();
+        totalAPagar += c.valor || 0;
+        if (c.status === 'pago') {
+            totalPago += c.valor || 0;
+        } else if (c.status === 'atrasado' || ehAtrasado(c.vencimento)) {
+            totalAtrasado += c.valor || 0;
+        } else {
+            totalAVencer += c.valor || 0;
+        }
+    });
+    
+    // Contas Parceladas (soma as parcelas do mês atual)
+    const snapParcelas = await colecoes.parcelas.get();
+    const hoje = new Date();
+    const mesAtual = hoje.getMonth(), anoAtual = hoje.getFullYear();
+    let totalParcelasMes = 0;
+    
+    snapParcelas.forEach(doc => {
+        const p = doc.data();
+        const valorParcela = p.valorTotal / p.quantidade;
+        const data = new Date(p.primeiraData);
+        for (let i = 0; i < p.quantidade; i++) {
+            if (data.getMonth() === mesAtual && data.getFullYear() === anoAtual) {
+                totalParcelasMes += valorParcela;
+            }
+            data.setMonth(data.getMonth() + 1);
+        }
+    });
+    
+    // A Receber
+    const snapReceber = await colecoes.receber.get();
+    snapReceber.forEach(doc => {
+        const r = doc.data();
+        totalAReceber += r.valorTotal || 0;
+        const data = new Date(r.primeiraData);
+        for (let i = 0; i < r.quantidade; i++) {
+            if (data.toISOString().split('T')[0] <= hoje().split('T')[0]) {
+                totalRecebido += (r.valorTotal / r.quantidade);
+            }
+            data.setMonth(data.getMonth() + 1);
+        }
+    });
+    
+    // Atualizar na tela
+    document.getElementById('totalAPagar').textContent = formatarMoeda(totalAPagar);
+    document.getElementById('totalAVencer').textContent = formatarMoeda(totalAVencer + totalParcelasMes);
+    document.getElementById('totalAtrasado').textContent = formatarMoeda(totalAtrasado);
+    document.getElementById('totalPago').textContent = formatarMoeda(totalPago);
+    document.getElementById('totalAReceber').textContent = formatarMoeda(totalAReceber);
+    document.getElementById('totalRecebido').textContent = formatarMoeda(totalRecebido);
+    
+    // Gráficos
+    atualizarGraficos(totalAVencer + totalParcelasMes, totalAtrasado, totalPago, totalAReceber - totalRecebido, totalRecebido);
 }
 
-function renderizarReceber() {
-    const lista = document.getElementById('listaReceber');
-    let filtrados = receber;
+function atualizarGraficos(vencer, atrasado, pago, aReceber, recebido) {
+    const ctx1 = document.getElementById('chartResumo').getContext('2d');
+    const ctx2 = document.getElementById('chartMes').getContext('2d');
     
-    if (filtroReceber !== 'todos') {
-        filtrados = receber.filter(r => r.status === filtroReceber);
-    }
-
-    if (filtrados.length === 0) {
-        lista.innerHTML = '<p class="text-gray-400 text-center py-4">Nenhuma conta a receber encontrada.</p>';
-        return;
-    }
-
-    lista.innerHTML = filtrados.map(r => {
-        let classeStatus = '', textoStatus = r.status;
-        if (r.status === 'a receber') { classeStatus = 'status-vencer'; textoStatus = '📅 A Receber'; }
-        else if (r.status === 'atrasado') { classeStatus = 'status-atrasado'; textoStatus = '⚠️ Atrasado'; }
-        else if (r.status === 'recebido') { classeStatus = 'status-pago'; textoStatus = '✅ Recebido'; }
-
-        return `
-        <div class="item-row">
-            <div class="flex-1 min-w-[200px]">
-                <strong>${r.nome}</strong>
-                <br><small class="text-gray-400">Previsão: ${formatarData(r.data)}</small>
-            </div>
-            <div class="text-right">
-                <p class="font-bold text-lg text-green-400">+ R$ ${formatarValor(r.valor)}</p>
-                <span class="${classeStatus} text-sm">${textoStatus}</span>
-            </div>
-            <div class="flex gap-1 mt-2 w-full md:w-auto">
-                <button class="btn btn-success text-sm py-1 px-2" onclick="mudarStatusReceber('${r.id}', '${r.status}')">✓</button>
-                <button class="btn btn-danger text-sm py-1 px-2" onclick="excluirReceber('${r.id}')">🗑️</button>
-            </div>
-        </div>`;
-    }).join('');
-}
-
-// ==========================================
-// PATRIMÔNIO
-// ==========================================
-async function adicionarPatrimonio() {
-    const nome = document.getElementById('patrimonioNome').value.trim();
-    const valor = parseFloat(document.getElementById('patrimonioValor').value || 0);
-    const obs = document.getElementById('patrimonioObs').value.trim();
-    const tipo = document.getElementById('patrimonioTipo').value;
-
-    if (!nome || !valor) { alert('Preencha nome e valor!'); return; }
-
-    await patrimonioRef.add({ nome, valor, obs, tipo });
+    if (chartResumo) chartResumo.destroy();
+    if (chartMes) chartMes.destroy();
     
-    document.getElementById('patrimonioNome').value = '';
-    document.getElementById('patrimonioValor').value = '';
-    document.getElementById('patrimonioObs').value = '';
+    chartResumo = new Chart(ctx1, {
+        type: 'doughnut',
+        data: {
+            labels: ['A Vencer', 'Atrasado', 'Pago'],
+            datasets: [{
+                data: [vencer, atrasado, pago],
+                backgroundColor: ['#eab308', '#dc2626', '#16a34a'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: 'bottom', labels: { color: '#e2e8f0' } } },
+            cutout: '60%'
+        }
+    });
     
-    await carregarDados();
-}
-
-async function excluirPatrimonio(id) {
-    if (confirm('Excluir este item?')) {
-        await patrimonioRef.doc(id).delete();
-        await carregarDados();
-    }
-}
-
-function renderizarPatrimonio() {
-    const lista = document.getElementById('listaPatrimonio');
-    if (patrimonio.length === 0) {
-        lista.innerHTML = '<p class="text-gray-400 text-center py-4">Nenhum item cadastrado.</p>';
-        return;
-    }
-
-    const total = patrimonio.reduce((s, p) => s + Number(p.valor), 0);
-
-    lista.innerHTML = `
-    <div class="mb-4 p-3 bg-green-900/30 rounded-lg text-center">
-        <strong>💰 Valor Total do Patrimônio:</strong>
-        <span class="text-xl font-bold text-green-400"> R$ ${formatarValor(total)}</span>
-    </div>
-    ${patrimonio.map(p => `
-    <div class="item-row">
-        <div class="flex-1">
-            <strong>${p.nome}</strong>
-            <br><small class="text-gray-400">${p.tipo}${p.obs ? ` | ${p.obs}` : ''}</small>
-        </div>
-        <p class="font-bold text-lg">R$ ${formatarValor(p.valor)}</p>
-        <button class="btn btn-danger text-sm py-1 px-2" onclick="excluirPatrimonio('${p.id}')">🗑️</button>
-    </div>`).join('')}`;
-}
-
-// ==========================================
-// RESUMO MENSAL
-// ==========================================
-function calcularResumoMensal() {
-    const mesAtualStr = mesAtual();
-    const mesSeguinteStr = mesSeguinte();
-
-    // BOLETOS A PAGAR
-    const boletosNaoPagos = boletos.filter(b => b.status !== 'pago');
-    const devoMesAtual = boletosNaoPagos.filter(b => getMes(b.data) === mesAtualStr).reduce((s, b) => s + Number(b.valor), 0);
-    const devoMesSeguinte = boletosNaoPagos.filter(b => getMes(b.data) === mesSeguinteStr).reduce((s, b) => s + Number(b.valor), 0);
-    const devoMesFuturo = boletosNaoPagos.filter(b => getMes(b.data) !== mesAtualStr && getMes(b.data) !== mesSeguinteStr).reduce((s, b) => s + Number(b.valor), 0);
-
-    // CONTAS A RECEBER
-    const receberNaoRecebido = receber.filter(r => r.status !== 'recebido');
-    const receboMesAtual = receberNaoRecebido.filter(r => getMes(r.data) === mesAtualStr).reduce((s, r) => s + Number(r.valor), 0);
-    const receboMesSeguinte = receberNaoRecebido.filter(r => getMes(r.data) === mesSeguinteStr).reduce((s, r) => s + Number(r.valor), 0);
-    const receboMesFuturo = receberNaoRecebido.filter(r => getMes(r.data) !== mesAtualStr && getMes(r.data) !== mesSeguinteStr).reduce((s, r) => s + Number(r.valor), 0);
-
-    // TOTAIS GERAIS
-    const totalVencer = boletos.filter(b => b.status === 'a vencer').reduce((s, b) => s + Number(b.valor), 0);
-    const totalAtrasado = boletos.filter(b => b.status === 'atrasado').reduce((s, b) => s + Number(b.valor), 0);
-    const totalPago = boletos.filter(b => b.status === 'pago').reduce((s, b) => s + Number(b.valor), 0);
-    const totalReceber = receberNaoRecebido.reduce((s, r) => s + Number(r.valor), 0);
-
-    return {
-        devoMesAtual, devoMesSeguinte, devoMesFuturo,
-        receboMesAtual, receboMesSeguinte, receboMesFuturo,
-        saldoAtual: receboMesAtual - devoMesAtual,
-        saldoSeguinte: receboMesSeguinte - devoMesSeguinte,
-        saldoFuturo: receboMesFuturo - devoMesFuturo,
-        totalVencer, totalAtrasado, totalPago, totalReceber
-    };
-}
-
-function atualizarResumo() {
-    const resumo = calcularResumoMensal();
-    
-    document.getElementById('mesAtualDevo').textContent = `R$ ${formatarValor(resumo.devoMesAtual)}`;
-    document.getElementById('mesAtualRecebo').textContent = `Receber: R$ ${formatarValor(resumo.receboMesAtual)}`;
-    document.getElementById('mesAtualSaldo').textContent = `Saldo: R$ ${formatarValor(resumo.saldoAtual)}`;
-    
-    document.getElementById('mesSeguinteDevo').textContent = `R$ ${formatarValor(resumo.devoMesSeguinte)}`;
-    document.getElementById('mesSeguinteRecebo').textContent = `Receber: R$ ${formatarValor(resumo.receboMesSeguinte)}`;
-    document.getElementById('mesSeguinteSaldo').textContent = `Saldo: R$ ${formatarValor(resumo.saldoSeguinte)}`;
-    
-    document.getElementById('mesFuturoDevo').textContent = `R$ ${formatarValor(resumo.devoMesFuturo)}`;
-    document.getElementById('mesFuturoRecebo').textContent = `Receber: R$ ${formatarValor(resumo.receboMesFuturo)}`;
-    document.getElementById('mesFuturoSaldo').textContent = `Saldo: R$ ${formatarValor(resumo.saldoFuturo)}`;
-
-    document.getElementById('resumoVencer').textContent = `R$ ${formatarValor(resumo.totalVencer)}`;
-    document.getElementById('resumoAtrasado').textContent = `R$ ${formatarValor(resumo.totalAtrasado)}`;
-    document.getElementById('resumoReceber').textContent = `R$ ${formatarValor(resumo.totalReceber)}`;
-    document.getElementById('resumoPago').textContent = `R$ ${formatarValor(resumo.totalPago)}`;
-
-    atualizarGrafico(resumo);
-}
-
-function atualizarGrafico(resumo) {
-    const ctx = document.getElementById('graficoResumo').getContext('2d');
-    if (grafico) grafico.destroy();
-    
-    grafico = new Chart(ctx, {
+    chartMes = new Chart(ctx2, {
         type: 'bar',
         data: {
-            labels: ['Este Mês', 'Próximo Mês', 'Demais Meses'],
-            datasets: [
-                {
-                    label: 'A Pagar',
-                    data: [resumo.devoMesAtual, resumo.devoMesSeguinte, resumo.devoMesFuturo],
-                    backgroundColor: '#ef4444'
-                },
-                {
-                    label: 'A Receber',
-                    data: [resumo.receboMesAtual, resumo.receboMesSeguinte, resumo.receboMesFuturo],
-                    backgroundColor: '#10b981'
-                }
-            ]
+            labels: ['A Pagar', 'A Receber'],
+            datasets: [{
+                label: 'Aguardando',
+                data: [vencer + atrasado, aReceber],
+                backgroundColor: ['#f97316', '#3b82f6'],
+                borderRadius: 6
+            }, {
+                label: 'Concluído',
+                data: [pago, recebido],
+                backgroundColor: ['#16a34a', '#10b981'],
+                borderRadius: 6
+            }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
             scales: {
-                x: { ticks: { color: '#f1f5f9' }, grid: { color: '#334155' } },
-                y: { ticks: { color: '#f1f5f9' }, grid: { color: '#334155' } }
+                x: { ticks: { color: '#94a3b8' }, grid: { display: false } },
+                y: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' } }
             },
-            plugins: {
-                legend: { labels: { color: '#f1f5f9' } }
-            }
+            plugins: { legend: { position: 'bottom', labels: { color: '#e2e8f0' } } }
         }
     });
 }
 
-// ==========================================
-// NAVEGAÇÃO DE ABAS
-// ==========================================
-function showTab(nome) {
-    document.querySelectorAll('[id^="tab-"]').forEach(tab => tab.classList.add('hidden-tab'));
-    document.getElementById(`tab-${nome}`).classList.remove('hidden-tab');
-    
-    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-    event.target.classList.add('active');
-    
-    if (nome === 'boletos') renderizarBoletos();
-    if (nome === 'cheques') renderizarCheques();
-    if (nome === 'emprestimos') renderizarEmprestimos();
-    if (nome === 'receber') renderizarReceber();
-    if (nome === 'patrimonio') renderizarPatrimonio();
-    if (nome === 'resumo') atualizarResumo();
-}
-
-function atualizarTudo() {
-    renderizarBoletos();
-    renderizarCheques();
-    renderizarEmprestimos();
-    renderizarReceber();
-    renderizarPatrimonio();
-    atualizarResumo();
-}
-
-// Iniciar
-carregarDados();
+// ====================== INICIALIZAÇÃO ======================
+window.onload = async function() {
+    await carregarBoletos();
+    await carregarCheques();
+    await carregarParcelas();
+    await carregarReceber();
+    await atualizarResumo();
+};
 </script>
-
 </body>
 </html>
