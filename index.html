@@ -3,69 +3,78 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Controle Financeiro</title>
-    <!-- FIREBASE — JÁ VEM PRONTO -->
+    <title>Controle Financeiro Profissional</title>
+    <!-- FIREBASE -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; }
         body { background: #0f172a; color: #f1f5f9; padding: 16px; min-height: 100vh; }
-        .container { max-width: 1000px; margin: 0 auto; }
+        .container { max-width: 1050px; margin: 0 auto; }
         h1 { text-align: center; margin-bottom: 6px; color: #3b82f6; }
         .status-nuvem { text-align: center; font-size: 12px; color: #22c55e; margin-bottom: 20px; }
 
-        .abas { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
-        .aba { padding: 10px 16px; background: #1e293b; border: none; color: #94a3b8; border-radius: 8px; cursor: pointer; font-size: 14px; }
+        .abas { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 20px; }
+        .aba { padding: 9px 14px; background: #1e293b; border: none; color: #94a3b8; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: bold; transition: 0.2s; }
         .aba.ativa { background: #3b82f6; color: white; }
 
         .filtros { display: flex; gap: 6px; margin-bottom: 20px; flex-wrap: wrap; }
-        .filtro { padding: 6px 12px; background: transparent; border: 1px solid #3b82f6; color: #94a3b8; border-radius: 6px; cursor: pointer; }
+        .filtro { padding: 6px 12px; background: transparent; border: 1px solid #3b82f6; color: #94a3b8; border-radius: 6px; cursor: pointer; font-size: 12px; }
         .filtro.ativo { background: #3b82f6; color: white; }
 
         .conteudo { display: none; }
         .conteudo.visivel { display: block; }
 
-        .card { background: #1e293b; padding: 20px; border-radius: 12px; margin-bottom: 16px; }
-        h2 { font-size: 18px; margin-bottom: 16px; color: #e2e8f0; }
-        input, select { width: 100%; padding: 10px; margin-bottom: 12px; border-radius: 6px; border: 1px solid #475569; background: #0f172a; color: white; }
-        button.salvar { background: #22c55e; color: white; border: none; padding: 10px 16px; border-radius: 6px; cursor: pointer; width: 100%; font-size: 15px; }
+        .card { background: #1e293b; padding: 20px; border-radius: 12px; margin-bottom: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
+        h2 { font-size: 18px; margin-bottom: 16px; color: #e2e8f0; border-bottom: 1px solid #334155; padding-bottom: 8px; }
+        
+        label { font-size: 12px; color: #94a3b8; display: block; margin-bottom: 4px; }
+        input, select { width: 100%; padding: 10px; margin-bottom: 12px; border-radius: 6px; border: 1px solid #475569; background: #0f172a; color: white; font-size: 14px; }
+        
+        button.salvar { background: #22c55e; color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; width: 100%; font-size: 15px; font-weight: bold; }
         button.excluir { background: #ef4444; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; }
         button.pago { background: #3b82f6; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; margin-right: 6px; }
+        button.copiar { background: #8b5cf6; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; margin-right: 6px; }
 
-        .item { padding: 12px; background: #334155; border-radius: 6px; margin-bottom: 8px; }
+        .item { padding: 14px; background: #334155; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid #3b82f6; }
+        .item.atrasado { border-left-color: #ef4444; }
+        .item.pago { border-left-color: #22c55e; }
+
         .vazio { text-align: center; color: #64748b; padding: 30px; }
-        .resumo { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 20px; }
-        .resumo-card { background: #1e293b; padding: 16px; border-radius: 8px; text-align: center; }
+        .resumo { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 20px; }
+        .resumo-card { background: #1e293b; padding: 16px; border-radius: 8px; text-align: center; border: 1px solid #334155; }
         .valor { font-size: 20px; font-weight: bold; margin-top: 6px; }
         .positivo { color: #22c55e; }
         .negativo { color: #ef4444; }
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .parcela-valor { background: rgba(234, 179, 8, 0.1); color: #eab308; font-weight: bold; }
-        .salvando { font-size: 11px; color: #eab308; }
+        .codigo-barras { background: #0f172a; padding: 8px; border-radius: 4px; font-family: monospace; font-size: 12px; color: #38bdf8; margin: 6px 0; word-break: break-all; }
+        .mes-projecao { background: #1e293b; padding: 16px; border-radius: 8px; margin-bottom: 12px; border: 1px solid #475569; }
+        .mes-titulo { font-size: 16px; font-weight: bold; color: #38bdf8; margin-bottom: 8px; display: flex; justify-content: space-between; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>💼 CONTROLE FINANCEIRO</h1>
+    <h1>💼 CONTROLE FINANCEIRO PROFISSIONAL</h1>
     <div class="status-nuvem" id="statusNuvem">🔄 Conectando à nuvem...</div>
 
     <div class="abas">
-        <button class="aba ativa" onclick="abrirAba('resumo')">📊 Resumo</button>
-        <button class="aba" onclick="abrirAba('boletos')">📄 Boletos</button>
-        <button class="aba" onclick="abrirAba('cheques')">✓ Cheques</button>
-        <button class="aba" onclick="abrirAba('emprestimos')">💰 Empréstimos</button>
-        <button class="aba" onclick="abrirAba('eu-devo')">⬆️ O Que Devo</button>
-        <button class="aba" onclick="abrirAba('me-devem')">⬇️ Me Devem</button>
-        <button class="aba" onclick="abrirAba('contas')">📋 Contas</button>
+        <button class="aba ativa" onclick="abrirAba('resumo', this)">📊 Resumo</button>
+        <button class="aba" onclick="abrirAba('projecao', this)">📅 Projeção Mensal</button>
+        <button class="aba" onclick="abrirAba('boletos', this)">📄 Boletos</button>
+        <button class="aba" onclick="abrirAba('parcelamentos', this)">💳 Parcelamentos</button>
+        <button class="aba" onclick="abrirAba('emprestimos', this)">📈 Empréstimos c/ Juros</button>
+        <button class="aba" onclick="abrirAba('eu-devo', this)">⬆️ O Que Devo</button>
+        <button class="aba" onclick="abrirAba('me-devem', this)">⬇️ Me Devem</button>
+        <button class="aba" onclick="abrirAba('contas', this)">📋 Despesas Fixas</button>
     </div>
 
     <div class="filtros">
-        <button class="filtro ativo" onclick="filtro='todos'; carregarTudo()">Todos</button>
-        <button class="filtro" onclick="filtro='a_vencer'; carregarTudo()">A Vencer</button>
-        <button class="filtro" onclick="filtro='atrasado'; carregarTudo()">Atrasados</button>
-        <button class="filtro" onclick="filtro='pago'; carregarTudo()">Pagos</button>
+        <button class="filtro ativo" onclick="mudarFiltro('todos', this)">Todos</button>
+        <button class="filtro" onclick="mudarFiltro('a_vencer', this)">A Vencer</button>
+        <button class="filtro" onclick="mudarFiltro('atrasado', this)">Atrasados</button>
+        <button class="filtro" onclick="mudarFiltro('pago', this)">Pagos / Quitados</button>
     </div>
 
     <!-- RESUMO -->
@@ -76,17 +85,31 @@
                 <div class="valor positivo" id="valReceber">R$ 0,00</div>
             </div>
             <div class="resumo-card">
-                <div>A Pagar</div>
+                <div>Saída do Mês (Atual)</div>
+                <div class="valor negativo" id="valSaidaMes">R$ 0,00</div>
+            </div>
+            <div class="resumo-card">
+                <div>Total Devido Geral</div>
                 <div class="valor negativo" id="valPagar">R$ 0,00</div>
             </div>
             <div class="resumo-card">
-                <div>Empréstimos</div>
-                <div class="valor negativo" id="valEmprestimos">R$ 0,00</div>
-            </div>
-            <div class="resumo-card">
-                <div>Saldo</div>
+                <div>Saldo Geral</div>
                 <div class="valor" id="valSaldo">R$ 0,00</div>
             </div>
+        </div>
+        <div class="card">
+            <h2>💡 Dica Profissional</h2>
+            <p style="color: #94a3b8; font-size: 14px; line-height: 1.5;">
+                Utilize a aba <b>Projeção Mensal</b> para verificar exatamente quanto sairá do seu bolso mês a mês (incluindo compras parceladas de longo prazo, como celulares e equipamentos). Na aba de <b>Boletos</b>, use o botão de copiar código de barras para agilizar seus pagamentos no aplicativo do banco.
+            </p>
+        </div>
+    </div>
+
+    <!-- PROJEÇÃO MENSAL -->
+    <div id="projecao" class="conteudo">
+        <div class="card">
+            <h2>📅 Quanto vai sair do meu bolso nos próximos meses?</h2>
+            <div id="listaProjecao" class="vazio">Calculando projeções...</div>
         </div>
     </div>
 
@@ -94,8 +117,9 @@
     <div id="boletos" class="conteudo">
         <div class="card">
             <h2>Novo Boleto</h2>
-            <input type="text" id="bolNome" placeholder="Nome / Empresa">
-            <input type="text" id="bolCodigo" placeholder="Código de Barras">
+            <input type="text" id="bolNome" placeholder="Nome / Empresa (Ex: Energia, Fornecedor)">
+            <input type="text" id="bolCodigo" placeholder="Código de Barras ou Linha Digitável">
+            <label>Data de Vencimento</label>
             <input type="date" id="bolData">
             <input type="number" step="0.01" id="bolValor" placeholder="Valor R$">
             <select id="bolStatus">
@@ -103,60 +127,74 @@
                 <option value="pago">Pago</option>
                 <option value="atrasado">Atrasado</option>
             </select>
-            <button class="salvar" onclick="adicionarBoleto()">➕ Salvar na Nuvem</button>
+            <button class="salvar" onclick="adicionarBoleto()">➕ Salvar Boleto</button>
         </div>
         <div class="card">
-            <h2>Meus Boletos</h2>
+            <h2>Gerenciador de Boletos</h2>
             <div id="listaBoletos" class="vazio">Carregando...</div>
         </div>
     </div>
 
-    <!-- CHEQUES -->
-    <div id="cheques" class="conteudo">
+    <!-- PARCELAMENTOS / LONGO PRAZO -->
+    <div id="parcelamentos" class="conteudo">
         <div class="card">
-            <h2>Novo Cheque</h2>
-            <input type="text" id="cheqNome" placeholder="Emitente">
-            <input type="text" id="cheqNum" placeholder="Número">
-            <input type="date" id="cheqData">
-            <input type="number" step="0.01" id="cheqValor" placeholder="Valor R$">
-            <select id="cheqStatus">
-                <option value="a_vencer">A Vencer</option>
-                <option value="pago">Compensado</option>
-                <option value="atrasado">Atrasado</option>
+            <h2>Novo Parcelamento (Dívida de Longo Prazo)</h2>
+            <input type="text" id="parcNome" placeholder="O que comprou? (Ex: Celular em 12x)">
+            <div class="grid-2">
+                <div>
+                    <label>Valor Total R$</label>
+                    <input type="number" step="0.01" id="parcTotal" placeholder="0,00" oninput="calcularParcelamento()">
+                </div>
+                <div>
+                    <label>Nº de Parcelas</label>
+                    <input type="number" id="parcQtd" placeholder="Ex: 12" min="1" oninput="calcularParcelamento()">
+                </div>
+            </div>
+            <label>Valor Calculado por Parcela</label>
+            <input type="text" id="parcValorCalc" style="background:#1e293b; color:#eab308; font-weight:bold;" placeholder="R$ 0,00" readonly>
+            <label>Data da 1ª Parcela (ou vencimento mensal)</label>
+            <input type="date" id="parcDataInicio">
+            <select id="parcStatus">
+                <option value="ativo">🔄 Em Andamento</option>
+                <option value="quitado">✅ Quitado</option>
             </select>
-            <button class="salvar" onclick="adicionarCheque()">➕ Salvar na Nuvem</button>
+            <button class="salvar" onclick="adicionarParcelamento()">➕ Salvar Parcelamento</button>
         </div>
         <div class="card">
-            <h2>Meus Cheques</h2>
-            <div id="listaCheques" class="vazio">Carregando...</div>
+            <h2>Meus Parcelamentos (Longo Prazo)</h2>
+            <div id="listaParcelamentos" class="vazio">Carregando...</div>
         </div>
     </div>
 
-    <!-- EMPRÉSTIMOS -->
+    <!-- EMPRÉSTIMOS COM JUROS -->
     <div id="emprestimos" class="conteudo">
         <div class="card">
-            <h2>Novo Empréstimo</h2>
-            <input type="text" id="empNome" placeholder="Instituição / Credor">
+            <h2>Novo Empréstimo com Porcentagem / Juros</h2>
+            <input type="text" id="empNome" placeholder="Instituição / Credor / Pessoa">
             <input type="text" id="empDesc" placeholder="Descrição (opcional)">
             <div class="grid-2">
                 <div>
-                    <input type="number" step="0.01" id="empTotal" placeholder="Valor Total R$" oninput="calcularParcela()">
+                    <label>Valor Inicial / Principal R$</label>
+                    <input type="number" step="0.01" id="empValor" placeholder="0,00" oninput="calcularJurosEmprestimo()">
                 </div>
                 <div>
-                    <input type="number" id="empParcelas" placeholder="Nº de Parcelas" min="1" oninput="calcularParcela()">
+                    <label>Taxa de Juros Mensal (%)</label>
+                    <input type="number" step="0.01" id="empJuros" placeholder="Ex: 2.5" oninput="calcularJurosEmprestimo()">
                 </div>
             </div>
-            <input type="text" id="empParcelaValor" class="parcela-valor" placeholder="Valor da Parcela" readonly>
-            <input type="date" id="empPrimeiraParcela">
+            <label>Total Estimado com Juros (ou Total a Pagar)</label>
+            <input type="number" step="0.01" id="empTotalFinal" placeholder="0,00">
+            <label>Data de Vencimento / Acerto</label>
+            <input type="date" id="empData">
             <select id="empStatus">
                 <option value="ativo">🔄 Em Andamento</option>
                 <option value="quitado">✅ Quitado</option>
                 <option value="atrasado">⚠️ Atrasado</option>
             </select>
-            <button class="salvar" onclick="adicionarEmprestimo()">➕ Salvar na Nuvem</button>
+            <button class="salvar" onclick="adicionarEmprestimo()">➕ Salvar Empréstimo</button>
         </div>
         <div class="card">
-            <h2>Meus Empréstimos</h2>
+            <h2>Empréstimos Cadastrados</h2>
             <div id="listaEmprestimos" class="vazio">Carregando...</div>
         </div>
     </div>
@@ -165,19 +203,20 @@
     <div id="eu-devo" class="conteudo">
         <div class="card">
             <h2>Novo — O Que Devo</h2>
-            <input type="text" id="devEuNome" placeholder="Para quem">
+            <input type="text" id="devEuNome" placeholder="Para quem você deve">
             <input type="text" id="devEuDesc" placeholder="Descrição">
             <input type="number" step="0.01" id="devEuValor" placeholder="Valor R$">
+            <label>Data de Vencimento</label>
             <input type="date" id="devEuData">
             <select id="devEuStatus">
                 <option value="a_vencer">A Pagar</option>
                 <option value="pago">Pago</option>
                 <option value="atrasado">Atrasado</option>
             </select>
-            <button class="salvar" onclick="adicionarEuDevo()">➕ Salvar na Nuvem</button>
+            <button class="salvar" onclick="adicionarEuDevo()">➕ Salvar</button>
         </div>
         <div class="card">
-            <h2>O Que Eu Devo</h2>
+            <h2>Contas a Pagar</h2>
             <div id="listaEuDevo" class="vazio">Carregando...</div>
         </div>
     </div>
@@ -186,37 +225,38 @@
     <div id="me-devem" class="conteudo">
         <div class="card">
             <h2>Novo — Me Devem</h2>
-            <input type="text" id="devNome" placeholder="Quem">
+            <input type="text" id="devNome" placeholder="Quem te deve">
             <input type="text" id="devDesc" placeholder="Descrição">
             <input type="number" step="0.01" id="devValor" placeholder="Valor R$">
+            <label>Data para Recebimento</label>
             <input type="date" id="devData">
             <select id="devStatus">
                 <option value="a_vencer">A Receber</option>
                 <option value="recebido">Recebido</option>
                 <option value="atrasado">Atrasado</option>
             </select>
-            <button class="salvar" onclick="adicionarMeDevem()">➕ Salvar na Nuvem</button>
+            <button class="salvar" onclick="adicionarMeDevem()">➕ Salvar</button>
         </div>
         <div class="card">
-            <h2>Quem Me Deve</h2>
+            <h2>Valores a Receber</h2>
             <div id="listaMeDevem" class="vazio">Carregando...</div>
         </div>
     </div>
 
-    <!-- CONTAS -->
+    <!-- CONTAS FIXAS -->
     <div id="contas" class="conteudo">
         <div class="card">
-            <h2>Nova Conta</h2>
-            <input type="text" id="contaNome" placeholder="Nome da conta">
+            <h2>Nova Despesa ou Receita Fixa Mensal</h2>
+            <input type="text" id="contaNome" placeholder="Nome (Ex: Aluguel, Sistema, Salário)">
             <input type="number" step="0.01" id="contaValor" placeholder="Valor mensal R$">
             <select id="contaTipo">
-                <option value="despesa">Despesa</option>
-                <option value="receita">Receita</option>
+                <option value="despesa">Despesa Fixa</option>
+                <option value="receita">Receita Fixa</option>
             </select>
-            <button class="salvar" onclick="adicionarConta()">➕ Salvar na Nuvem</button>
+            <button class="salvar" onclick="adicionarConta()">➕ Salvar Conta Fixa</button>
         </div>
         <div class="card">
-            <h2>Minhas Contas</h2>
+            <h2>Contas Recorrentes Cadastradas</h2>
             <div id="listaContas" class="vazio">Carregando...</div>
         </div>
     </div>
@@ -224,7 +264,7 @@
 
 <script>
 // ==============================================
-// 🔑 SEU FIREBASE — JÁ ESTÁ AQUI
+// 🔑 FIREBASE CONFIG
 // ==============================================
 const firebaseConfig = {
   apiKey: "AIzaSyCPd-aIQVDEP-UK2twGzci8sRLgjTRmI",
@@ -235,28 +275,27 @@ const firebaseConfig = {
   appId: "1:597330115962:web:0d01a891a5745f8e6ac3"
 };
 
-// INICIA FIREBASE
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-// NOMES DAS COLEÇÕES NO BANCO
 const colecoes = {
-    boletos: db.collection('boletos_v1'),
-    cheques: db.collection('cheques_v1'),
-    emprestimos: db.collection('emprestimos_v1'),
-    euDevo: db.collection('eu_devo_v1'),
-    meDevem: db.collection('me_devem_v1'),
-    contas: db.collection('contas_v1')
+    boletos: db.collection('boletos_v2'),
+    parcelamentos: db.collection('parcelamentos_v2'),
+    emprestimos: db.collection('emprestimos_v2'),
+    euDevo: db.collection('eu_devo_v2'),
+    meDevem: db.collection('me_devem_v2'),
+    contas: db.collection('contas_v2')
 };
 
 let filtro = 'todos';
-let dados = { boletos: [], cheques: [], emprestimos: [], euDevo: [], meDevem: [], contas: [] };
+let dados = { boletos: [], parcelamentos: [], emprestimos: [], euDevo: [], meDevem: [], contas: [] };
 
 function moeda(valor) {
     return 'R$ ' + parseFloat(valor||0).toFixed(2).replace('.', ',');
 }
 
 function hoje() { return new Date().toISOString().split('T')[0]; }
+
 function diasAte(dataStr) {
     if (!dataStr) return 0;
     const hojeDt = new Date(hoje());
@@ -280,45 +319,189 @@ function deveMostrar(dataStr, statusCadastrado) {
     return true;
 }
 
-function abrirAba(nome) {
+function abrirAba(nome, elemento) {
     document.querySelectorAll('.aba').forEach(b => b.classList.remove('ativa'));
     document.querySelectorAll('.conteudo').forEach(c => c.classList.remove('visivel'));
-    event.target.classList.add('ativa');
+    if (elemento) elemento.classList.add('ativa');
     document.getElementById(nome).classList.add('visivel');
     if (nome === 'resumo') atualizarResumo();
+    if (nome === 'projecao') gerarProjecaoMensal();
+}
+
+function mudarFiltro(novoFiltro, elemento) {
+    document.querySelectorAll('.filtro').forEach(f => f.classList.remove('ativo'));
+    if (elemento) elemento.classList.add('ativo');
+    filtro = novoFiltro;
+    carregarTudo();
 }
 
 async function carregarTudo() {
-    document.getElementById('statusNuvem').innerHTML = '🔄 Sincronizando...';
+    document.getElementById('statusNuvem').innerHTML = '🔄 Sincronizando dados...';
     await Promise.all([
         carregarBoletos(),
-        carregarCheques(),
+        carregarParcelamentos(),
         carregarEmprestimos(),
         carregarEuDevo(),
         carregarMeDevem(),
         carregarContas()
     ]);
     atualizarResumo();
-    document.getElementById('statusNuvem').innerHTML = '✅ Dados salvos na nuvem!';
+    document.getElementById('statusNuvem').innerHTML = '✅ Conectado e atualizado na nuvem!';
+}
+
+function copiarCodigo(codigo) {
+    navigator.clipboard.writeText(codigo).then(() => {
+        alert('📋 Código de barras copiado com sucesso!');
+    }).catch(err => {
+        alert('Erro ao copiar código.');
+    });
 }
 
 function atualizarResumo() {
-    let receber = 0, pagar = 0, totalEmp = 0;
+    let receber = 0, pagarGeral = 0, saidaMesAtual = 0;
+    const mesAtualStr = hoje().substring(0, 7); // YYYY-MM
+
     dados.meDevem.forEach(i => { if (i.status !== 'recebido') receber += parseFloat(i.valor||0); });
-    dados.euDevo.forEach(i => { if (i.status !== 'pago') pagar += parseFloat(i.valor||0); });
-    dados.boletos.forEach(i => { if (i.status !== 'pago') pagar += parseFloat(i.valor||0); });
-    dados.cheques.forEach(i => { if (i.status !== 'pago') pagar += parseFloat(i.valor||0); });
-    dados.emprestimos.forEach(e => { if (e.status !== 'quitado') totalEmp += parseFloat(e.valorTotal||0); });
+    dados.euDevo.forEach(i => { 
+        if (i.status !== 'pago') {
+            pagarGeral += parseFloat(i.valor||0);
+            if (i.data && i.data.startsWith(mesAtualStr)) saidaMesAtual += parseFloat(i.valor||0);
+        }
+    });
+    dados.boletos.forEach(i => { 
+        if (i.status !== 'pago') {
+            pagarGeral += parseFloat(i.valor||0);
+            if (i.data && i.data.startsWith(mesAtualStr)) saidaMesAtual += parseFloat(i.valor||0);
+        }
+    });
+    dados.emprestimos.forEach(e => { 
+        if (e.status !== 'quitado') {
+            pagarGeral += parseFloat(e.totalFinal||0);
+            if (e.data && e.data.startsWith(mesAtualStr)) saidaMesAtual += parseFloat(e.totalFinal||0);
+        }
+    });
+    dados.parcelamentos.forEach(p => {
+        if (p.status === 'ativo') {
+            pagarGeral += (parseFloat(p.valorParcela||0) * parseInt(p.qtdeParcelas||1));
+            // Verificar se esta parcela cai no mês atual
+            const parcelasDoP = gerarListaParcelas(p);
+            parcelasDoP.forEach(parc => {
+                if (parc.data.startsWith(mesAtualStr) && !parc.pago) {
+                    saidaMesAtual += parc.valor;
+                }
+            });
+        }
+    });
     dados.contas.forEach(i => {
         if (i.tipo === 'receita') receber += parseFloat(i.valor||0);
-        else pagar += parseFloat(i.valor||0);
+        else {
+            pagarGeral += parseFloat(i.valor||0);
+            saidaMesAtual += parseFloat(i.valor||0);
+        }
     });
+
     document.getElementById('valReceber').textContent = moeda(receber);
-    document.getElementById('valPagar').textContent = moeda(pagar);
-    document.getElementById('valEmprestimos').textContent = moeda(totalEmp);
-    const saldo = receber - (pagar + totalEmp);
+    document.getElementById('valPagar').textContent = moeda(pagarGeral);
+    document.getElementById('valSaidaMes').textContent = moeda(saidaMesAtual);
+    
+    const saldo = receber - pagarGeral;
     document.getElementById('valSaldo').textContent = moeda(saldo);
     document.getElementById('valSaldo').className = 'valor ' + (saldo >= 0 ? 'positivo' : 'negativo');
+}
+
+// ===== PROJEÇÃO MENSAL (Longo Prazo / Meses Futuros) =====
+function gerarListaParcelas(p) {
+    let lista = [];
+    if (!p.dataInicio) return lista;
+    let [ano, mes, dia] = p.dataInicio.split('-').map(Number);
+    let valorP = parseFloat(p.valorParcela || 0);
+    let qtd = parseInt(p.qtdeParcelas || 1);
+
+    for (let i = 1; i <= qtd; i++) {
+        let mesStr = String(mes).padStart(2, '0');
+        let anoStr = String(ano);
+        let dataFormatada = `${anoStr}-${mesStr}-${String(dia).padStart(2,'0')}`;
+        lista.push({
+            numero: i,
+            totalParcelas: qtd,
+            data: dataFormatada,
+            mesAno: `${mesStr}/${anoStr}`,
+            valor: valorP,
+            pago: p.status === 'quitado'
+        });
+        mes++;
+        if (mes > 12) { mes = 1; ano++; }
+    }
+    return lista;
+}
+
+function gerarProjecaoMensal() {
+    const el = document.getElementById('listaProjecao');
+    let mesesMap = {};
+
+    // Adiciona boletos, eu devo, parcelamentos nas suas respectivas datas (YYYY-MM)
+    dados.boletos.forEach(b => {
+        if (b.status !== 'pago' && b.data) {
+            let m = b.data.substring(0, 7);
+            if (!mesesMap[m]) mesesMap[m] = { total: 0, itens: [] };
+            mesesMap[m].total += parseFloat(b.valor || 0);
+            mesesMap[m].itens.push({ nome: `Boleto: ${b.nome}`, valor: parseFloat(b.valor || 0), data: b.data });
+        }
+    });
+
+    dados.euDevo.forEach(d => {
+        if (d.status !== 'pago' && d.data) {
+            let m = d.data.substring(0, 7);
+            if (!mesesMap[m]) mesesMap[m] = { total: 0, itens: [] };
+            mesesMap[m].total += parseFloat(d.valor || 0);
+            mesesMap[m].itens.push({ nome: `Devo: ${d.nome}`, valor: parseFloat(d.valor || 0), data: d.data });
+        }
+    });
+
+    dados.parcelamentos.forEach(p => {
+        if (p.status === 'ativo') {
+            let parcelas = gerarListaParcelas(p);
+            parcelas.forEach(parc => {
+                let m = parc.data.substring(0, 7);
+                if (!mesesMap[m]) mesesMap[m] = { total: 0, itens: [] };
+                mesesMap[m].total += parc.valor;
+                mesesMap[m].itens.push({ nome: `Parcela ${parc.numero}/${parc.totalParcelas} - ${p.nome}`, valor: parc.valor, data: parc.data });
+            });
+        }
+    });
+
+    dados.contas.forEach(c => {
+        if (c.tipo === 'despesa') {
+            // Contas fixas entram no mês atual e próximos 5 meses como exemplo
+            let hojeStr = hoje().substring(0, 7);
+            if (!mesesMap[hojeStr]) mesesMap[hojeStr] = { total: 0, itens: [] };
+            mesesMap[hojeStr].total += parseFloat(c.valor || 0);
+            mesesMap[hojeStr].itens.push({ nome: `Despesa Fixa: ${c.nome}`, valor: parseFloat(c.valor || 0), data: 'Recorrente' });
+        }
+    });
+
+    let mesesOrdenados = Object.keys(mesesMap).sort();
+    if (mesesOrdenados.length === 0) {
+        el.innerHTML = '<div class="vazio">Nenhuma despesa futura projetada</div>';
+        return;
+    }
+
+    el.innerHTML = mesesOrdenados.map(m => {
+        let dadosMes = mesesMap[m];
+        let [ano, mes] = m.split('-');
+        let nomeMesFormatado = `${mes}/${ano}`;
+        return `
+            <div class="mes-projecao">
+                <div class="mes-titulo">
+                    <span>🗓️ Mês: ${nomeMesFormatado}</span>
+                    <span class="negativo">${moeda(dadosMes.total)}</span>
+                </div>
+                <div style="font-size: 13px; color: #94a3b8;">
+                    ${dadosMes.itens.map(i => `• ${i.nome} — ${moeda(i.valor)} (Venc:${i.data})`).join('<br>')}
+                </div>
+            </div>
+        `;
+    }).join('');
 }
 
 // ===== BOLETOS =====
@@ -330,12 +513,12 @@ async function carregarBoletos() {
     if (filtroLista.length === 0) { el.innerHTML = '<div class="vazio">Nenhum boleto encontrado</div>'; return; }
     el.innerHTML = filtroLista.map(b => {
         const s = statusReal(b.data, b.status);
-        return `<div class="item">
-            <strong>${b.nome}</strong><br>
-            Venc: ${b.data} | ${moeda(b.valor)}<br>
-            ${b.codigo ? '📎 ' + b.codigo + '<br>' : ''}
-            <small>${s==='pago'?'✅ Pago':s==='atrasado'?'⚠️ Atrasado':'📅 A Vencer'}</small>
-            <br>
+        return `<div class="item ${s}">
+            <strong>📄 ${b.nome}</strong><br>
+            Vencimento: ${b.data} | <strong>${moeda(b.valor)}</strong><br>
+            ${b.codigo ? `<div class="codigo-barras">🔗 ${b.codigo}</div>` : ''}
+            <small>${s==='pago'?'✅ Pago':s==='atrasado'?'⚠️ Atrasado':'📅 A Vencer'}</small><br><br>
+            ${b.codigo ? `<button class="copiar" onclick="copiarCodigo('${b.codigo}')">📋 Copiar Código</button>` : ''}
             <button class="pago" onclick="marcarBoletoPago('${b.id}')">✓ Pago</button>
             <button class="excluir" onclick="excluirBoleto('${b.id}')">🗑️ Excluir</button>
         </div>`;
@@ -348,7 +531,7 @@ async function adicionarBoleto() {
     const data = document.getElementById('bolData').value;
     const valor = parseFloat(document.getElementById('bolValor').value);
     const status = document.getElementById('bolStatus').value;
-    if (!nome || !data || !valor) { alert('Preencha os obrigatórios!'); return; }
+    if (!nome || !data || !valor) { alert('Preencha os campos obrigatórios!'); return; }
     await colecoes.boletos.add({ nome, codigo, data, valor, status, criadoEm: firebase.firestore.FieldValue.serverTimestamp() });
     document.getElementById('bolNome').value = '';
     document.getElementById('bolCodigo').value = '';
@@ -356,69 +539,77 @@ async function adicionarBoleto() {
     document.getElementById('bolValor').value = '';
     carregarBoletos();
 }
-window.marcarBoletoPago = async function(id) { await colecoes.boletos.doc(id).update({status:'pago'}); carregarBoletos(); };
-window.excluirBoleto = async function(id) { if(confirm('Excluir?')) { await colecoes.boletos.doc(id).delete(); carregarBoletos(); }};
+window.marcarBoletoPago = async function(id) { await colecoes.boletos.doc(id).update({status:'pago'}); carregarTudo(); };
+window.excluirBoleto = async function(id) { if(confirm('Excluir boleto?')) { await colecoes.boletos.doc(id).delete(); carregarTudo(); }};
 
-// ===== CHEQUES =====
-async function carregarCheques() {
-    const snap = await colecoes.cheques.orderBy('data', 'asc').get();
-    dados.cheques = snap.docs.map(d => ({id:d.id, ...d.data()}));
-    const el = document.getElementById('listaCheques');
-    const filtroLista = dados.cheques.filter(c => deveMostrar(c.data, c.status));
-    if (filtroLista.length === 0) { el.innerHTML = '<div class="vazio">Nenhum cheque encontrado</div>'; return; }
-    el.innerHTML = filtroLista.map(c => {
-        const s = statusReal(c.data, c.status);
+// ===== PARCELAMENTOS (LONGO PRAZO) =====
+function calcularParcelamento() {
+    const total = parseFloat(document.getElementById('parcTotal').value) || 0;
+    const qtd = parseInt(document.getElementById('parcQtd').value) || 1;
+    document.getElementById('parcValorCalc').value = moeda(total / qtd);
+}
+
+async function carregarParcelamentos() {
+    const snap = await colecoes.parcelamentos.orderBy('dataInicio', 'asc').get();
+    dados.parcelamentos = snap.docs.map(d => ({id:d.id, ...d.data()}));
+    const el = document.getElementById('listaParcelamentos');
+    const filtroLista = dados.parcelamentos.filter(p => deveMostrar(p.dataInicio, p.status));
+    if (filtroLista.length === 0) { el.innerHTML = '<div class="vazio">Nenhum parcelamento cadastrado</div>'; return; }
+    el.innerHTML = filtroLista.map(p => {
         return `<div class="item">
-            <strong>${c.nome}</strong><br>
-            Nº: ${c.numero||'—'} | Venc: ${c.data} | ${moeda(c.valor)}<br>
-            <small>${s==='pago'?'✅ Compensado':s==='atrasado'?'⚠️ Atrasado':'📅 A Vencer'}</small>
-            <br>
-            <button class="pago" onclick="marcarChequePago('${c.id}')">✓ Pago</button>
-            <button class="excluir" onclick="excluirCheque('${c.id}')">🗑️ Excluir</button>
+            <strong>💳 ${p.nome}</strong><br>
+            Valor Total: <strong>${moeda(p.valorTotal)}</strong> | ${p.qtdeParcelas}x de ${moeda(p.valorParcela)}<br>
+            Início: ${p.dataInicio || '—'}<br>
+            <small>${p.status==='quitado'?'✅ Quitado':'🔄 Em Andamento (Longo Prazo)'}</small><br><br>
+            <button class="pago" onclick="marcarParcelamentoQuitado('${p.id}')">✅ Quitar Tudo</button>
+            <button class="excluir" onclick="excluirParcelamento('${p.id}')">🗑️ Excluir</button>
         </div>`;
     }).join('');
 }
 
-async function adicionarCheque() {
-    const nome = document.getElementById('cheqNome').value.trim();
-    const numero = document.getElementById('cheqNum').value.trim();
-    const data = document.getElementById('cheqData').value;
-    const valor = parseFloat(document.getElementById('cheqValor').value);
-    const status = document.getElementById('cheqStatus').value;
-    if (!nome || !data || !valor) { alert('Preencha os obrigatórios!'); return; }
-    await colecoes.cheques.add({ nome, numero, data, valor, status, criadoEm: firebase.firestore.FieldValue.serverTimestamp() });
-    document.getElementById('cheqNome').value = '';
-    document.getElementById('cheqNum').value = '';
-    document.getElementById('cheqData').value = '';
-    document.getElementById('cheqValor').value = '';
-    carregarCheques();
+async function adicionarParcelamento() {
+    const nome = document.getElementById('parcNome').value.trim();
+    const valorTotal = parseFloat(document.getElementById('parcTotal').value);
+    const qtdeParcelas = parseInt(document.getElementById('parcQtd').value) || 1;
+    const dataInicio = document.getElementById('parcDataInicio').value;
+    const status = document.getElementById('parcStatus').value;
+    if (!nome || !valorTotal || !dataInicio) { alert('Preencha nome, valor total e data!'); return; }
+    const valorParcela = valorTotal / qtdeParcelas;
+    await colecoes.parcelamentos.add({ nome, valorTotal, qtdeParcelas, valorParcela, dataInicio, status, criadoEm: firebase.firestore.FieldValue.serverTimestamp() });
+    document.getElementById('parcNome').value = '';
+    document.getElementById('parcTotal').value = '';
+    document.getElementById('parcQtd').value = '';
+    document.getElementById('parcValorCalc').value = '';
+    document.getElementById('parcDataInicio').value = '';
+    carregarTudo();
 }
-window.marcarChequePago = async function(id) { await colecoes.cheques.doc(id).update({status:'pago'}); carregarCheques(); };
-window.excluirCheque = async function(id) { if(confirm('Excluir?')) { await colecoes.cheques.doc(id).delete(); carregarCheques(); }};
+window.marcarParcelamentoQuitado = async function(id) { await colecoes.parcelamentos.doc(id).update({status:'quitado'}); carregarTudo(); };
+window.excluirParcelamento = async function(id) { if(confirm('Excluir?')) { await colecoes.parcelamentos.doc(id).delete(); carregarTudo(); }};
 
-// ===== EMPRÉSTIMOS =====
-function calcularParcela() {
-    const total = parseFloat(document.getElementById('empTotal').value) || 0;
-    const qtd = parseInt(document.getElementById('empParcelas').value) || 1;
-    document.getElementById('empParcelaValor').value = moeda(total / qtd);
+// ===== EMPRÉSTIMOS COM JUROS =====
+function calcularJurosEmprestimo() {
+    const valor = parseFloat(document.getElementById('empValor').value) || 0;
+    const juros = parseFloat(document.getElementById('empJuros').value) || 0;
+    const totalComJuros = valor + (valor * (juros / 100));
+    document.getElementById('empTotalFinal').value = totalComJuros.toFixed(2);
 }
 
 async function carregarEmprestimos() {
-    const snap = await colecoes.emprestimos.orderBy('dataInicio', 'asc').get();
+    const snap = await colecoes.emprestimos.orderBy('data', 'asc').get();
     dados.emprestimos = snap.docs.map(d => ({id:d.id, ...d.data()}));
     const el = document.getElementById('listaEmprestimos');
-    const filtroLista = dados.emprestimos.filter(e => deveMostrar(e.dataInicio, e.status));
-    if (filtroLista.length === 0) { el.innerHTML = '<div class="vazio">Nenhum empréstimo encontrado</div>'; return; }
+    const filtroLista = dados.emprestimos.filter(e => deveMostrar(e.data, e.status));
+    if (filtroLista.length === 0) { el.innerHTML = '<div class="vazio">Nenhum empréstimo cadastrado</div>'; return; }
     el.innerHTML = filtroLista.map(e => {
         return `<div class="item">
-            <strong>💰 ${e.nome}</strong><br>
+            <strong>📈 ${e.nome}</strong><br>
             ${e.desc||''}<br>
-            Total: <strong>${moeda(e.valorTotal)}</strong> | ${e.qtdeParcelas}x de ${moeda(e.valorTotal/e.qtdeParcelas)}<br>
-            1ª parcela: ${e.dataInicio||'—'}<br>
-            <small>${e.status==='quitado'?'✅ Quitado':e.status==='atrasado'?'⚠️ Atrasado':'🔄 Em Andamento'}</small>
-            <br>
-            <button class="pago" onclick="marcarEmpQuitado('${e.id}')">✅ Quitado</button>
-            <button class="excluir" onclick="excluirEmp('${e.id}')">🗑️ Excluir</button>
+            Principal: ${moeda(e.valorPrincipal)} | Juros: ${e.juros}% a.m.<br>
+            <strong>Total com Juros: ${moeda(e.totalFinal)}</strong><br>
+            Vencimento: ${e.data || '—'}<br>
+            <small>${e.status==='quitado'?'✅ Quitado':e.status==='atrasado'?'⚠️ Atrasado':'🔄 Em Andamento'}</small><br><br>
+            <button class="pago" onclick="marcarEmprestimoQuitado('${e.id}')">✅ Quitado</button>
+            <button class="excluir" onclick="excluirEmprestimo('${e.id}')">🗑️ Excluir</button>
         </div>`;
     }).join('');
 }
@@ -426,22 +617,23 @@ async function carregarEmprestimos() {
 async function adicionarEmprestimo() {
     const nome = document.getElementById('empNome').value.trim();
     const desc = document.getElementById('empDesc').value.trim();
-    const valorTotal = parseFloat(document.getElementById('empTotal').value);
-    const qtdeParcelas = parseInt(document.getElementById('empParcelas').value) || 1;
-    const dataInicio = document.getElementById('empPrimeiraParcela').value;
+    const valorPrincipal = parseFloat(document.getElementById('empValor').value) || 0;
+    const juros = parseFloat(document.getElementById('empJuros').value) || 0;
+    const totalFinal = parseFloat(document.getElementById('empTotalFinal').value) || valorPrincipal;
+    const data = document.getElementById('empData').value;
     const status = document.getElementById('empStatus').value;
-    if (!nome || !valorTotal) { alert('Preencha nome e valor total!'); return; }
-    await colecoes.emprestimos.add({ nome, desc, valorTotal, qtdeParcelas, dataInicio, status, criadoEm: firebase.firestore.FieldValue.serverTimestamp() });
+    if (!nome || !totalFinal) { alert('Preencha os campos obrigatórios!'); return; }
+    await colecoes.emprestimos.add({ nome, desc, valorPrincipal, juros, totalFinal, data, status, criadoEm: firebase.firestore.FieldValue.serverTimestamp() });
     document.getElementById('empNome').value = '';
     document.getElementById('empDesc').value = '';
-    document.getElementById('empTotal').value = '';
-    document.getElementById('empParcelas').value = '';
-    document.getElementById('empParcelaValor').value = '';
-    document.getElementById('empPrimeiraParcela').value = '';
-    carregarEmprestimos();
+    document.getElementById('empValor').value = '';
+    document.getElementById('empJuros').value = '';
+    document.getElementById('empTotalFinal').value = '';
+    document.getElementById('empData').value = '';
+    carregarTudo();
 }
-window.marcarEmpQuitado = async function(id) { await colecoes.emprestimos.doc(id).update({status:'quitado'}); carregarEmprestimos(); };
-window.excluirEmp = async function(id) { if(confirm('Excluir?')) { await colecoes.emprestimos.doc(id).delete(); carregarEmprestimos(); }};
+window.marcarEmprestimoQuitado = async function(id) { await colecoes.emprestimos.doc(id).update({status:'quitado'}); carregarTudo(); };
+window.excluirEmprestimo = async function(id) { if(confirm('Excluir?')) { await colecoes.emprestimos.doc(id).delete(); carregarTudo(); }};
 
 // ===== EU DEVO =====
 async function carregarEuDevo() {
@@ -453,11 +645,9 @@ async function carregarEuDevo() {
     el.innerHTML = filtroLista.map(d => {
         const s = statusReal(d.data, d.status);
         return `<div class="item">
-            <strong>${d.nome}</strong><br>
-            ${d.desc||''}<br>
-            Venc: ${d.data} | ${moeda(d.valor)}<br>
-            <small>${s==='pago'?'✅ Pago':s==='atrasado'?'⚠️ Atrasado':'📅 A Pagar'}</small>
-            <br>
+            <strong>⬆️ ${d.nome}</strong><br>${d.desc||''}<br>
+            Venc: ${d.data} | <strong>${moeda(d.valor)}</strong><br>
+            <small>${s==='pago'?'✅ Pago':s==='atrasado'?'⚠️ Atrasado':'📅 A Pagar'}</small><br><br>
             <button class="pago" onclick="marcarDevoPago('${d.id}')">✓ Pago</button>
             <button class="excluir" onclick="excluirDevo('${d.id}')">🗑️ Excluir</button>
         </div>`;
@@ -476,10 +666,10 @@ async function adicionarEuDevo() {
     document.getElementById('devEuDesc').value = '';
     document.getElementById('devEuValor').value = '';
     document.getElementById('devEuData').value = '';
-    carregarEuDevo();
+    carregarTudo();
 }
-window.marcarDevoPago = async function(id) { await colecoes.euDevo.doc(id).update({status:'pago'}); carregarEuDevo(); };
-window.excluirDevo = async function(id) { if(confirm('Excluir?')) { await colecoes.euDevo.doc(id).delete(); carregarEuDevo(); }};
+window.marcarDevoPago = async function(id) { await colecoes.euDevo.doc(id).update({status:'pago'}); carregarTudo(); };
+window.excluirDevo = async function(id) { if(confirm('Excluir?')) { await colecoes.euDevo.doc(id).delete(); carregarTudo(); }};
 
 // ===== ME DEVEM =====
 async function carregarMeDevem() {
@@ -491,11 +681,9 @@ async function carregarMeDevem() {
     el.innerHTML = filtroLista.map(d => {
         const s = statusReal(d.data, d.status);
         return `<div class="item">
-            <strong>${d.nome}</strong><br>
-            ${d.desc||''}<br>
-            Receb: ${d.data} | ${moeda(d.valor)}<br>
-            <small>${s==='recebido'?'✅ Recebido':s==='atrasado'?'⚠️ Atrasado':'📅 A Receber'}</small>
-            <br>
+            <strong>⬇️ ${d.nome}</strong><br>${d.desc||''}<br>
+            Receb: ${d.data} | <strong>${moeda(d.valor)}</strong><br>
+            <small>${s==='recebido'?'✅ Recebido':s==='atrasado'?'⚠️ Atrasado':'📅 A Receber'}</small><br><br>
             <button class="pago" onclick="marcarMeDevemRecebido('${d.id}')">✓ Recebido</button>
             <button class="excluir" onclick="excluirMeDevem('${d.id}')">🗑️ Excluir</button>
         </div>`;
@@ -514,12 +702,12 @@ async function adicionarMeDevem() {
     document.getElementById('devDesc').value = '';
     document.getElementById('devValor').value = '';
     document.getElementById('devData').value = '';
-    carregarMeDevem();
+    carregarTudo();
 }
-window.marcarMeDevemRecebido = async function(id) { await colecoes.meDevem.doc(id).update({status:'recebido'}); carregarMeDevem(); };
-window.excluirMeDevem = async function(id) { if(confirm('Excluir?')) { await colecoes.meDevem.doc(id).delete(); carregarMeDevem(); }};
+window.marcarMeDevemRecebido = async function(id) { await colecoes.meDevem.doc(id).update({status:'recebido'}); carregarTudo(); };
+window.excluirMeDevem = async function(id) { if(confirm('Excluir?')) { await colecoes.meDevem.doc(id).delete(); carregarTudo(); }};
 
-// ===== CONTAS =====
+// ===== CONTAS FIXAS =====
 async function carregarContas() {
     const snap = await colecoes.contas.get();
     dados.contas = snap.docs.map(d => ({id:d.id, ...d.data()}));
@@ -527,9 +715,8 @@ async function carregarContas() {
     if (dados.contas.length === 0) { el.innerHTML = '<div class="vazio">Nenhuma conta cadastrada</div>'; return; }
     el.innerHTML = dados.contas.map(c => {
         return `<div class="item">
-            <strong>${c.nome}</strong> — ${moeda(c.valor)}<br>
-            <small>${c.tipo==='receita'?'💵 Entrada':'💸 Saída'}</small>
-            <br>
+            <strong>${c.nome}</strong> — <strong>${moeda(c.valor)}</strong><br>
+            <small>${c.tipo==='receita'?'💵 Entrada Fixa':'💸 Despesa Fixa'}</small><br><br>
             <button class="excluir" onclick="excluirConta('${c.id}')">🗑️ Excluir</button>
         </div>`;
     }).join('');
@@ -543,13 +730,12 @@ async function adicionarConta() {
     await colecoes.contas.add({ nome, valor, tipo, criadoEm: firebase.firestore.FieldValue.serverTimestamp() });
     document.getElementById('contaNome').value = '';
     document.getElementById('contaValor').value = '';
-    carregarContas();
+    carregarTudo();
 }
-window.excluirConta = async function(id) { if(confirm('Excluir?')) { await colecoes.contas.doc(id).delete(); carregarContas(); }};
+window.excluirConta = async function(id) { if(confirm('Excluir?')) { await colecoes.contas.doc(id).delete(); carregarTudo(); }};
 
 // INICIAR
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('✅ Sistema conectado ao Firebase!');
     carregarTudo();
 });
 </script>
